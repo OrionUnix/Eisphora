@@ -1,0 +1,101 @@
+# Python et Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
+staticfiles/
+collected_static/
+
+# Environnement virtuel
+venv/
+.env
+*.env
+.env.*
+
+# Base de données
+*.db
+pg_data/
+pg_dump/
+*.pgsql
+*.pgpass
+*.backup
+*.dump
+
+# Fichiers temporaires et logs
+*.log
+*.tmp
+temp/
+*.bak
+*.cache
+*.swp
+.mypy_cache/
+
+# Fichiers sensibles
+secrets/
+*.key
+*.pem
+*.secret
+*.crt
+*.enc
+
+# Développement local
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Fichiers de build
+build/
+dist/
+
+# Données utilisateur
+*.csv
+*.json
+data/
+uploads/
+transactions/
+exports/
+*.pdf
+*.xlsx
+*.xls
+
+# React/Next.js et Tailwind
+node_modules/
+.next/
+out/
+public/build/
+frontend/.next/
+frontend/out/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-data/
+docker.env
+
+# Julia
+.julia/
+.julia_history
+
+# GraphQL
+graphql-schema.json
+
+# Camunda workflow
+camunda_logs/
+camunda_cache/
+camunda/temp/
+
+# PostgreSQL
+*.sql
+pg_backup/
+
+# Tests et autres
+error.log
+*.tar
+*.zip
+*.gz"__pycache__/" 
+"venv/" 
