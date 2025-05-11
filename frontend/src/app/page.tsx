@@ -1,12 +1,14 @@
 import Image from "next/image";
 
 export default function Home() {
+  console.log("Base URL:", process.env.NEXT_PUBLIC_BASE_URL); // Pour débogage
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
-          src="/next.svg"
+          src={`${process.env.NEXT_PUBLIC_BASE_URL}/next.svg`} // Utiliser la variable d'environnement
           alt="Next.js logo"
           width={180}
           height={38}
@@ -34,7 +36,7 @@ export default function Home() {
           >
             <Image
               className="dark:invert"
-              src="/vercel.svg"
+              src={`${process.env.NEXT_PUBLIC_BASE_URL}/vercel.svg`} // Utiliser la variable d'environnement
               alt="Vercel logomark"
               width={20}
               height={20}
@@ -42,7 +44,8 @@ export default function Home() {
             Deploy now
           </a>
           <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flexляв
+            items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
             href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
             target="_blank"
             rel="noopener noreferrer"
@@ -59,11 +62,11 @@ export default function Home() {
           rel="noopener noreferrer"
         >
           <Image
-            aria-hidden
-            src="/file.svg"
+            src={`${process.env.NEXT_PUBLIC_BASE_URL}/file.svg`} // Utiliser la variable d'environnement
             alt="File icon"
             width={16}
-            height={16}
+            height={16} // Corrigé : hight → height
+            priority
           />
           Learn
         </a>
@@ -75,7 +78,7 @@ export default function Home() {
         >
           <Image
             aria-hidden
-            src="/window.svg"
+            src={`${process.env.NEXT_PUBLIC_BASE_URL}/window.svg`} // Utiliser la variable d'environnement
             alt="Window icon"
             width={16}
             height={16}
@@ -90,7 +93,7 @@ export default function Home() {
         >
           <Image
             aria-hidden
-            src="/globe.svg"
+            src={`${process.env.NEXT_PUBLIC_BASE_URL}/globe.svg`} // Utiliser la variable d'environnement
             alt="Globe icon"
             width={16}
             height={16}
