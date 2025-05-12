@@ -85,6 +85,46 @@ Follow these steps to install and configure the project locally:
 
 Your application should now be accessible (usually at `http://localhost:8000`).
 
+## Architecture
+This diagram illustrates the main components and data flow of the Eisphora application.
+
+    ```mermaid
+    graph TD
+        A[Utilisateur] -->|HTTPS| B[Frontend: Next.js intégré dans Django]
+        subgraph Frontend
+            B -->|Tailwind CSS| C[UI Responsive]
+            B -->|GSAP| D[Animations Parallaxe/Neumorphisme]
+            B -->|IndexedDB| E[Clé Chiffrement]
+            E -->|PBKDF2/Argon2| F[Dérivation]
+        end
+        B -->|GraphQL/AJAX| G[Django Server]
+        subgraph Backend_Django
+            G --> H[Apps]
+            H --> I[calculator_FIFO: FIFO/Nettoyage]
+            H --> J[documents: Transactions/Suppression]
+            H --> K[analytics: Analyses Approfondies]
+            H --> L[users: Espace Personnel]
+            H --> M[core: Modèles]
+            G --> N[GraphQL: graphene-django]
+            G --> O[Tasks: Celery]
+            G -->|AES-256| P[django-cryptography]
+            G --> Q[django-otp]
+            G --> R[django-gdpr-assistant]
+            G --> S[Julia: Calculs lourds via pyjulia]
+            G --> T[LLM: Analyse via transformers]
+            G --> W[Camunda: Workflows BPMN intégrés]
+        end
+        G --> Y[Webhooks]
+        G --> Z[PostgreSQL]
+        Z --> AA[pg_cron]
+        Z --> AB[pgjwt]
+        Z --> AD[TOAST]
+        Z --> AE[Role taxapp_readonly]
+        G --> AF[Redis]
+        G --> AG[MinIO]
+        G --> AH[Azure Key Vault]
+    ```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the project.
