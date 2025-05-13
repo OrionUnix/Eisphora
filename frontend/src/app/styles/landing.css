@@ -1,0 +1,48 @@
+/* landing.css */
+*,
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Vos variables */
+:root {
+  --primaryColor: #282a57;
+  --secondaryColor: #e4e4e4;
+  --background: var(--primaryColor);
+  --foreground: var(--secondaryColor);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primaryColor: #0a0a0a;
+    --secondaryColor: #ededed;
+    --background: var(--primaryColor);
+    --foreground: var(--secondaryColor);
+  }
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* S’assure que le container parallax prend la totalité de la fenêtre */
+.relative.h-screen {
+  height: 100vh;
+}
+
+/* Pour éviter un overflow horizontal dû aux translations */
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+
+/* Sections */
+.about {
+  color: var(--secondaryColor);
+}
+
+/* Ajustez les tailles si besoin */
