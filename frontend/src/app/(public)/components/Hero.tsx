@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { siteDetails } from "../siteDetails";
 
 const Hero: React.FC = () => {
   return (
@@ -20,7 +21,7 @@ const Hero: React.FC = () => {
 
       {/* Content */}
       <div className="relative z-10 text-white text-center px-4">
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">Eisphora</h1>
+        <h1 className="text-4xl md:text-6xl font-bold mb-4"> {siteDetails.siteName} </h1>
         <p className="text-lg md:text-xl max-w-xl mx-auto">Une plateforme décentralisée pour explorer vos données financières en crypto.</p>
       </div>
     </section>
