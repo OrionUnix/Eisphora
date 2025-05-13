@@ -1,8 +1,11 @@
 export const siteDetails = {
     siteName: 'Eisphora',
     siteUrl: 'http://localhost:3000//',
-    GitHub: 'https://github.com/OrionUnix/Eisphora',
-    Twitter: 'https://x.com/OrionDeimos',
+    GitHubUrl: 'https://github.com/OrionUnix/Eisphora',
+    TwitterUrl: 'https://x.com/OrionDeimos',
+    DiscordUrl: 'https://x.com/OrionDeimos',
+    
+    
     metadata: {
         title: 'Eisphora - OpenSource',
         description: 'Eisphora empowers businesses with cutting-edge technology solutions to drive success and efficiency.',

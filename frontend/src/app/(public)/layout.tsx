@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Footer from "./components/elements/Footer";
 
 
 
@@ -7,7 +8,7 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log("Layout Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
+console.log("Footer is:", Footer);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -23,9 +24,7 @@ export default function PublicLayout({
       </header>
 <main className="flex-1">{children}</main>
 
-      <footer className="bg-gray-800 text-white p-4 text-center">
-        © 2025 My App
-      </footer>
+     <Footer />
     </div>
   );
 }
