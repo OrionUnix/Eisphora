@@ -4,80 +4,137 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "../styles/landing.css";
 
-export default function LandingPage() {
-  const parallaxRef = useRef<HTMLDivElement>(null);
-  const [showTitle, setShowTitle] = useState(false);
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
-  // Parallax
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!parallaxRef.current) return;
-      const scrollY = window.scrollY;
-      parallaxRef.current
-        .querySelectorAll<HTMLElement>("[data-speed]")
-        .forEach((el) => {
-          const speed = parseFloat(el.dataset.speed!);
-          el.style.transform = `translateY(${scrollY * speed}px)`;
+function Parallax() {
+
+    const [background, setBackground] = useState(20)
+
+    const parallaxRef = useRef(null);
+    const mountain3 = useRef(null);
+    const mountain2 = useRef(null);
+    const mountain1 = useRef(null);
+    const cloudsBottom = useRef(null);
+    const cloudsLeft = useRef(null);
+    const cloudsRight = useRef(null);
+    const stars = useRef(null);
+    const sun = useRef(null);
+    const copy = useRef(null);
+    const btn = useRef(null);
+
+    useEffect(() => {
+        let ctx = gsap.context(() => {
+            gsap.registerPlugin(ScrollTrigger);
+            var tl = gsap.timeline({
+                defaults: { duration: 1 },
+                scrollTrigger: {
+                    trigger: parallaxRef.current,
+                    start: "top top",
+                    end: "5000 bottom",
+                    scrub: true,
+                    pin: true,
+                    onUpdate: (self) => {
+                        setBackground(Math.ceil(self.progress * 100 + 20))
+                    },
+                },
+            });
+            tl.to(
+                mountain3.current,
+                {
+                    y: "-=80",
+                },
+                0
+            );
+            tl.to(
+                mountain2.current,
+                {
+                    y: "-=30",
+                },
+                0
+            );
+            tl.to(
+                mountain1.current,
+                {
+                    y: "+=50",
+                },
+                0
+            );
+            tl.to(
+                stars.current,
+                {
+                    top: 0,
+                },
+                0.5
+            );
+            tl.to(
+                cloudsBottom.current,
+                {
+                    opacity: 0,
+                    duration: 0.5
+                },
+                0
+            );
+            tl.to(
+                cloudsLeft.current,
+                {
+                    x: "-20%",
+                    opacity: 0,
+                },
+                0
+            );
+            tl.to(
+                cloudsRight.current,
+                {
+                    x: "20%",
+                    opacity: 0,
+                },
+                0
+            );
+            tl.to(
+                sun.current,
+                {
+                    y: "+=210",
+                },
+                0
+            );
+            tl.to(
+                copy.current,
+                {
+                    y: "-250%",
+                    opacity: 1
+                },
+                0
+            );
+            tl.to(
+                btn.current,
+                {
+                    opacity: 1,
+                },
+                1.5
+            );
         });
-
-      // Déclenche l’apparition du titre après 200px
-      setShowTitle(scrollY > 200);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+        return () => ctx.revert();
+    }, []);
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      {/* Dégradé plein écran */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-700 to-pink-600"></div>
-
-      {/* Calques SVG */}
-      <div ref={parallaxRef} className="relative h-full">
-        {[
-          { src: "/landing/stars.svg", speed: 0.4, className: "top-0 w-full" },
-          { src: "/landing/clouds-left.svg", speed: 0.15, className: "left-0 w-1/4 top-1/4" },
-          { src: "/landing/clouds-right.svg", speed: 0.12, className: "right-0 w-1/4 top-1/3" },
-          { src: "/landing/sun.svg", speed: 0.05, className: "w-2/5 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" },
-          { src: "/landing/mountain-1.svg", speed: 0.3, className: "bottom-0 w-full" },
-          { src: "/landing/mountain-2.svg", speed: 0.2, className: "bottom-0 w-full" },
-          { src: "/landing/mountain-3.svg", speed: 0.1, className: "bottom-0 w-full" },
-        ].map(({ src, speed, className }, i) => (
-          <img
-            key={i}
-            data-speed={speed}
-            src={src}
-            alt=""
-            className={`absolute ${className}`}
-          />
-        ))}
-      </div>
-
-      {/* Titre de l’appli qui fade-in */}
-      <h1
-        className={`
-          fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
-          text-6xl font-extrabold text-white transition-opacity duration-700
-          ${showTitle ? "opacity-100" : "opacity-0"}
-        `}
-      >
-        NomDeVotreAppli
-      </h1>
-
-      {/* Contenu sous le parallax */}
-      <div className="relative mt-screen h-screen bg-white text-gray-800 flex flex-col items-center justify-center">
-        <h2 className="text-4xl mb-4">Bienvenue chez nous !</h2>
-        <p className="max-w-xl text-center mb-8">
-          Faites défiler pour découvrir plus de merveilles.
-        </p>
-        <div className="flex gap-4">
-          <Link href="/admin/login" className="btn-primary">Commencer</Link>
-          <Link href="https://nextjs.org/docs" className="btn-secondary">
-            Lire la Doc
-          </Link>
+    <div className="parallax-outer">
+            <div ref={parallaxRef} style={{ background: `linear-gradient(#0F2B9C, #673D7D ${background}%, #A74A67, #EDFC54 )` }} className='parallax'>
+                <img ref={mountain3} className='mountain-3' src="/parallax/mountain-3.svg" />
+                <img ref={mountain2} className='mountain-2' src="/parallax/mountain-2.svg" />
+                <img ref={mountain1} className='mountain-1' src="/parallax/mountain-1.svg" />
+                <img ref={sun} className='sun' src="/parallax/sun.svg" />
+                <img ref={cloudsBottom} className='clouds-bottom' src="/parallax/cloud-bottom.svg" />
+                <img ref={cloudsLeft} className='clouds-left' src="/parallax/clouds-left.svg" />
+                <img ref={cloudsRight} className='clouds-right' src="/parallax/clouds-right.svg" />
+                <img ref={stars} className='stars' src="/parallax/stars.svg" />
+                <div ref={copy} className="copy">
+                    <h1>Eisphora</h1>
+                    <span ref={btn}>Discover more</span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    )
 }
+
+export default Parallax
