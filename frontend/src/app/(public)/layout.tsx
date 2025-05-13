@@ -5,7 +5,7 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log("Layout Base URL:", process.env.NEXT_PUBLIC_BASE_URL); // Debug
+  console.log("Layout Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">

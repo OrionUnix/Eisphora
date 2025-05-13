@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function LandingPage() {
-  console.log("Base URL:", process.env.NEXT_PUBLIC_BASE_URL); // Debug
+  console.log("Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
 
   return (
     <div className="text-center">
