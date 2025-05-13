@@ -5,7 +5,8 @@ export default function LandingPage() {
   console.log("Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
 
   return (
-    <div className="text-center">
+    // Apply the background color using the CSS variable
+    <div className="min-h-screen bg-[var(--background)] text-center py-8">
       <h2 className="text-4xl font-bold mb-8">Welcome to Our App!</h2>
       <p className="mb-4">
         Base URL: {process.env.NEXT_PUBLIC_BASE_URL || "Not defined"}

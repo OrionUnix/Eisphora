@@ -16,8 +16,9 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--background) !important;
   color: var(--foreground);
   margin: 0;
   font-family: var(--font-geist-sans), sans-serif;
 }
+
