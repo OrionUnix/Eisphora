@@ -10,7 +10,7 @@ export default function PublicLayout({
   console.log("Layout Base URL:", process.env.NEXT_PUBLIC_BASE_URL);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <header className="bg-blue-600 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">My App</h1>
@@ -21,7 +21,8 @@ export default function PublicLayout({
           </nav>
         </div>
       </header>
-      <main className="flex-1 container mx-auto p-8">{children}</main>
+<main className="flex-1">{children}</main>
+
       <footer className="bg-gray-800 text-white p-4 text-center">
         © 2025 My App
       </footer>

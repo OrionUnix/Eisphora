@@ -1,4 +1,9 @@
-import { useRef, useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import "../styles/landing.css";
+
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
@@ -112,8 +117,8 @@ function Parallax() {
         return () => ctx.revert();
     }, []);
 
-    return (
-        <div className="parallax-outer">
+  return (
+    <div className="parallax-outer">
             <div ref={parallaxRef} style={{ background: `linear-gradient(#0F2B9C, #673D7D ${background}%, #A74A67, #EDFC54 )` }} className='parallax'>
                 <img ref={mountain3} className='mountain-3' src="/parallax/mountain-3.svg" />
                 <img ref={mountain2} className='mountain-2' src="/parallax/mountain-2.svg" />
@@ -124,7 +129,7 @@ function Parallax() {
                 <img ref={cloudsRight} className='clouds-right' src="/parallax/clouds-right.svg" />
                 <img ref={stars} className='stars' src="/parallax/stars.svg" />
                 <div ref={copy} className="copy">
-                    <h1>Journey</h1>
+                    <h1>Eisphora</h1>
                     <span ref={btn}>Discover more</span>
                 </div>
             </div>

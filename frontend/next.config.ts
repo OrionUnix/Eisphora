@@ -1,26 +1,23 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+module.exports = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: '/:path*',
         headers: [
           {
-            key: "Access-Control-Allow-Origin",
-            value: "http://127.0.0.1:8000",
+            key: 'Access-Control-Allow-Origin',
+            value: 'http://127.0.0.1:8000',
           },
           {
-            key: "Access-Control-Allow-Methods",
-            value: "GET,POST,OPTIONS",
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET,OPTIONS,HEAD',
           },
           {
-            key: "Access-Control-Allow-Headers",
-            value: "Content-Type",
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-Requested-With, Content-Type, Accept',
           },
         ],
       },
     ];
   },
 };
-
-module.exports = nextConfig;

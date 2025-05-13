@@ -1,9 +1,8 @@
-*,
-html,
-body {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* Reset and box-sizing */
+*, html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 :root {
