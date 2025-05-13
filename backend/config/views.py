@@ -1,11 +1,12 @@
 from django.http import HttpResponse
 import requests
+import os
 
 def landing(request):
-    # Construire l'URL de Next.js
-    next_url = f"http://localhost:3000{request.path}"
+    NEXTJS_URL = os.getenv('NEXTJS_URL', 'http://localhost:3000')
+    next_url = f"{NEXTJS_URL}{request.path}"
     response = requests.get(next_url)
-    # Remplacer les URLs relatives par des URLs absolues
     content = response.content.decode('utf-8')
-    content = content.replace('/_next/', 'http://localhost:3000/_next/')
+    content = content.replace('/_next/', f'{NEXTJS_URL}/_next/')
+    content = content.replace('/icons/', f'{NEXTJS_URL}/icons/')
     return HttpResponse(content, content_type=response.headers['content-type'])
