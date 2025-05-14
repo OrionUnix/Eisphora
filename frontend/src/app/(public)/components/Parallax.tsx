@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import "../styles/landing.css";
-import { siteDetails } from "../siteDetails";
+import "@styles/landing.css";
+import { seoConfig } from "@seoConfig";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
@@ -129,7 +129,7 @@ function Parallax() {
                 <img ref={cloudsRight} className='clouds-right' src="/parallax/clouds-right.svg" />
                 <img ref={stars} className='stars' src="/parallax/stars.svg" />
                 <div ref={copy} className="copy">
-                    <h1>{siteDetails.siteName} </h1>
+                    <h1>{seoConfig.siteName} </h1>
                     <span ref={btn}>Discover more</span>
                 </div>
             </div>

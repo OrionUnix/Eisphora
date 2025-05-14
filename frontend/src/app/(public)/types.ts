@@ -2,9 +2,6 @@ export interface IMenuItem {
     text: string;
     url: string;
 }
-
-
-
 export interface IPricing {
     name: string;
     price: number | string;

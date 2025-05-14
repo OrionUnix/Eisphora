@@ -1,4 +1,7 @@
-module.exports = {
+const path = require('path'); // path is no longer strictly necessary for aliases, but can remain if used elsewhere
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async headers() {
     return [
       {
@@ -20,4 +23,7 @@ module.exports = {
       },
     ];
   },
+
 };
+
+module.exports = nextConfig;

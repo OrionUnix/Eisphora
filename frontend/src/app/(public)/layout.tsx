@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Footer from "./components/elements/Footer";
-
+import Footer from "@elements/Footer";
+import { seoConfig } from '@seoConfig';
 
 
 export default function PublicLayout({
@@ -14,7 +14,7 @@ console.log("Footer is:", Footer);
     <div className="min-h-screen flex flex-col">
       <header className="bg-blue-600 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">My App</h1>
+          <h1 className="text-2xl font-bold">{seoConfig.siteName}</h1>
           <nav>
             <Link href="/admin/login" className="text-white hover:underline">
               Admin Login
