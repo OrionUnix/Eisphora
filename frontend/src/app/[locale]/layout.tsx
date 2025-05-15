@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Footer from "@elements/Footer";
-import { seoConfig } from '@seoConfig';
+import Footer from "@/app/[locale]/components/elements/Footer";
+import { seoConfig } from '@/app/[locale]/seo.config';
 
 
 export default function PublicLayout({

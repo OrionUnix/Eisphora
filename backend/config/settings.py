@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_nextjs',
     'corsheaders',
+    'graphene_django',
 ]
 
 MIDDLEWARE = [

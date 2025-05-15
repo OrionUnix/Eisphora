@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "@styles/landing.css";
-import { seoConfig } from "@seoConfig";
+import { seoConfig } from "@/app/[locale]/seo.config";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
