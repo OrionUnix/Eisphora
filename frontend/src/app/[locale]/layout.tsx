@@ -1,13 +1,11 @@
 import Link from "next/link";
-import Footer from "@/app/[locale]/components/elements/Footer";
-import { seoConfig } from '@/app/[locale]/seo.config';
+import Footer from "@components/elements/Footer";
+import { seoConfig } from '@seoConfig';
 
 
-export default function PublicLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function LocaleLayout({ children, params }: any) {
+
+
 console.log("Footer is:", Footer);
 
   return (

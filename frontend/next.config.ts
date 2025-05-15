@@ -26,9 +26,3 @@ const nextConfig = {
 
 };
 
-module.exports = {
-  i18n: {
-    locales: ['en', 'fr', 'esp', 'it'], // langues disponibles
-    defaultLocale: 'fr',   // langue par défaut
-  },
-};

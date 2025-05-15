@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
-import { seoConfig } from "@/app/[locale]/seo.config";
+import { seoConfig } from "@seoConfig";
 
 
 const Hero: React.FC = () => {

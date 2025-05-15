@@ -1,5 +1,5 @@
 import React from 'react';
-import { seoConfig } from "@/app/[locale]/seo.config";
+import { seoConfig } from "@seoConfig";
 
 const Footer: React.FC = () => {
     return (

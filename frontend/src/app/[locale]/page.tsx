@@ -1,7 +1,7 @@
-import Hero from '@/app/[locale]/components/Hero';
-import Parallax from '@/app/[locale]/components/Parallax';
-import FAQ from '@/app/[locale]/components/FAQ';
-import { seoConfig } from '@/app/[locale]/seo.config';
+import Hero from '@components/Hero';
+import Parallax from '@components/Parallax';
+import FAQ from '@components/FAQ';
+import { seoConfig } from '@seoConfig';
 
 const HomePage: React.FC = () => {
   return (

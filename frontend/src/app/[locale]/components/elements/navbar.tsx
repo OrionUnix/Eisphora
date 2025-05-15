@@ -1,3 +1,3 @@
 import React from 'react';
-import { seoConfig } from "@/app/[locale]/seo.config";
+import { seoConfig } from "@seoConfig";
 import { Transition } from '@headlessui/react';
