@@ -1,4 +1,5 @@
-from django.shortcuts import redirect
+# backend/config/views.py
+from django.shortcuts import render
 
-def landing(request):
-    return redirect(f"http://localhost:3000{request.path}")
+def home(request):
+   return render(request, 'home.html')

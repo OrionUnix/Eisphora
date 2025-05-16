@@ -7,3 +7,4 @@ psycopg==3.2.8
 psycopg2==2.9.10
 django-cors-headers==4.7.0
 graphene-django==3.2.3
+django-tailwind==4.0.1

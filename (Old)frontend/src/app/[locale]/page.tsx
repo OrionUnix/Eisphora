@@ -7,7 +7,7 @@ const HomePage: React.FC = () => {
   return (
     <>
 
-      <Parallax />
+
       <Hero />
       <FAQ />
 
@@ -16,3 +16,4 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
