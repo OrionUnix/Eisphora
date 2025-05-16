@@ -1,22 +1,124 @@
-{% load static tailwind_tags %}
+{% load static tailwind_tags i18n %}
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{% get_current_language as LANG %}{{ LANG }}">
 	<head>
-    <title>Django Tailwind</title>
+
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <title>{{ seo.site_name }}</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta http-equiv="X-UA-Compatible" content="ie=edge">
-		{% tailwind_css %}
+    <!-- SEO dynamique -->
+    <title>{{ seo.current_meta.title }} – {{ seo.site_name }}</title>
+    <meta name="description" content="{{ seo.current_meta.description }}">
+    <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
+    
+    <!-- Hreflang -->
+    {% for locale, url in seo.hreflang.items %}
+    <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
+    {% endfor %}
+    
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="{{ seo.site_name }}">
+    <meta property="og:title" content="{{ seo.current_meta.title }}">
+    <meta property="og:description" content="{{ seo.current_meta.description }}">
+    <meta property="og:url" content="{{ seo.site_url }}{{ request.path }}">
+    <meta property="og:image" content="{{ seo.site_logo }}">
+    
+    {% if seo.google_analytics_id %}
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ seo.google_analytics_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', '{{ seo.google_analytics_id }}');
+    </script>
+    {% endif %}
+    
+    {% tailwind_css %}
 	</head>
+{% include 'includes/navbar.html' %}
 
-	<body class="bg-gray-50 font-serif leading-normal tracking-normal">
-		<div class="container mx-auto">
-			<section class="flex items-center justify-center h-screen">
-				<h1 class="text-5xl">Django + Tailwind = ❤️</h1>
-					<h1 class="text-5xl">bref c'est fonctionnel 
-						
-					</h1>
-			</section>
-		</div>
+	<body class="bg-gradient-to-r from-rose-400 to-red-500">
+<div class="min-h-screen">
+    <!-- Hero Section -->
+    <section class="text-center py-20 bg-gradient-to-b from-blue-50 to-white">
+        <div class="max-w-4xl mx-auto px-4">
+            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6">
+              {% include 'includes/logo.html' with size="h-[128px] w-[128px]" %} {{ seo.site_name }}
+            </h1>
+            <p class="text-xl text-gray-600 mb-8">
+                Outil crypto-fiscal open source et respectueux de la vie privée
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-12">Fonctionnalités clés</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature Cards -->
+<div class="p-6 isolate aspect-video w-96 rounded-xl bg-white/20 shadow-lg ring-1 ring-black/5">
+                    <h3 class="text-xl font-semibold mb-4">📊 Calcul fiscal automatique</h3>
+                    <p class="text-gray-600">Méthode FIFO pour le Formulaire 2086 (France)</p>
+                </div>
+                
+<div class=" p-6 isolate aspect-video w-96 rounded-xl bg-white/20 shadow-lg ring-1 ring-black/5">
+
+                    <h3 class="text-xl font-semibold mb-4">🔒 Chiffrement E2EE</h3>
+                    <p class="text-gray-600">Toutes les données chiffrées côté client avec XSalsa20-Poly1305</p>
+                </div>
+
+                <div class="p-6 bg-white w-96 rounded-xl bg-white/20 shadow-lg ring-1 ring-black/5">
+                    <h3 class="text-xl font-semibold mb-4">🌍 Multilingue</h3>
+                    <p class="text-gray-600">Support EN/FR/DE avec traductions communautaires</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="py-16 bg-gray-100">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Sécurité renforcée</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">🔑 Gestion des clés</h3>
+                    <ul class="list-disc pl-6 space-y-2 text-gray-600">
+                        <li>Clés API chiffrées côté client</li>
+                        <li>Aucun mot de passe stocké</li>
+                        <li>Cookies temporaires (12h)</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">🛡️ Protection des données</h3>
+                    <ul class="list-disc pl-6 space-y-2 text-gray-600">
+                        <li>RGPD compliant</li>
+                        <li>Pas de journalisation sensible</li>
+                        <li>Suppression automatique après 30j d'inactivité</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 text-center">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8">Prêt à commencer ?</h2>
+            <button class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                Commencer maintenant
+            </button>
+            <p class="mt-4 text-gray-600 text-sm">
+                Open source • Gratuit • Communautaire
+            </p>
+        </div>
+    </section>
+	{% include 'includes/footer.html' %}
+</div>
 	</body>
 </html>

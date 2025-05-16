@@ -60,7 +60,8 @@ NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'theme' / 'templates'],
+        # ici, on regarde dans H:/…/backend/templates
+        'DIRS': [ BASE_DIR / 'templates' ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

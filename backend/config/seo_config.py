@@ -2,8 +2,8 @@
 
 seo_config = {
     'site_name': 'Eisphora',
-    'site_url': 'https://eisphora.org',
-    'site_logo': '/static/images/logo.svg',
+    'site_url': 'http://127.0.0.1:8000/',
+    'site_logo': '/static/images/logo.png',
     'google_analytics_id': '',  # tu peux lire depuis env si besoin
 
     # Réseaux sociaux
