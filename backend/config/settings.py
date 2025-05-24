@@ -1,16 +1,16 @@
 from pathlib import Path
 import os
+import sys
 import environ
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import get_language
-import logging
-import logging.config
-from logging.handlers import RotatingFileHandler
+from .logging_config import setup_logging
 from pathlib import Path
 import shutil
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(os.path.dirname(__file__))
 
 # Initialize django-environ: default DEBUG to True for development
 env = environ.Env(
@@ -75,66 +75,7 @@ SECURE_CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-s
 SECURE_CACHE_CONTROL = "no-store, no-cache, must-revalidate, max-age=0"
 
 # 🔹 Gestion des logs en production
-LOGS_DIR = Path(BASE_DIR) / 'logs'
-if not LOGS_DIR.exists():
-    try:
-        LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        logging.warning(f"Logs directory created: {LOGS_DIR}")
-    except OSError as e:
-        logging.error(f"Error creating logs directory: {e}")
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "file_info": {
-            "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "django_info.log",
-            "maxBytes": 5 * 1024 * 1024,  # 📌 Limite à 5 MB
-            "backupCount": 5,  # 📌 Garde les 5 derniers fichiers
-            "formatter": "verbose",
-        },
-        "file_error": {
-            "level": "ERROR",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "django_errors.log",
-            "maxBytes": 5 * 1024 * 1024,
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["file_info", "file_error"],
-        "level": "INFO",
-    },
-    "console": {
-    "class": "logging.StreamHandler",
-    "formatter": "verbose",
-    "level": "DEBUG",
-},
-"mail_admins": {
-    "level": "ERROR",
-    "class": "django.utils.log.AdminEmailHandler",
-    "formatter": "verbose",
-},
-    "loggers": {
-        "django": {
-            "handlers": ["file_info", "file_error"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
-
-# 🔥 Activation de la configuration
-logging.config.dictConfig(LOGGING)
+setup_logging(BASE_DIR, debug=DEBUG)
 
 # Application definition
 INSTALLED_APPS = [
