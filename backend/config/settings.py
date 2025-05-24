@@ -4,7 +4,7 @@ import sys
 import environ
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import get_language
-# from .logging_config import setup_logging
+from .logging_config import setup_logging
 from pathlib import Path
 import shutil
 
@@ -77,8 +77,7 @@ SECURE_CACHE_CONTROL = "no-store, no-cache, must-revalidate, max-age=0"
 # 🔹 Gestion des logs en production
 # setup_logging(BASE_DIR, debug=DEBUG)
 if not DEBUG:
-    from logging_config import setup_logging
-    setup_logging(BASE_DIR, debug=DEBUG)
+    setup_logging(BASE_DIR, debug=DEBUG) 
     def setup_logging(base_dir: Path, debug: bool = False):
         if debug:  # Évite l'activation en mode dev
             print("🛠 Mode développement détecté : logging désactivé.")
@@ -182,11 +181,20 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOWED_ORIGINS = [os.getenv("FRONTEND_ORIGIN", "https://yourdomain.com")]
+# CORS configuration
+SITE_DOMAIN = os.getenv("SITE_DOMAIN", "localhost")  # Par défaut, localhost en développement
+
+FRONTEND_ORIGINS = os.getenv("FRONTEND_ORIGINS", "")
+if not FRONTEND_ORIGINS and not DEBUG:
+    raise ImproperlyConfigured("FRONTEND_ORIGINS must be set in .env for production.")
+
+CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS.split(";") if FRONTEND_ORIGINS else []
+CORS_ALLOWED_ORIGIN_REGEXES = [fr"^https://\w+\.{SITE_DOMAIN.split('//')[-1]}$"]  # Génère la regex basée sur SITE_DOMAIN
 
 
+if DEBUG and os.getenv("ENVIRONMENT") == "local":
+    CORS_ALLOW_ALL_ORIGINS = False
+
+ 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 
