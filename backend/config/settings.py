@@ -3,7 +3,11 @@ import os
 import environ
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import get_language
+import logging
 import logging.config
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+import shutil
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +16,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, True)
 )
-#Security settings
+from django.core.exceptions import ImproperlyConfigured
+
+# Check the environment variable first, otherwise try to detect it in the PATH
+NPM_BIN_PATH = os.getenv("NPM_BIN_PATH_ENV") or shutil.which("npm")
+
+if not NPM_BIN_PATH:
+    raise ImproperlyConfigured(
+        "npm was not found. Either install it, or define NPM_BIN_PATH_ENV in your .env."
+    )
 
 # Load .env from project root
 env_file = BASE_DIR.parent / '.env'
@@ -31,7 +43,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 # Provide sensible defaults for development
 SITE_DOMAIN = os.getenv("SITE_DOMAIN", "localhost") 
 ALLOWED_HOSTS = [SITE_DOMAIN] if not DEBUG else ["localhost", "127.0.0.1"]
-
+if not SITE_DOMAIN:
+    raise ImproperlyConfigured("SITE_DOMAIN must be set in production.")
 # security  setting
 # # Cookies
 CSRF_COOKIE_SECURE = not DEBUG  
@@ -62,35 +75,66 @@ SECURE_CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-s
 SECURE_CACHE_CONTROL = "no-store, no-cache, must-revalidate, max-age=0"
 
 # 🔹 Gestion des logs en production
-LOG_FILE_PATH = os.path.join(BASE_DIR, "logs/django_errors.log")
+LOGS_DIR = Path(BASE_DIR) / 'logs'
+if not LOGS_DIR.exists():
+    try:
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        logging.warning(f"Logs directory created: {LOGS_DIR}")
+    except OSError as e:
+        logging.error(f"Error creating logs directory: {e}")
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {
-        "file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": LOG_FILE_PATH,
-            "formatter": "detailed",
-        },
-    },
     "formatters": {
-        "detailed": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
         },
     },
+    "handlers": {
+        "file_info": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "django_info.log",
+            "maxBytes": 5 * 1024 * 1024,  # 📌 Limite à 5 MB
+            "backupCount": 5,  # 📌 Garde les 5 derniers fichiers
+            "formatter": "verbose",
+        },
+        "file_error": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "django_errors.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["file_info", "file_error"],
+        "level": "INFO",
+    },
+    "console": {
+    "class": "logging.StreamHandler",
+    "formatter": "verbose",
+    "level": "DEBUG",
+},
+"mail_admins": {
+    "level": "ERROR",
+    "class": "django.utils.log.AdminEmailHandler",
+    "formatter": "verbose",
+},
     "loggers": {
         "django": {
-            "handlers": ["file"],
-            "level": "ERROR",
-            "propagate": True,
+            "handlers": ["file_info", "file_error"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }
 
+# 🔥 Activation de la configuration
 logging.config.dictConfig(LOGGING)
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -120,6 +164,7 @@ if not DEBUG:
 TAILWIND_APP_NAME = 'theme'
 
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -128,12 +173,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
 ]
 
+
 ROOT_URLCONF = 'config.urls'
-NPM_BIN_PATH = env('NPM_BIN_PATH_ENV', default=r"C:\\Program Files\\nodejs\\npm.cmd")
+
 
 TEMPLATES = [
     {
@@ -191,8 +235,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-]
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [os.getenv("FRONTEND_ORIGIN", "https://yourdomain.com")]
+
 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
