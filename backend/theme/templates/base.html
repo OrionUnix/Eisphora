@@ -1,30 +1,31 @@
 {% load static tailwind_tags i18n %}
-
-
 <!DOCTYPE html>
 <html lang="{% get_current_language as LANG %}{{ LANG }}">
 	<head>
-
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <title>{{ seo.site_name }}</title>
+        <link rel="icon" type="image/png" href="{{ seo.site_favicon }}">
+        <meta name="theme-color" content="#0f172a">
+        <meta name="msapplication-TileColor" content="#1a1a1a">
+        <link rel="mask-icon" href="{{ seo.site_favicon }}" color="#1a1a1a">
+        <meta name="msapplication-TileColor" content="#0f172a">
+        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <title>{{ seo.site_name }}</title>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- SEO dynamique -->
-    <title>{{ seo.current_meta.title }} – {{ seo.site_name }}</title>
-    <meta name="description" content="{{ seo.current_meta.description }}">
-    <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
+         <!-- SEO dynamique -->
+        <title>{{ seo.current_meta.title }} – {{ seo.site_name }}</title>
+        <meta name="description" content="{{ seo.current_meta.description }}">
+        <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
     
-    <!-- Hreflang -->
-    {% for locale, url in seo.hreflang.items %}
-    <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
-    {% endfor %}
-    
-    <!-- Open Graph -->
-    <meta property="og:site_name" content="{{ seo.site_name }}">
-    <meta property="og:title" content="{{ seo.current_meta.title }}">
-    <meta property="og:description" content="{{ seo.current_meta.description }}">
-    <meta property="og:url" content="{{ seo.site_url }}{{ request.path }}">
-    <meta property="og:image" content="{{ seo.site_logo }}">
+        <!-- Hreflang -->
+        {% for locale, url in seo.hreflang.items %}
+        <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
+        {% endfor %}
+        <!-- Open Graph -->
+        <meta property="og:site_name" content="{{ seo.site_name }}">
+        <meta property="og:title" content="{{ seo.current_meta.title }}">
+        <meta property="og:description" content="{{ seo.current_meta.description }}">
+        <meta property="og:url" content="{{ seo.site_url }}{{ request.path }}">
+        <meta property="og:image" content="{{ seo.site_logo }}">
     
     {% if seo.google_analytics_id %}
     <!-- Google Analytics -->
@@ -39,21 +40,11 @@
     
     {% tailwind_css %}
 	</head>
-{% include 'includes/navbar.html' %}
+    {% include 'includes/navbar.html' %}
 
 	<body class="bg-gradient-to-r from-rose-400 to-red-500">
-<div class="min-h-screen">
-    <!-- Hero Section -->
-    <section class="text-center py-20 bg-gradient-to-b from-blue-50 to-white">
-        <div class="max-w-4xl mx-auto px-4">
-            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6">
-              {% include 'includes/logo.html' with size="h-[128px] w-[128px]" %} {{ seo.site_name }}
-            </h1>
-            <p class="text-xl text-gray-600 mb-8">
-                Outil crypto-fiscal open source et respectueux de la vie privée
-            </p>
-        </div>
-    </section>
+    <div class="min-h-screen">
+    {% include 'pages/header.html' %}
 
     <!-- Features Grid -->
     <section class="py-16 px-4">

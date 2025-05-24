@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from .views import HomeView
+from django.urls import path, include
 
 # Vue principale pour la page d'accueil
 

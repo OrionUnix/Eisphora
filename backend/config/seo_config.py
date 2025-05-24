@@ -3,8 +3,9 @@
 seo_config = {
     'site_name': 'Eisphora',
     'site_url': 'http://127.0.0.1:8000/',
-    'site_logo': '/static/images/logo.png',
-    'google_analytics_id': '',  # tu peux lire depuis env si besoin
+    'site_logo': '/static/images/logo/logo.svg',
+    'site_favicon': '/static/images/logo/favicon.png',
+    'google_analytics_id': '', 
 
     # Réseaux sociaux
     'social_links': {
@@ -34,7 +35,7 @@ seo_config = {
 
     # Hreflang
     'hreflang': {
-        'en-US': 'https://eisphora.org/en',
-        'fr-FR': 'https://eisphora.org/fr',
+        'en-US': 'http://127.0.0.1:8000/en',
+        'fr-FR': 'http://127.0.0.1:8000/fr',
     },
 }

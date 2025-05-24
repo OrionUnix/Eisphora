@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import environ
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import get_language
+import logging.config
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,6 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, True)
 )
+#Security settings
 
 # Load .env from project root
 env_file = BASE_DIR.parent / '.env'
@@ -22,13 +25,52 @@ environ.Env.read_env(str(env_file))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG')
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # Hosts configuration
 # Provide sensible defaults for development
-default_hosts = ['localhost', '127.0.0.1'] if DEBUG else ['your-production-domain.com']
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=default_hosts)
+SITE_DOMAIN = os.getenv("SITE_DOMAIN", "localhost") 
+ALLOWED_HOSTS = [SITE_DOMAIN] if not DEBUG else ["localhost", "127.0.0.1"]
 
+# security  setting
+# # Cookies
+CSRF_COOKIE_SECURE = not DEBUG  
+SESSION_COOKIE_SECURE = not DEBUG  
+SESSION_COOKIE_HTTPONLY = True  
+CSRF_COOKIE_HTTPONLY = True  
+# 🔹 Sécurisation des connexions HTTPS
+SECURE_SSL_REDIRECT = not DEBUG  
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG  
+SECURE_HSTS_PRELOAD = not DEBUG  
+# 🔹 Protection contre les attaques XSS et MIME sniffing
+SECURE_BROWSER_XSS_FILTER = True  
+SECURE_CONTENT_TYPE_NOSNIFF = True  
+
+# 🔹 Renforcement des en-têtes HTTP
+SECURE_REFERRER_POLICY = "no-referrer"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_RESOURCE_POLICY = "same-origin"
+# 🔹 Restriction du chargement de contenu non sécurisé
+SECURE_CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'"
+
+# 🔹 Désactivation du cache sur les pages sensibles
+SECURE_CACHE_CONTROL = "no-store, no-cache, must-revalidate, max-age=0"
+
+# 🔹 Gestion des logs en production
+
+
+# 🔹 Protection contre les erreurs en production
+if not DEBUG:
+    ADMINS_RAW = os.getenv("ADMIN_MAIL", "") 
+    ADMINS = [tuple(admin.split(",")) for admin in ADMINS_RAW.split(";") if admin] 
+    # Récupérer la langue courante
+    CURRENT_LANGUAGE = get_language() or "en"
+    DEFAULT_ERROR_MESSAGE = {
+    "en": os.getenv("ERROR_MESSAGE_EN", "An internal error has occurred."),
+    "fr": os.getenv("ERROR_MESSAGE_FR", "Une erreur interne s'est produite."),
+    "es": os.getenv("ERROR_MESSAGE_ES", "Se ha producido un error interno."),
+                    }.get(CURRENT_LANGUAGE, "An error occurred.")
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -40,27 +82,31 @@ INSTALLED_APPS = [
     'corsheaders',
     'tailwind',
     'theme',
+
+                                                                                                                                                           
 ]
 TAILWIND_APP_NAME = 'theme'
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+     'django.contrib.auth.middleware.AuthenticationMiddleware',
 
 ]
 
 ROOT_URLCONF = 'config.urls'
-NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
+NPM_BIN_PATH = env('NPM_BIN_PATH_ENV', default=r"C:\Program Files\nodejs\npm.cmd")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # ici, on regarde dans H:/…/backend/templates
+       
         'DIRS': [ BASE_DIR / 'templates' ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -126,3 +172,4 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+
