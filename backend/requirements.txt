@@ -8,4 +8,5 @@ psycopg2==2.9.10
 django-cors-headers==4.7.0
 graphene-django==3.2.3
 django-tailwind==4.0.1
-django-secure==1.0.2
+python-json-logger==3.3.0
+python-dotenv==1.1.0

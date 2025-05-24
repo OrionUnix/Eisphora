@@ -4,7 +4,7 @@ import sys
 import environ
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import get_language
-from .logging_config import setup_logging
+# from .logging_config import setup_logging
 from pathlib import Path
 import shutil
 
@@ -37,7 +37,7 @@ environ.Env.read_env(str(env_file))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = env.bool("DEBUG", default=True)  
 
 # Hosts configuration
 # Provide sensible defaults for development
@@ -75,8 +75,14 @@ SECURE_CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self'; style-s
 SECURE_CACHE_CONTROL = "no-store, no-cache, must-revalidate, max-age=0"
 
 # 🔹 Gestion des logs en production
-setup_logging(BASE_DIR, debug=DEBUG)
-
+# setup_logging(BASE_DIR, debug=DEBUG)
+if not DEBUG:
+    from logging_config import setup_logging
+    setup_logging(BASE_DIR, debug=DEBUG)
+    def setup_logging(base_dir: Path, debug: bool = False):
+        if debug:  # Évite l'activation en mode dev
+            print("🛠 Mode développement détecté : logging désactivé.")
+        return
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -183,3 +189,4 @@ else:
 
 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+
