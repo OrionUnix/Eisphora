@@ -10,3 +10,4 @@ graphene-django==3.2.3
 django-tailwind==4.0.1
 python-json-logger==3.3.0
 python-dotenv==1.1.0
+django-two-factor-auth==1.17.0

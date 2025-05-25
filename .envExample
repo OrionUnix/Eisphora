@@ -1,9 +1,49 @@
-SECRET_KEY=your-secure-secret-key
+SECRET_KEY=Your_secret_key
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+SITE_DOMAIN=localhost
+# mail
+ADMIN_MAIL=admin@example.com
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=user
+SMTP_PASSWORD=your_password
+SMTP_FROM=admin@example.com
+DEBUG=true
 
-DB_NAME=eisphora_db
-DB_USER=postgres
-DB_PASSWORD=your-password
-DB_HOST=localhost
+#Token alert logg
+TELEGRAM_TOKEN=you_token
+TELEGRAM_CHAT_ID=you_ID
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+SLACK_WEBHOOK_URL=you_token
+
+ERROR_MESSAGE_EN="An internal error has occurred. Please contact the administrator."
+ERROR_MESSAGE_FR="Une erreur interne s'est produite. Contactez l'administrateur."
+ERROR_MESSAGE_ES="Se ha producido un error interno. Contacte con el administrador."
+
+NPM_BIN_PATH_ENV="NPM_BIN_PATH_ENV", "npm"
+# if Unix/macOS
+# NPM_BIN_PATH_ENV=/usr/local/bin/npm
+
+# mail
+ADMIN_MAIL=admin@example.com
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=user@example.com
+SMTP_PASSWORD=your_password
+SMTP_FROM=admin@example.com
+DEBUG=true
+
+#Token alert logg
+## TELEGRAM_TOKEN=you_token
+## TELEGRAM_CHAT_ID=you_ID
+## DISCORD_WEBHOOK_URL=you_token
+## SLACK_WEBHOOK_URL=you_token
+
+DB_NAME=name_db
+DB_USER=user_name 
+DB_PASSWORD=your_password 
+DB_HOST=localhost 
 DB_PORT=5432
+
+# cors config 
+FRONTEND_ORIGINS=https://yourdomain.com;https://yourapp.com

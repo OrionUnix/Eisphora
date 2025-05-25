@@ -51,7 +51,8 @@ CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG  
 SESSION_COOKIE_HTTPONLY = True  
 CSRF_COOKIE_HTTPONLY = True  
-SESSION_COOKIE_SAMESITE = "Lax"  # Ou "Strict" pour encore plus de sécurité
+SESSION_COOKIE_SAMESITE = "Lax"  # or "Strict" for more security
+SESSION_COOKIE_AGE = 3600 if not DEBUG else 0
 
 # 🔹 Sécurisation des connexions HTTPS
 SECURE_SSL_REDIRECT = not DEBUG  
@@ -93,6 +94,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'tailwind',
     'theme',
+    # 'two_factor', # django-two-factor-auth
 
 ]
 
@@ -108,6 +110,10 @@ if not DEBUG:
     }.get(CURRENT_LANGUAGE, "An error occurred.")
 
 TAILWIND_APP_NAME = 'theme'
+
+#2FA
+LOGIN_URL = 'two_factor:login' 
+# TWO_FACTOR_PATCH_ADMIN = True # Pour sécuriser l'admin Django avec 2FA aussi
 
 MIDDLEWARE = [
 
@@ -154,16 +160,16 @@ DATABASES = {
     }
 }
 
-required_vars = ['SECRET_KEY', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT']
-missing = [v for v in required_vars if not os.environ.get(v)]
-if missing:
+required_db_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT']
+missing_db_vars = [v for v in required_db_vars if not env.str(v, default=None)] 
+if missing_db_vars:
     raise ImproperlyConfigured(
-        f"Missing required environment variables: {', '.join(missing)}"
+        f"Missing required database environment variables: {', '.join(missing_db_vars)}"
     )
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 10}}, 
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
@@ -198,3 +204,45 @@ if DEBUG and os.getenv("ENVIRONMENT") == "local":
  
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 
+#users upload file
+MEDIA_URL = '/media/' 
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Mail config
+# settings.py
+
+# ... autres configurations ...
+# DEBUG = env.bool("DEBUG", default=False) # Ceci lit la variable DEBUG de votre .env
+
+# Configuration Email
+if not DEBUG: 
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = env.str('SMTP_HOST') 
+    EMAIL_PORT = env.int('SMTP_PORT') 
+    EMAIL_HOST_USER = env.str('SMTP_USER') 
+    EMAIL_HOST_PASSWORD = env.str('SMTP_PASSWORD') 
+    EMAIL_USE_TLS = env.bool('SMTP_USE_TLS', default=True) 
+    EMAIL_USE_SSL = env.bool('SMTP_USE_SSL', default=False) 
+    DEFAULT_FROM_EMAIL = env.str('SMTP_FROM', default=f'noreply@{SITE_DOMAIN}') 
+    SERVER_EMAIL = env.str('SMTP_FROM', default=f'server-errors@{SITE_DOMAIN}') 
+    ADMINS_EMAIL_STRING = env.str('ADMIN_MAIL', default='')
+    if ADMINS_EMAIL_STRING:
+        ADMINS = [('Admin', email.strip()) for email in ADMINS_EMAIL_STRING.split(';') if email.strip()]
+    else:
+        ADMINS = []
+
+else: # DEBUG =True
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
+    DEFAULT_FROM_EMAIL = f'console@{SITE_DOMAIN}'
+    SERVER_EMAIL = f'console-server@{SITE_DOMAIN}'
+    ADMINS = []
+    print("🛠 Mode développement détecté : Emails redirigés vers la console.")
+
+if not DEBUG:
+    required_email_vars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM']
+    missing_email_vars = [v for v in required_email_vars if not env.str(v, default=None)]
+    if missing_email_vars:
+        raise ImproperlyConfigured(
+            f"Missing required email environment variables for production: {', '.join(missing_email_vars)}"
+        )

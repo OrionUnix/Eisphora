@@ -1,134 +1,161 @@
 # Eisphora
 
-**Eisphora** is an open-source web application designed to simplify tax management. Initially focused on French taxation, it has plans to expand to the US, Luxembourg, and other countries. It features a multilingual interface, leverages a powerful LLM for tax law interpretation, and ensures secure data handling.
+> 🧾 **Eisphora** is an open-source, secure-by-design crypto tax app — built in Django with no exposed REST API.  
+> 🧠 Local key derivation (Argon2/PBKDF2), AES-256 encryption, FIFO-based reporting, Julia-powered calculations.  
+> 🔐 Frontend uses Django Templates + Tailwind + GSAP/Vue.js — minimal JS, no attack surface.  
+> 🇫🇷🇺🇸🇱🇺 Focused on privacy, legal clarity, and multilingual support.  
+> ⚠️ Built by one developer, security first. Next.js/React-ready for future versions.
 
-## Features
+**Eisphora** is an open-source web application designed to simplify crypto-related tax management. Initially focused on the French tax system, it aims to support the US, Luxembourg, and other jurisdictions. Developed by a solo developer, the project emphasizes **security**, **clarity**, and **long-term maintainability**.
 
-* Tax calculations (FIFO, income tax, etc.)
-* Transaction management and analytics
-* Multilingual support (French, English, Spanish)
-* Secure data encryption (AES-256)
-* Responsive UI with React/Next.js and Tailwind CSS
+> ✦ Multilingual, auditable, and privacy-first.  
+> ✦ Built without exposing a REST API or relying on external frontend runtimes like Next.js.
 
-## Installation
+---
 
-Follow these steps to install and configure the project locally:
+## 🔒 Why This Architecture?
 
-1.  **Clone the repository:**
+The project originally used a React/Next.js frontend connected to Django via REST APIs. This introduced:
 
-    ```bash
-    git clone [https://github.com/OrionUnix/Eisphora.git](https://github.com/OrionUnix/Eisphora.git)
-    cd Eisphora
-    ```
+- A broader attack surface (CORS, CSRF, token leakage risks),
+- An overcomplicated setup for a local or low-userbase deployment,
+- An unnecessary architectural split for a secure, single-user tool.
 
-2.  **Configure Environment Variables:**
+Instead, Eisphora now uses **Django Templates** for rendering, along with modern frontend libraries (Tailwind, GSAP, Vue.js) directly embedded into the server-rendered flow. Data encryption and key management are **performed locally** in the browser using `IndexedDB` and `PBKDF2/Argon2`.
 
-    * **For the Backend (at the project root):**
-        Copy the example file `.env.example` (if it exists at the root) or create a `.env` file at the root of the project. You **must** then edit this `.env` file and fill in the appropriate values for your database, secret keys, etc.
-        ```bash
-        # Make sure you are at the root of the Eisphora project
-        cp .env.example .env  # If a .env.example exists at the root
-        # Or create it manually if needed
-        ```
-        **Important:** Open the created `.env` file and replace the default or placeholder values with your actual configuration information.
+> Nothing prevents future reintegration of a modern frontend stack (like Next.js), but only once the app is secure and stable enough to justify it.
 
-    * **For the Frontend (in `frontend/.env.local`):**
-        Create a file named `.env.local` inside the `frontend/` directory. This file will contain the environment variables needed for the Next.js frontend to function correctly.
-        ```bash
-        # Make sure you are at the root of the Eisphora project
-        touch frontend/.env.local
-        ```
-        **Important:** Open the `frontend/.env.local` file and add the necessary variables. For example, to set the base URL of your backend API:
-        ```dotenv
-        NEXT_PUBLIC_BASE_URL=http://localhost:8000  # Replace with your backend URL if different
-        ```
-        Ensure you configure all variables required by the frontend.
+---
 
-3.  **Install Backend Dependencies:**
+## ✨ Features
 
-    ```bash
-    cd backend
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    pip install -r requirements.txt
-    ```
+- Tax reporting based on FIFO method and income brackets
+- Advanced transaction management
+- Multilingual UI (English, French, Spanish)
+- AES-256 secure data encryption (local + server)
+- Heavy computation offloading using Julia
+- Transformer-based LLM for tax interpretation
+- Declarative BPMN workflows with Camunda
+- Document and reporting generation
+- GDPR-friendly by design
 
-4.  **Install Frontend Dependencies:**
+---
 
-    ```bash
-    cd ../frontend
-    npm install
-    ```
+## 🧠 Architecture Overview
 
-5.  **Run Database Migrations:**
+Here is the updated architecture diagram reflecting the current stack:
 
-    ```bash
-    cd ../backend
-    python manage.py migrate
-    ```
+```mermaid
+graph TD
+    A[User] -->|HTTPS| B[Frontend: Django Templates]
+    subgraph Frontend
+        B -->|Tailwind CSS| C[Responsive UI]
+        B -->|GSAP| D[Parallax Animations]
+        B -->|Vue.js| E[Lightweight Interactions]
+        B -->|IndexedDB| F[Local Key Storage]
+        F -->|PBKDF2/Argon2| G[Key Derivation]
+    end
+    B --> H[Django Server]
+    subgraph Backend_Django
+        H --> I[Apps]
+        I --> J[core: Global Models, Utils]
+        I --> K[users: Signup & Login]
+        I --> L[calculator_FIFO: FIFO Engine]
+        I --> M[taxes: Country-specific Logic]
+        I --> N[documents: Reports & Exports]
+        I --> O[analytics: Dashboards & Metrics]
+        H --> P[Celery Tasks]
+        H -->|AES-256| Q[django-cryptography]
+        H --> R[django-otp]
+        H --> S[django-gdpr-assistant]
+        H --> T[Julia via pyjulia]
+        H --> U[LLM Transformers]
+        H --> V[Camunda BPMN Engine]
+    end
+    H --> W[Webhooks]
+    H --> X[PostgreSQL]
+    X --> Y[pg_cron]
+    X --> Z[pgjwt]
+    X --> AA[TOAST Compression]
+    X --> AB[Readonly Role]
+    H --> AC[Redis]
+    H --> AD[MinIO]
+    H --> AE[Azure Key Vault]
+```
 
-6.  **Build Frontend:**
+##  🚀 Installation Guide
 
-    ```bash
-    # Make sure you are at the root of the Eisphora project
-    ./build_frontend.sh
-    # Note: This script depends on its presence and content.
-    # Alternatively, you might need commands like `cd frontend && npm run build`
-    ```
+### 1. Clone the Repository
 
-7.  **Start the Backend Server:**
+```git clone https://github.com/OrionUnix/Eisphora.git
+cd Eisphora
+```
 
-    ```bash
-    cd backend
-    python manage.py runserver
-    ```
+#### 2. Configure Environment Variables
 
-Your application should now be accessible (usually at `http://localhost:8000`).
+**Backend**
+Copy or create a .env file at the project root:
 
-## Architecture
-This diagram illustrates the main components and data flow of the Eisphora application.
+```bash
+cp .env.example .env
+# Edit it with your DB credentials, secret keys, etc.
+```
 
-    ```mermaid
-    graph TD
-        A[Utilisateur] -->|HTTPS| B[Frontend: Next.js intégré dans Django]
-        subgraph Frontend
-            B -->|Tailwind CSS| C[UI Responsive]
-            B -->|GSAP| D[Animations Parallaxe/Neumorphisme]
-            B -->|IndexedDB| E[Clé Chiffrement]
-            E -->|PBKDF2/Argon2| F[Dérivation]
-        end
-        B -->|GraphQL/AJAX| G[Django Server]
-        subgraph Backend_Django
-            G --> H[Apps]
-            H --> I[calculator_FIFO: FIFO/Nettoyage]
-            H --> J[documents: Transactions/Suppression]
-            H --> K[analytics: Analyses Approfondies]
-            H --> L[users: Espace Personnel]
-            H --> M[core: Modèles]
-            G --> N[GraphQL: graphene-django]
-            G --> O[Tasks: Celery]
-            G -->|AES-256| P[django-cryptography]
-            G --> Q[django-otp]
-            G --> R[django-gdpr-assistant]
-            G --> S[Julia: Calculs lourds via pyjulia]
-            G --> T[LLM: Analyse via transformers]
-            G --> W[Camunda: Workflows BPMN intégrés]
-        end
-        G --> Y[Webhooks]
-        G --> Z[PostgreSQL]
-        Z --> AA[pg_cron]
-        Z --> AB[pgjwt]
-        Z --> AD[TOAST]
-        Z --> AE[Role taxapp_readonly]
-        G --> AF[Redis]
-        G --> AG[MinIO]
-        G --> AH[Azure Key Vault]
-    ```
+**_Frontend (Optional)  _**
+Only if you reintroduce the frontend build process (Vue/Next.js/etc.):
 
-## Contributing
+```touch frontend/.env.local
+# Example:
+NEXT_PUBLIC_BASE_URL=http://localhost:8000
+
+```
+
+### Install Backend Dependencies
+
+```cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+```
+
+### 4. (Optional) Install Frontend Dependencies
+
+Only if you re-enable JS assets:
+
+```cd ../frontend
+npm install```
+
+### 5. Apply Database Migrations
+
+```cd ../backend
+python manage.py migrate
+
+```
+
+### 6. Build Frontend Assets (Optional)
+
+```./build_frontend.sh
+# or manually: cd frontend && npm run build
+```
+
+### 7. Run the Server
+
+``` cd backend
+python manage.py runserver
+```
+
+## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the project.
 
-## License
+## 📄 License
 
 This project is licensed under the [BSD-3-Clause License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+
+## 🧭 Roadmap
+
+ * Expand tax logic to US, Luxembourg, Germany
+ * Improve local encryption UX (password entropy hints, key backup)
+ * Add PDF export of tax reports
+ * Consider reintroducing REST API + external frontend (as an opt-in)
