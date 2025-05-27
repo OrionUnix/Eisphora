@@ -45,12 +45,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'tailwind',
     'theme',
+    'apps.members',
 
 ]
 
 # Uncomment and set if using a custom user model
 # AUTH_USER_MODEL = 'users.CustomUser'
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -81,20 +81,34 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Database Model 
+AUTH_USER_MODEL = 'members.CustomUser'
 # Database configuration
-# Ensure you run `python manage.py migrate` after setting up the database
+DATABASE_ROUTERS = ['config.routers.AuthRouter']
+
 DATABASES = {
     'default': {
+    },
+    'eisphora_db': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': env('DB_NAME', default='').strip(),
         'USER': env('DB_USER', default='').strip(),
         'PASSWORD': env('DB_PASSWORD', default='').strip(),
         'HOST': env('DB_HOST', default='').strip(),
         'PORT': env.int('DB_PORT', default=5432),
-        'OPTIONS': {
+                'OPTIONS': {
             'options': '-c client_encoding=UTF8'  # Force UTF-8 encoding
         },
-    }
+    },
+    'auth_db': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('AUTH_DB_PATH', default='').strip(),
+        'USER': env('DB_USER', default='').strip(),
+        'PASSWORD': env('DB_PASSWORD', default='').strip(),
+        'HOST': env('DB_HOST', default='').strip(),
+        'PORT': env.int('DB_PORT', default=5432),
+    },
+
 }
 # Validate database environment variables
 required_db_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT']
@@ -133,7 +147,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Tailwind configuration
 TAILWIND_APP_NAME = 'theme'
 
-
 #users upload file
 MEDIA_URL = '/media/' 
 MEDIA_ROOT = BASE_DIR / 'mediafiles'
@@ -150,7 +163,6 @@ if not FRONTEND_ORIGINS and not DEBUG:
 
 CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS.split(";") if FRONTEND_ORIGINS else []
 CORS_ALLOWED_ORIGIN_REGEXES = [fr"^https://\w+\.{SITE_DOMAIN.split('//')[-1]}$"]  # Génère la regex basée sur SITE_DOMAIN
-
 
 if DEBUG and os.getenv("ENVIRONMENT") == "local":
     CORS_ALLOW_ALL_ORIGINS = False
@@ -220,5 +232,4 @@ if not DEBUG:
 SECURE_SSL_REDIRECT = not DEBUG  
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG  
-SECURE_HSTS_PRELOAD = not DEBUG  
-
+SECURE_HSTS_PRELOAD = not DEBUG
