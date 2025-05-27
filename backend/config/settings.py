@@ -14,6 +14,8 @@ sys.path.append(os.path.dirname(__file__))
 env = environ.Env(
     DEBUG=(bool, True)
 )
+env = environ.Env()
+environ.Env.read_env()
 # Check the environment variable first, otherwise try to detect it in the PATH
 NPM_BIN_PATH = os.getenv("NPM_BIN_PATH_ENV") or shutil.which("npm")
 
@@ -45,7 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'tailwind',
     'theme',
-    'apps.members',
+    'members',
+    
 
 ]
 
@@ -81,10 +84,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database Model 
-AUTH_USER_MODEL = 'members.CustomUser'
-# Database configuration
-DATABASE_ROUTERS = ['config.routers.AuthRouter']
+# Debug environment variables
+print("AUTH_DB_NAME:", env('AUTH_DB_NAME', default='NOT_SET'))
+print("EISPHORA_DB_NAME:", env('EISPHORA_DB_NAME', default='NOT_SET'))
+print("DB_USER:", env('DB_USER', default='NOT_SET'))
+print("DB_PASSWORD:", env('DB_PASSWORD', default='NOT_SET'))
+print("DB_HOST:", env('DB_HOST', default='NOT_SET'))
+print("DB_PORT:", env('DB_PORT', default='NOT_SET'))
 
 DATABASES = {
     'default': {
@@ -96,13 +102,11 @@ DATABASES = {
         'PASSWORD': env('DB_PASSWORD', default='').strip(),
         'HOST': env('DB_HOST', default='').strip(),
         'PORT': env.int('DB_PORT', default=5432),
-                'OPTIONS': {
-            'options': '-c client_encoding=UTF8'  # Force UTF-8 encoding
-        },
+
     },
     'auth_db': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('AUTH_DB_PATH', default='').strip(),
+        'NAME': env('AUTH_DB_NAME', default='').strip(),
         'USER': env('DB_USER', default='').strip(),
         'PASSWORD': env('DB_PASSWORD', default='').strip(),
         'HOST': env('DB_HOST', default='').strip(),
@@ -110,6 +114,17 @@ DATABASES = {
     },
 
 }
+
+DATABASES['default'] = DATABASES['auth_db']
+#redirection
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+# Database Model 
+AUTH_USER_MODEL = 'members.CustomUser'
+# Database configuration
+DATABASE_ROUTERS = ['config.routers.AuthRouter']
+
 # Validate database environment variables
 required_db_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT']
 missing_db_vars = [v for v in required_db_vars if not env.str(v, default=None)]
@@ -121,7 +136,7 @@ if missing_db_vars:
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 10}}, 
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 1}}, 
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
