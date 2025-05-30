@@ -9,13 +9,10 @@ import shutil
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.dirname(__file__))
-
 # Initialize django-environ
-env = environ.Env(
-    DEBUG=(bool, True)
-)
-env = environ.Env()
+env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env()
+
 # Check the environment variable first, otherwise try to detect it in the PATH
 NPM_BIN_PATH = os.getenv("NPM_BIN_PATH_ENV") or shutil.which("npm")
 
@@ -48,7 +45,6 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'members',
-    
 
 ]
 
@@ -57,11 +53,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+   
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -77,6 +75,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                 'django.template.context_processors.i18n',
             ],
         },
     },
@@ -140,12 +139,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
-
-# Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -248,3 +241,19 @@ SECURE_SSL_REDIRECT = not DEBUG
 SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0  
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG  
 SECURE_HSTS_PRELOAD = not DEBUG
+
+# Language settings
+LANGUAGE_CODE = env.str('LANGUAGE_CODE', default='fr-fr').lower()
+USE_I18N = True
+USE_L10N = True
+LANGUAGES = [
+    ('fr-fr', 'Français'),
+    ('en-us', 'English'),
+]
+LOCALE_PATHS = [BASE_DIR / 'locale']
+
+# Internationalization
+
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True

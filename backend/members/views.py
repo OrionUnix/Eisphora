@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from .forms import SignUpForm
 from .models import UserProfile
 
+
 def sign_up(request):
     print("Request method:", request.method)
     print("POST data:", request.POST)
@@ -41,3 +42,5 @@ def us_space(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
