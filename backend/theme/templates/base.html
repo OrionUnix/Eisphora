@@ -1,5 +1,4 @@
 {% load i18n static tailwind_tags %}
-
 {% get_current_language as LANGUAGE_CODE %}
 
 <!DOCTYPE html>
@@ -43,13 +42,13 @@
     
     {% tailwind_css %}
 	</head>
-  
-<body class="bg-gradient-to-r from-rose-400 to-red-500">
-{% include 'includes/navbar.html' %}
- 
-  <div class="min-h-screen">
+    {% include 'includes/navbar.html' %}
+
+	<body class="bg-gradient-to-r from-rose-400 to-red-500">
+    <div class="min-h-screen">
     {% include 'pages/header.html' %}
-<!-- Features Grid -->
+
+    <!-- Features Grid -->
     <section class="py-16 px-4">
         <div class="max-w-7xl mx-auto">
             <h2 class="text-3xl font-bold text-center mb-12">Fonctionnalités clés</h2>
