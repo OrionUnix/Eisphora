@@ -1,0 +1,32 @@
+{% load i18n static tailwind_tags %}
+{% tailwind_css %}
+
+  <link rel="stylesheet" href="{% static 'css/gradient.css' %}">
+<style>
+
+</style>
+
+<section class="gradient-section">
+
+  <!-- Content -->
+  <div class="content-container max-w-7xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-12 text-white">{% trans "Key Features" %}</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Feature Cards -->
+      <div class="p-6 isolate aspect-video w-96 rounded-xl feature-card shadow-lg ring-1 ring-black/5">
+        <h3 class="text-xl font-semibold mb-4 text-white">📊 {% trans "Automatic Tax Calculation" %}</h3>
+        <p class="text-gray-200">{% trans "FIFO Method for Form 2086 (France)" %}</p>
+      </div>
+      
+      <div class="p-6 isolate aspect-video w-96 rounded-xl feature-card shadow-lg ring-1 ring-black/5">
+        <h3 class="text-xl font-semibold mb-4 text-white">🔒 {% trans "E2EE Encryption" %}</h3>
+        <p class="text-gray-200">{% trans "All data encrypted client-side with XSalsa20-Poly1305" %}</p>
+      </div>
+
+      <div class="p-6 isolate w-96 rounded-xl feature-card shadow-lg ring-1 ring-black/5">
+        <h3 class="text-xl font-semibold mb-4 text-white">🌍 {% trans "Multilingual" %}</h3>
+        <p class="text-gray-200">{% trans "EN/FR support with community translations" %}</p>
+      </div>
+    </div>
+  </div>
+</section>

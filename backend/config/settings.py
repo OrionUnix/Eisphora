@@ -5,6 +5,8 @@ import environ
 from django.core.exceptions import ImproperlyConfigured
 from .logging_config import setup_logging
 import shutil
+from django.utils.translation import gettext_lazy as _
+
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,22 +77,15 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                 'django.template.context_processors.i18n',
-                 'config.context_processors.seo'
+                'django.template.context_processors.i18n',
+                'config.context_processors.seo',
+              
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-# Debug environment variables
-print("AUTH_DB_NAME:", env('AUTH_DB_NAME', default='NOT_SET'))
-print("EISPHORA_DB_NAME:", env('EISPHORA_DB_NAME', default='NOT_SET'))
-print("DB_USER:", env('DB_USER', default='NOT_SET'))
-print("DB_PASSWORD:", env('DB_PASSWORD', default='NOT_SET'))
-print("DB_HOST:", env('DB_HOST', default='NOT_SET'))
-print("DB_PORT:", env('DB_PORT', default='NOT_SET'))
 
 DATABASES = {
     'default': {
@@ -248,13 +243,16 @@ LANGUAGE_CODE = env.str('LANGUAGE_CODE', default='fr-fr').lower()
 USE_I18N = True
 USE_L10N = True
 LANGUAGES = [
-    ('fr-fr', 'Français'),
-    ('en-us', 'English'),
+    ('en-us', _('English')),
+    ('fr-fr', _('French')),
 ]
-LOCALE_PATHS = [BASE_DIR / 'locale']
 
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 # Internationalization
 
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+

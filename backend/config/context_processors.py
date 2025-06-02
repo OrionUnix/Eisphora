@@ -26,3 +26,13 @@ def seo(request):
     
         }
     }
+def language_flag_mapping(request):
+    return {
+        "LANGUAGE_FLAG_MAP": {
+            "fr-fr": "fr-Fr.png",
+            "en-us": "en-US.png",
+            "it": "it.png",
+            "nl": "nl.png",
+            "uk": "uk.png",
+        }
+    }

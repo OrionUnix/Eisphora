@@ -1,7 +1,8 @@
 <!-- templates/sign_up.html -->
+{% load i18n %}
+
 
 <!DOCTYPE html>
-{% load i18n %}
 <html >
 <head>
     <meta charset="UTF-8">
@@ -89,6 +90,8 @@
         <div class="mt-4 text-center">
             <p class="text-sm text-gray-600">Déjà un compte ? <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Connectez-vous</a></p>
         </div>
+        
     </div>
+    	{% include 'includes/footer.html' %}
 </body>
 </html>

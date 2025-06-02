@@ -1,4 +1,18 @@
-<nav class="py-5 lg:fixed transition-all top-0 left-0 z-50 duration-500 w-full bg-white">
+{% load i18n static tailwind_tags %}
+{% tailwind_css %}
+
+<style>
+.transbg {
+background: rgba(87, 84, 84, 0.05);
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(4.1px);
+-webkit-backdrop-filter: blur(4.1px);
+
+}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<nav class="py-5 lg:fixed transition-all top-0 left-0 z-50 duration-500 w-full transbg ">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="w-full flex flex-col lg:flex-row">
         <div class="flex justify-between lg:flex-row">
@@ -19,15 +33,15 @@
         <div class="hidden w-full lg:flex lg:pl-11 max-lg:mt-1 max-lg:h-screen max-lg:overflow-y-auto" id="navbar">
             <ul class="flex lg:items-center lg:justify-center flex-col max-lg:gap-4 max-lg:pt-4 max-lg:mb-4 lg:mt-0 lg:flex-row lg:mx-auto ">
                 <li> <a href="http://127.0.0.1:8000/"
-                        class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-base text-gray-500 font-medium transition-all duration-500 hover:text-gray-900">Home</a>
+                        class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-base text-gray-950 font-medium transition-all duration-500 hover:text-gray-900">Home</a>
                 </li>
                 <li> <a href="javascript:;"
-                    class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-gray-500 font-medium transition-all duration-500 hover:text-gray-900">About us</a>
+                    class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-gray-950 font-medium transition-all duration-500 hover:text-gray-900">About us</a>
                 </li>
                 <li class="relative">
                         <!-- Dropdown menu -->
                         <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open" class="flex items-center text-gray-600 hover:text-indigo-600 lg:mr-6 md:mb-0 lg:text-left text-gray-500 font-medium transition-all duration-500 hover:text-gray-900">
+                    <button @click="open = !open" class="flex items-center text-gray-950  hover:text-indigo-600 lg:mr-6 md:mb-0 lg:text-left text-gray-950 font-medium transition-all duration-500 hover:text-gray-900">
                         <span>Produits</span>
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -35,9 +49,9 @@
                     </button>
                     
                     <div x-show="open" @click.away="open = false" 
-                         class="absolute top-full left-0 w-96 bg-white shadow-lg rounded-lg p-4 mt-2">
+                         class="absolute top-full left-0 w-96 transbg shadow-lg rounded-lg p-4 mt-2">
                         <!-- Contenu du dropdown -->
-                        <div class="grid gap-4">
+                        <div class="grid gap-4 transbg">
                             <!-- Item 1 -->
                             <a href="#" class="flex items-center p-3 hover:bg-gray-50 rounded-lg">
                                 <div class="bg-indigo-100 p-2 rounded-lg">
@@ -45,7 +59,7 @@
                                         <!-- Icône -->
                                     </svg>
                                 </div>
-                                <div class="ml-4">
+                                <div class="ml-4 ">
                                     <h3 class="font-medium text-gray-900">Analytics</h3>
                                     <p class="text-sm text-gray-500">Analysez vos données financières</p>
                                 </div>
@@ -66,10 +80,41 @@
               <!-- Dropdown menu 2 -->
 
                 <li> <a href="javascript:;"
-                    class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-gray-500 font-medium transition-all duration-500 hover:text-gray-900">About us</a>
+                    class="nav-link mb-2 block lg:mr-6 md:mb-0 lg:text-left text-gray-950 font-medium transition-all duration-500 hover:text-gray-900">About us</a>
                 </li>
 
-       
+       <!-- Language selector -->
+        <div x-data="{ open: false }" class="relative ml-4 flex items-center ">
+               <button @click="open = !open" class="flex items-center text-gray-950 p-2  transbg ">
+                <svg class="w-6 h-6 text-gray-800  mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m13 19 3.5-9 3.5 9m-6.125-2h5.25M3 7h7m0 0h2m-2 0c0 1.63-.793 3.926-2.239 5.655M7.5 6.818V5m.261 7.655C6.79 13.82 5.521 14.725 4 15m3.761-2.345L5 10m2.761 2.655L10.2 15"/>
+                </svg>
+                    <img src="{% static 'images/flags/'|add:LANGUAGE_CODE|add:'.png' %}" alt="{{ LANGUAGE_CODE }}" class="w-6 h-6 inline-block mr-2" />
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                </button>
+    
+     <div x-show="open" @click.away="open = false" x-cloak
+         class="absolute top-full left-0 w-40 transbg shadow-lg rounded-lg p-4 mt-2 z-50">
+        <form action="{% url 'set_language' %}" method="post" class="grid gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}">
+            {% get_current_language as LANGUAGE_CODE %}
+            {% get_available_languages as LANGUAGES %}
+            
+            {% for lang in LANGUAGES %}
+                <button type="submit" name="language" value="{{ lang.0 }}" 
+                        class="w-full flex items-center p-3 text-sm rounded-lg hover:bg-indigo-50 transition-colors
+                               {% if lang.0 == LANGUAGE_CODE %}  text-indigo-700{% endif %}">
+                    <img src="{% static 'images/flags/'|add:lang.0|add:'.png' %}" alt="{{ lang.0 }}" class="w-6 h-6 inline-block mr-2" />
+                    <span>{{ lang.1 }}</span>
+                </button>
+            {% endfor %}
+        </form>
+    </div>
+</div>
+
                <!-- Button -->
                 <div class="flex lg:items-center w-full justify-start flex-col lg:flex-row gap-4 lg:w-max max-lg:gap-4 lg:ml-14 lg:justify-end">
                     <button 
@@ -89,4 +134,4 @@
       </div>
     </div>
   </nav>
-                                            
+

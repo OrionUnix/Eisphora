@@ -1,0 +1,24 @@
+{% load i18n static tailwind_tags %}
+
+<section class="py-16 bg-gray-100">
+    <div class="max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12"> {% trans "Enhanced safety" %}</h2>
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">🔑 {% trans "Key management" %}</h3>
+                <ul class="list-disc pl-6 space-y-2 text-gray-600">
+                    <li> {% trans "Client-side encrypted API keys" %}</li>
+                    <li> {% trans "No password storage" %}</li>
+                    <li> {% trans "Temporary cookies (12h)" %}</li>
+                </ul>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-4">🛡️ {% trans "Data protection" %}</h3>
+                <ul class="list-disc pl-6 space-y-2 text-gray-600">
+                    <li> {% trans "No sensitive logging" %}</li>
+                    <li> {% trans "Automatic deletion after 30 days of inactivity" %}</li>
+                </ul>
+            </div>
+        </div>
+
+</section>

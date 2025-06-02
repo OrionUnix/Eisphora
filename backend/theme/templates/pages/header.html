@@ -1,10 +1,242 @@
-    <section class="text-center py-20 bg-gradient-to-b from-blue-50 to-white">
-        <div class="max-w-4xl mx-auto px-4">
-            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6">
-              {% include 'includes/logo.html' with size="h-[128px] w-[128px]" %} {{ seo.site_name }}
+{% load i18n static tailwind_tags %}
+{% tailwind_css %}
+<!-- Styles personnalisés -->
+
+    <link rel="stylesheet" href="{% static 'css/header.css' %}">
+     <link rel="stylesheet" href="{% static 'css/gradient.css' %}">
+    <script defer src="{% static 'js/header.js' %}"></script>
+<!-- Section Header -->
+<section class="split-section flex">
+   <!-- Left content section -->
+    <div class="w-1/2 relative z-10 flex items-center justify-center">
+          <!-- Gradient Background -->
+  <div class="gradients-container">
+    <div class="g1"></div>
+    <div class="g2"></div>
+    <div class="g3"></div>
+    <div class="g4"></div>
+    <div class="g5"></div>
+  </div>
+
+        <div class="px-20 py-24 max-w-xl">
+            <p class="text-sm font-light tracking-wider uppercase text-gray-300 mb-2">{% trans "Easy. Secure. Open-source. Global." %}</p>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight">
+                <span class="text-white">
+                  {{ seo.site_name }}</span>
+                <br>
+                <span class="text-outline text-white">{% trans "Clarity. Simplicity. Peace of mind." %}</span>
+                <br>
+    
             </h1>
-            <p class="text-xl text-gray-600 mb-8">
-                {{ seo.current_meta.description }}
-            </p>
+            <button class="mt-8 px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-700 hover:to-pink-600 transition-all transform hover:scale-105">
+                Get Started
+            </button>
+            <div class="mt-10 flex items-center text-sm">
+                <div>
+                    <span class="ml-2 text-sm text-gray-300">{% trans "Make with love ❤, Say goodbye to tax headaches. Eisphora is free, open, and designed to make crypto tax compliance finally make sense. " %} 
+                    <a href="#" class="underline hover:text-white font-medium">Learn more</a></span>
+                </div>        
+            </div>           
+        </div>        
+    </div>
+ <!-- Right content section avec formes fluides -->
+  <div class="w-1/2 relative z-10 overflow-hidden">
+    <svg class="fluid-background" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
+        <!-- Définitions des gradients -->
+        <defs>
+            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" class="gradient-stop-1" />
+                <stop offset="100%" class="gradient-stop-2" />
+            </linearGradient>
+            <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" class="gradient-stop-2" />
+                <stop offset="100%" class="gradient-stop-3" />
+            </linearGradient>
+            <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" class="gradient-stop-3" />
+                <stop offset="100%" class="gradient-stop-1" />
+            </linearGradient>
+        </defs>
+
+        <!-- Formes fluides -->
+        <path class="shape-1 shape-light" fill="url(#gradient1)" d="M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z" />
+        <path class="shape-2 shape-light" fill="url(#gradient2)" d="M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z" />
+        <path class="shape-3 shape-dark" fill="url(#gradient3)" d="M0,500 C50,350 300,650 500,400 S700,300 900,550 S1200,700 1200,500 V600 H0 Z" />
+    </svg>
+
+    <!-- Contenu principal  -->
+    <div class="flex justify-center items-center">
+       
+        <!-- tax -->
+    <div class="tax-card">
+        <div class="form-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0d3b66">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H8c-.55 0-1-.45-1-1s.45-1 1-1h3c.55 0 1 .45 1 1s-.45 1-1 1zm0-4H8c-.55 0-1-.45-1-1s.45-1 1-1h3c.55 0 1 .45 1 1s-.45 1-1 1zm0-4H8c-.55 0-1-.45-1-1s.45-1 1-1h3c.55 0 1 .45 1 1s-.45 1-1 1zm5 8h-1v-1c0-.55-.45-1-1-1s-1 .45-1 1v1h-1c-.55 0-1 .45-1 1s.45 1 1 1h1v1c0 .55.45 1 1 1s1-.45 1-1v-1h1c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+            </svg>
+        </div>       
+        <div class="tax-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
         </div>
-    </section>
+        
+        <div class="form-header">
+            <div class="form-title">{% trans "Tax Declaration" %}</div>
+
+        </div>        
+        <div class="form-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Full Name" %}</label>
+                    <input type="text" class="form-input" id="fullName" readonly>
+                    <div class="auto-fill-indicator" id="fullNameIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{% trans "Tax ID" %}</label>
+                    <input type="text" class="form-input" id="taxId" readonly>
+                    <div class="auto-fill-indicator" id="taxIdIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+            </div>   
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Annual Income" %}</label>
+                    <input type="text" class="form-input" id="annualIncome" readonly>
+                    <div class="auto-fill-indicator" id="annualIncomeIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{% trans "Deductions" %}</label>
+                    <input type="text" class="form-input" id="deductions" readonly>
+                    <div class="auto-fill-indicator" id="deductionsIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">{% trans "Taxable Income" %}</label>
+                    <input type="text" class="form-input" id="taxableIncome" readonly>
+                    <div class="auto-fill-indicator" id="taxableIncomeIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{% trans "Tax Due" %}</label>
+                    <input type="text" class="form-input" id="taxDue" readonly>
+                    <div class="auto-fill-indicator" id="taxDueIndicator">
+                        <i class="fas fa-check-circle mr-2"></i> {% trans "Auto-filled" %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">{% trans "Preparing your form..." %}</div>
+            
+
+            
+            <div class="success-message" id="successMessage">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="font-bold text-gray-800 mb-1">{% trans "Form Completed!" %}</h3>
+                <p class="text-gray-600">{% trans "Your tax declaration is ready to submit." %}</p>
+            </div>
+        </div>
+    </div>
+
+
+         <!-- hardwallet-->
+  <div class="hardwallet-container">
+        <div class="hardwallet">
+            <div class="metal-stripe"></div>
+            <div class="usb-port"></div>
+            
+            <div class="wallet-top">
+                <div class="crypto-chip">
+       {% include 'includes/logo.html' with size="w-8 h-8" color="text-purple-600" seo=seo %}
+                </div>               
+            </div>
+            
+            <div class="led-screen">
+                <div class="screen-content transaction-animation">
+                    <div class="screen-line">> Welcome {{ seo.site_name }}</div>
+                    <div class="screen-line">> Wallet: crypto </div>
+                    <div class="screen-line">> Balance: 2.75 BTC</div>
+                    <div class="screen-line">> Last TX: 0.15 BTC</div>
+                    <div class="screen-line">> To: bc1qar0srrr7xf...</div>
+                    <div class="screen-line">> Status: Confirmed</div>
+                    <div class="screen-line">> New TX: 1.2 BTC</div>
+                    <div class="screen-line">> To: 3FZbgi29cpjq2...</div>
+                    <div class="screen-line">> Fee: 0.00012 BTC</div>
+                    <div class="screen-line">> Confirm? [Press OK]</div>
+                </div>
+            </div>
+            
+            <div class="wallet-bottom">
+                <div class="crypto-logo w-10 h-10">
+                    <img src="{% static 'images/crypto_logo/bitcoin-btc-logo.svg' %}" alt="Bitcoin logo" class="w-full h-full object-contain">
+                </div>  
+                <div class="buttons-container">
+                    <div class="hardwallet-button">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="hardwallet-button">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="hardwallet-button" style="background: linear-gradient(135deg, #84cc16, #65a30d);">
+                        <svg viewBox="0 0 24 24">
+                            <path fill="#ffffff" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+        <!-- Carte 3 -->
+        <div class="card-mockup">
+            <div class="flex justify-between">
+                <div class="flex items-center">
+                    <div class="text-white text-xs">
+                         {% include 'includes/logo.html' with size="w-8 h-8" color="text-purple-600" seo=seo %}
+                        <div>Metamask</div>
+                        <div class="font-bold">Wallet</div>
+                    </div>
+                </div>
+                <div class="w-10 h-10 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.1.9-2 2-2s2 .9 2 2-2 4-2 4m0 0c-1.1 0-2-.9-2-2s.9-2 2-2zm0 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-2 4-2 4z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-white tracking-widest">0x8...adC2</div>
+                <div class="flex justify-end mt-6 space-x-4">
+                    <div class="text-white">
+                       
+                        <img src="{% static 'images/logo/metamask.svg' %}" alt="Bitcoin logo" class="w-8 h-8 object-contain">
+                    </div>
+                    <div class="w-10 h-10 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v2h-2zm0 4h2v6h-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+ 

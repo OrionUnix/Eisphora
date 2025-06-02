@@ -14,4 +14,5 @@ urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('', HomeView.as_view(), name='home'),
     path('auth/', include('members.urls')),
+    path('i18n/', include('django.conf.urls.i18n')),
 )

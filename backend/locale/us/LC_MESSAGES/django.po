@@ -1,0 +1,374 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-02 10:40+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: .\config\seo_config.py:39
+msgid "Eisphora - Open-Source Tax Platform"
+msgstr ""
+
+#: .\config\seo_config.py:40
+msgid ""
+"File your crypto taxes in seconds. Eisphora is a secure, open-source and "
+"multilingual app built for global tax compliance"
+msgstr ""
+
+#: .\config\seo_config.py:41 .\theme\templates\pages\header.html:12
+msgid "Easy. Secure. Open-source. Global."
+msgstr ""
+
+#: .\config\seo_config.py:42 .\theme\templates\pages\header.html:17
+msgid "Clarity. Simplicity. Peace of mind."
+msgstr ""
+
+#: .\config\seo_config.py:43
+msgid ""
+"No stress, no lock-in. An open-source app to simplify your crypto taxes."
+msgstr ""
+
+#: .\config\seo_config.py:44 .\theme\templates\pages\header.html:26
+msgid ""
+"Make with love ❤, Say goodbye to tax headaches. Eisphora is free, open, and "
+"designed to make crypto tax compliance finally make sense. "
+msgstr ""
+
+#: .\config\seo_config.py:48
+msgid "Eisphora - Plateforme fiscale open source"
+msgstr ""
+
+#: .\config\seo_config.py:49
+msgid ""
+"Calculez et déclarez vos impôts crypto en quelques clics. Eisphora est open "
+"source, multilingue et pensée pour la conformité fiscale."
+msgstr ""
+
+#: .\config\seo_config.py:50
+msgid " Facile. Sécurisé. Open-source. Mondial."
+msgstr ""
+
+#: .\config\seo_config.py:51
+msgid "Transparence. Simplicité. Sérénité."
+msgstr ""
+
+#: .\config\seo_config.py:52
+msgid "Open source. Multilingue. Pour simplifier vos impôts crypto."
+msgstr ""
+
+#: .\config\seo_config.py:53
+msgid ""
+"Créée avec amour ❤, construite pour vous simplifier la vie : Eisphora vous "
+"aide à reprendre le contrôle de vos obligations fiscales "
+msgstr ""
+
+#: .\config\seo_config.py:57
+msgid "Eisphora - Piattaforma fiscale open source"
+msgstr ""
+
+#: .\config\seo_config.py:59
+msgid ""
+"Dichiara le tue tasse crypto in pochi secondi. Eisphora è gratuita, sicura, "
+"open source e progettata per la conformità globale."
+msgstr ""
+
+#: .\config\seo_config.py:61
+msgid "Semplice. Sicura. Open-source. Globale."
+msgstr ""
+
+#: .\config\seo_config.py:62
+msgid "Chiarezza. Semplicità. Tranquillità."
+msgstr ""
+
+#: .\config\seo_config.py:64
+msgid ""
+"Stop allo stress fiscale. Eisphora semplifica la dichiarazione delle tue "
+"criptovalute."
+msgstr ""
+
+#: .\config\seo_config.py:67
+msgid ""
+"Creata con amore ❤, pensata per aiutarti a gestire le tasse crypto senza "
+"stress."
+msgstr ""
+
+#: .\config\seo_config.py:72
+msgid "Eisphora - Plataforma fiscal open source"
+msgstr ""
+
+#: .\config\seo_config.py:74
+msgid ""
+"Declara tus impuestos cripto en segundos. Eisphora es segura, gratuita, "
+"multilingüe y diseñada para una fiscalidad clara."
+msgstr ""
+
+#: .\config\seo_config.py:76
+msgid "Simple. Segura. Open-source. Global."
+msgstr ""
+
+#: .\config\seo_config.py:77
+msgid "Claridad. Simplicidad. Tranquilidad."
+msgstr ""
+
+#: .\config\seo_config.py:79
+msgid ""
+"Sin estrés fiscal. Eisphora te ayuda a declarar tus criptomonedas sin "
+"complicaciones."
+msgstr ""
+
+#: .\config\seo_config.py:82
+msgid ""
+"Hecha con amor ❤, construida para simplificar tus impuestos cripto de forma "
+"libre y transparente."
+msgstr ""
+
+#: .\config\seo_config.py:87
+msgid "Eisphora - オープンソースの税務アプリ"
+msgstr ""
+
+#: .\config\seo_config.py:89
+msgid ""
+"暗号資産の税務申告を数秒で完了。Eisphoraは安全で、多言語対応、オープンソース"
+"のグローバルな税務プラットフォームです。"
+msgstr ""
+
+#: .\config\seo_config.py:91
+msgid "シンプル、安全、オープン、グローバル"
+msgstr ""
+
+#: .\config\seo_config.py:92
+msgid "明確、簡単、安心"
+msgstr ""
+
+#: .\config\seo_config.py:94
+msgid "税務のストレスを解消。Eisphoraで暗号資産の申告を簡単に。"
+msgstr ""
+
+#: .\config\seo_config.py:97
+msgid "愛を込めて開発 ❤、税務申告を簡単にする自由で透明なツールです。"
+msgstr ""
+
+#: .\config\seo_config.py:102
+msgid "Eisphora - 오픈소스 세금 플랫폼"
+msgstr ""
+
+#: .\config\seo_config.py:104
+msgid ""
+"암호화폐 세금 신고를 몇 초 만에. Eisphora는 안전하고 다국어 지원, 오픈소스 기"
+"반의 글로벌 세금 플랫폼입니다."
+msgstr ""
+
+#: .\config\seo_config.py:106
+msgid "간단. 안전. 오픈소스. 글로벌."
+msgstr ""
+
+#: .\config\seo_config.py:107
+msgid "명확성. 단순함. 평온함."
+msgstr ""
+
+#: .\config\seo_config.py:109
+msgid "세금 스트레스 없이. Eisphora로 암호화폐 세금을 쉽게 신고하세요."
+msgstr ""
+
+#: .\config\seo_config.py:112
+msgid ""
+"사랑으로 만든 ❤, 암호화폐 세금신고를 단순하고 투명하게 도와주는 무료 툴입니"
+"다."
+msgstr ""
+
+#: .\config\settings.py:245
+msgid "English"
+msgstr ""
+
+#: .\config\settings.py:246
+msgid "French"
+msgstr ""
+
+#: .\members\templates\dashboard.html:8
+msgid "Dashboard"
+msgstr ""
+
+#: .\members\templates\dashboard.html:21
+msgid "Welcome to your personal dashboard"
+msgstr ""
+
+#: .\members\templates\dashboard.html:26
+msgid "Your country"
+msgstr ""
+
+#: .\members\templates\dashboard.html:31
+msgid "Access France space"
+msgstr ""
+
+#: .\members\templates\dashboard.html:35
+msgid "Access United States space"
+msgstr ""
+
+#: .\members\templates\dashboard.html:41
+msgid ""
+"No country is associated with your account. Please select a country to "
+"continue."
+msgstr ""
+
+#: .\members\templates\dashboard.html:48
+msgid "Select your country"
+msgstr ""
+
+#: .\members\templates\dashboard.html:51
+msgid "Choose your country"
+msgstr ""
+
+#: .\members\templates\dashboard.html:52
+msgid "France"
+msgstr ""
+
+#: .\members\templates\dashboard.html:53
+msgid "United States"
+msgstr ""
+
+#: .\members\templates\dashboard.html:57
+msgid "Save"
+msgstr ""
+
+#: .\theme\templates\pages\cta.html:6
+msgid "Ready to start?"
+msgstr ""
+
+#: .\theme\templates\pages\cta.html:8
+msgid "Start now"
+msgstr ""
+
+#: .\theme\templates\pages\cta.html:11
+msgid "Open source • Free • Community-driven"
+msgstr ""
+
+#: .\theme\templates\pages\features.html:5
+msgid "Key Features"
+msgstr ""
+
+#: .\theme\templates\pages\features.html:9
+msgid "Automatic Tax Calculation"
+msgstr ""
+
+#: .\theme\templates\pages\features.html:10
+#, fuzzy
+#| msgid "Méthode FIFO pour le Formulaire 2086 (France)"
+msgid "FIFO Method for Form 2086 (France)"
+msgstr "FIFO Method for Form 2086 (France)"
+
+#: .\theme\templates\pages\features.html:14
+msgid "E2EE Encryption"
+msgstr ""
+
+#: .\theme\templates\pages\features.html:15
+msgid "All data encrypted client-side with XSalsa20-Poly1305"
+msgstr "All data encrypted client-side with XSalsa20-Poly1305"
+
+#: .\theme\templates\pages\features.html:19
+#, fuzzy
+#| msgid "Multilingue"
+msgid "Multilingual"
+msgstr "Multilingual"
+
+#: .\theme\templates\pages\features.html:20
+#, fuzzy
+#| msgid "EN/FR/ support with community translations"
+msgid "EN/FR support with community translations"
+msgstr "EN/FR/ support with community translations"
+
+#: .\theme\templates\pages\header.html:71
+msgid "Tax Declaration"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:77
+msgid "Full Name"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:80
+#: .\theme\templates\pages\header.html:87
+#: .\theme\templates\pages\header.html:96
+#: .\theme\templates\pages\header.html:103
+#: .\theme\templates\pages\header.html:113
+#: .\theme\templates\pages\header.html:120
+msgid "Auto-filled"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:84
+msgid "Tax ID"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:93
+msgid "Annual Income"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:100
+msgid "Deductions"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:110
+msgid "Taxable Income"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:117
+msgid "Tax Due"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:128
+msgid "Preparing your form..."
+msgstr ""
+
+#: .\theme\templates\pages\header.html:131
+msgid "Fill Automatically"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:138
+msgid "Form Completed!"
+msgstr ""
+
+#: .\theme\templates\pages\header.html:139
+msgid "Your tax declaration is ready to submit."
+msgstr ""
+
+#: .\theme\templates\pages\security.html:5
+msgid "Enhanced safety"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:8
+msgid "Key management"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:10
+msgid "Client-side encrypted API keys"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:11
+msgid "No password storage"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:12
+msgid "Temporary cookies (12h)"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:16
+msgid "Data protection"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:18
+msgid "No sensitive logging"
+msgstr ""
+
+#: .\theme\templates\pages\security.html:19
+msgid "Automatic deletion after 30 days of inactivity"
+msgstr ""
