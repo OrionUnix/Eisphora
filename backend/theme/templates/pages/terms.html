@@ -1,0 +1,50 @@
+{% load i18n static tailwind_tags %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{% trans "Terms and Conditions of Use - Eisphora" %}</title>
+</head>
+<body>
+<h1>{% trans "Terms and Conditions of Use" %}</h1>
+
+```
+<h2>{% trans "1. Acceptance of Terms" %}</h2>
+<p>{% trans "By accessing or using the Eisphora application, available at <https://github.com/OrionUnix/Eisphora>, you agree to be bound by these Terms and Conditions of Use. If you do not agree, please do not use the application." %}</p>
+
+<h2>{% trans "2. License" %}</h2>
+<p>{% trans "Eisphora is provided under the BSD 3-Clause License. Copyright (c) 2025, OrionDeimos. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:" %}</p>
+<ul>
+    <li>{% trans "Redistributions of source code must retain the above copyright notice, this list of conditions, and the following disclaimer." %}</li>
+    <li>{% trans "Redistributions in binary form must reproduce the above copyright notice, this list of conditions, and the following disclaimer in the documentation and/or other materials provided with the distribution." %}</li>
+    <li>{% trans "Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission." %}</li>
+</ul>
+<p>{% trans "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE." %}</p>
+
+<h2>{% trans "3. Use of the Application" %}</h2>
+<p>{% trans "Eisphora is designed for calculating tax gains/losses on cryptocurrency transactions and analyzing wallet addresses. You are responsible for ensuring the accuracy of the data you enter (e.g., wallet addresses, transaction details)." %}</p>
+<p>{% trans "You may not use Eisphora for illegal purposes, including but not limited to money laundering or tax evasion." %}</p>
+
+<h2>{% trans "4. Privacy and Data Security" %}</h2>
+<p>{% trans "Your data is encrypted client-side using PBKDF2/Argon2 and stored in IndexedDB. Master keys are managed via Azure Key Vault. We comply with GDPR regulations via django-gdpr-assistant." %}</p>
+<p>{% trans "By using Eisphora, you consent to the collection and processing of your transaction data for the purpose of tax calculations and wallet analysis." %}</p>
+
+<h2>{% trans "5. Limitation of Liability" %}</h2>
+<p>{% trans "Eisphora is provided 'as is' without warranties of any kind. The developers are not liable for any financial losses, tax penalties, or damages resulting from the use of this application." %}</p>
+
+<h2>{% trans "6. Termination" %}</h2>
+<p>{% trans "We reserve the right to terminate or suspend your access to Eisphora at our discretion, with or without cause, and with or without notice." %}</p>
+
+<h2>{% trans "7. Changes to Terms" %}</h2>
+<p>{% trans "These Terms may be updated periodically. Continued use of Eisphora after changes constitutes acceptance of the new Terms." %}</p>
+
+<h2>{% trans "8. Contact" %}</h2>
+<p>{% trans "For questions or concerns, contact us at your.email@example.com or via the GitHub repository at <https://github.com/OrionUnix/Eisphora."> %}</p>
+
+```
+	{% include 'includes/footer.html' %}
+
+</body>
+</html>

@@ -43,26 +43,29 @@
     </script>
     {% endif %}
     {% tailwind_css %}
-<script type="application/ld+json">
-    {{ seo.json_ld|safe|json_script:"eisphora-jsonld" }}
-</script>
+    <script type="application/ld+json">
+        {{ seo.json_ld|safe|json_script:"eisphora-jsonld" }}
+    </script>
 	</head>
     {% include 'includes/navbar.html' %}
 
-	<body >
+	<body>
     <div class="min-h-screen">
-    {% include 'pages/header.html' %}
+        {% include 'pages/header.html' %}
 
-    <!-- Features Grid -->
-    {% include 'pages/features.html'%}
+        <!-- Features Grid -->
+        {% include 'pages/features.html' %}
 
-    <!-- Security Section -->
- 
-    {% include 'pages/security.html'%}
-    <!-- CTA Section -->
+        <!-- Security Section -->
+        {% include 'pages/security.html' %}
 
-    {% include 'pages/cta.html'%}
-	{% include 'includes/footer.html' %}
-</div>
+        <!-- CTA Section -->
+        {% include 'pages/cta.html' %}
+
+        <!-- Bloc pour le contenu spécifique des pages -->
+        {% block content %}{% endblock %}
+
+        {% include 'includes/footer.html' %}
+    </div>
 	</body>
 </html>

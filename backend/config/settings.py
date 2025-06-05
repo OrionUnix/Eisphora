@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'members',
-
+    'tax_forms',
+    'widget_tweaks',
 ]
 
 # Uncomment and set if using a custom user model

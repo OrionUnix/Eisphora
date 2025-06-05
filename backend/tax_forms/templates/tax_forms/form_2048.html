@@ -1,0 +1,101 @@
+{% load i18n tailwind_tags widget_tweaks form_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Formulaire 2048 - Plus-values ou moins-values réalisées directement" %}</title>
+    {% tailwind_css %}
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6">{% trans "Formulaire 2048 - Plus-values ou moins-values réalisées directement" %}</h1>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white p-6 rounded-lg shadow-md">
+            {% csrf_token %}
+            
+            <!-- Identification du déclarant -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.nom.label }}</label>
+                    {{ form.nom|add_class:"w-full p-2 border rounded-md" }}
+                    {{ form.nom.errors }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">{{ form.prenoms.label }}</label>
+                    {{ form.prenoms|add_class:"w-full p-2 border rounded-md" }}
+                    {{ form.prenoms.errors }}
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">{{ form.adresse.label }}</label>
+                {{ form.adresse|add_class:"w-full p-2 border rounded-md" }}
+                {{ form.adresse.errors }}
+            </div>
+
+            <!-- Champs des sessions -->
+            {% for i in "12345" %}
+                <div class="border-t pt-4 mt-4">
+                    <h2 class="text-lg font-semibold">{% trans "Session" %} {{ forloop.counter }}</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% with date_field="date_session_"|add:forloop.counter %}
+                        {% with valeur_field="valeur_globale_"|add:forloop.counter %}
+                        {% with prix_field="prix_session_"|add:forloop.counter %}
+                        {% with frais_field="frais_session_"|add:forloop.counter %}
+                        {% with details_field="transaction_details_"|add:forloop.counter %}
+                        {% if form|lookup:date_field %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ form|lookup:date_field|attr:"label" }}</label>
+                            {{ form|lookup:date_field|add_class:"w-full p-2 border rounded-md" }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ form|lookup:valeur_field|attr:"label" }}</label>
+                            {{ form|lookup:valeur_field|add_class:"w-full p-2 border rounded-md" }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ form|lookup:prix_field|attr:"label" }}</label>
+                            {{ form|lookup:prix_field|add_class:"w-full p-2 border rounded-md" }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">{{ form|lookup:frais_field|attr:"label" }}</label>
+                            {{ form|lookup:frais_field|add_class:"w-full p-2 border rounded-md" }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">{{ form|lookup:details_field|attr:"label" }}</label>
+                            {{ form|lookup:details_field|add_class:"w-full p-2 border rounded-md" }}
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Importation automatique -->
+            <div class="border-t pt-4 mt-4">
+                <h2 class="text-lg font-semibold">{% trans "Importation automatique des transactions" %}</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ form.transaction_file.label }}</label>
+                        {{ form.transaction_file|add_class:"w-full p-2 border rounded-md" }}
+                        {{ form.transaction_file.errors }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">{{ form.crypto_address.label }}</label>
+                        {{ form.crypto_address|add_class:"w-full p-2 border rounded-md" }}
+                        {{ form.crypto_address.errors }}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
+                {% trans "Soumettre" %}
+            </button>
+        </form>
+    </div>
+</body>
+</html>

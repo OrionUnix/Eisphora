@@ -1,0 +1,28 @@
+
+{% load i18n %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
+  <h1 class="text-2xl font-bold mb-6">{% trans "Résultat du Formulaire 2048" %}</h1>
+  
+  <h2 class="text-lg font-semibold">{% trans "Déclarant" %}</h2>
+  <p><strong>{% trans "Nom" %}:</strong> {{ nom }}</p>
+  <p><strong>{% trans "Prénoms" %}:</strong> {{ prenoms }}</p>
+  <p><strong>{% trans "Adresse" %}:</strong> {{ adresse }}</p>
+
+  <h2 class="text-lg font-semibold mt-6">{% trans "Sessions" %}</h2>
+  {% for session in sessions %}
+    <div class="border-t pt-4 mt-4">
+      <h3 class="text-md font-medium">{% trans "Session" %} {{ forloop.counter }}</h3>
+      <p><strong>{% trans "Date" %}:</strong> {{ session.date|default:"N/A" }}</p>
+      <p><strong>{% trans "Valeur globale" %}:</strong> {{ session.valeur_globale|default:"N/A" }} €</p>
+      <p><strong>{% trans "Prix de session" %}:</strong> {{ session.prix_session|default:"N/A" }} €</p>
+      <p><strong>{% trans "Frais de session" %}:</strong> {{ session.frais_session|default:"N/A" }} €</p>
+      <p><strong>{% trans "Prix de session net" %}:</strong> {{ session.prix_session_net|default:"N/A" }} €</p>
+      <p><strong>{% trans "Détails de la transaction" %}:</strong> {{ session.transaction_details|default:"N/A" }}</p>
+    </div>
+  {% empty %}
+    <p>{% trans "Aucune session remplie." %}</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,97 +1,123 @@
-<!-- templates/sign_up.html -->
-{% load i18n %}
-
-
 <!DOCTYPE html>
-<html >
+<html lang="fr">
 <head>
+    {% load i18n static tailwind_tags %}
+{% get_current_language as LANGUAGE_CODE %}
+{% tailwind_css %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription</title>
+    <title>Créer un compte</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'amu-dark-purple': '#362E4A',
+                        'amu-light-purple': '#5A4F7F',
+                        'amu-gray': '#2A2A2A',
+                        'amu-text-gray': '#A0A0A0',
+                        'amu-border-gray': '#444444',
+                        'amu-accent-purple': '#7B42F6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Créer un compte</h2>
-        
-        <form method="post" class="space-y-5">
-            {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-                <div class="text-red-500 text-sm p-3 bg-red-50 rounded">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-            
-            <div>
-                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-                <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" 
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
-                       placeholder="Entrez votre nom d'utilisateur" required>
-                {% if form.username.errors %}
-                    <div class="text-red-500 text-xs mt-1">{{ form.username.errors }}</div>
-                {% endif %}
+<body class="font-sans bg-gray-900 text-white flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+    <div class="flex flex-col lg:flex-row w-full max-w-6xl bg-amu-gray rounded-xl shadow-xl overflow-hidden">
+        <div class="relative lg:w-1/2 bg-amu-dark-purple p-6 sm:p-8 flex flex-col justify-between rounded-tl-[40px] rounded-tr-2xl lg:rounded-tr-none lg:rounded-bl-[40px] lg:rounded-br-none">
+            <div class="absolute inset-0 bg-cover bg-center rounded-tl-[40px] rounded-tr-2xl lg:rounded-tr-none lg:rounded-bl-[40px] lg:rounded-br-none"
+                 style="background-image: url('https://placehold.co/800x600/5A4F7F/FFFFFF?text=Image+de+Désert');">
+                <div class="absolute inset-0 bg-gradient-to-r from-amu-dark-purple via-transparent to-amu-dark-purple opacity-60 rounded-tl-[40px] rounded-tr-2xl lg:rounded-tr-none lg:rounded-bl-[40px] lg:rounded-br-none"></div>
             </div>
-            
-            <div>
-                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Adresse email</label>
-                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" 
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
-                       placeholder="Entrez votre email" required>
-                {% if form.email.errors %}
-                    <div class="text-red-500 text-xs mt-1">{{ form.email.errors }}</div>
-                {% endif %}
+            <div class="relative z-10 flex justify-between items-start mb-16 sm:mb-24 lg:mb-0">
+                <div class="text-white text-2xl font-bold">AMU</div>
+                <a href="#" class="text-white text-sm flex items-center bg-white bg-opacity-20 px-3 py-1 rounded-full hover:bg-opacity-30 transition-colors">
+                    Retour au site web <svg class="ml-2 w-3 h-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </a>
             </div>
-            
-            <div>
-                <label for="{{ form.country.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Pays</label>
-                <select name="{{ form.country.name }}" id="{{ form.country.id_for_label }}" 
-                        class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" required>
-                    <option value="" disabled selected>Choisissez votre pays</option>
-                    {% for code, name in form.country.field.choices %}
-                        {% if code %}
-                            <option value="{{ code }}">{{ name }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-                {% if form.country.errors %}
-                    <div class="text-red-500 text-xs mt-1">{{ form.country.errors }}</div>
-                {% endif %}
+            <div class="relative z-10 text-white text-3xl sm:text-4xl font-semibold leading-tight mt-auto text-center lg:text-left">
+                Capturer les moments,<br>Créer des souvenirs
             </div>
-            
-            <div>
-                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-                <input type="password" name="{{ form.password1.name }}" id="{{ form.password1.id_for_label }}" 
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
-                       placeholder="Entrez votre mot de passe" required>
-                {% if form.password1.errors %}
-                    <div class="text-red-500 text-xs mt-1">{{ form.password1.errors }}</div>
-                {% endif %}
-                {% if form.password1.help_text %}
-                    <div class="text-gray-500 text-xs mt-1">{{ form.password1.help_text }}</div>
-                {% endif %}
+            <div class="relative z-10 flex justify-center lg:justify-start mt-8">
+                <span class="w-2 h-2 bg-white rounded-full mx-1"></span>
+                <span class="w-2 h-2 bg-white bg-opacity-50 rounded-full mx-1"></span>
+                <span class="w-2 h-2 bg-white bg-opacity-50 rounded-full mx-1"></span>
             </div>
-            
-            <div>
-                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
-                <input type="password" name="{{ form.password2.name }}" id="{{ form.password2.id_for_label }}" 
-                       class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
-                       placeholder="Confirmez votre mot de passe" required>
-                {% if form.password2.errors %}
-                    <div class="text-red-500 text-xs mt-1">{{ form.password2.errors }}</div>
-                {% endif %}
-            </div>
-            
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition duration-300">
-                S'inscrire
-            </button>
-        </form>
-        
-        <div class="mt-4 text-center">
-            <p class="text-sm text-gray-600">Déjà un compte ? <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Connectez-vous</a></p>
         </div>
-        
+        <div class="lg:w-1/2 p-6 sm:p-8 lg:p-12 flex flex-col justify-center bg-amu-gray rounded-bl-2xl lg:rounded-bl-none rounded-br-2xl">
+            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-2">Créer un compte</h2>
+            <p class="text-amu-text-gray text-sm mb-8">
+                Vous avez déjà un compte ? <a href="#" class="text-amu-accent-purple hover:underline">Connectez-vous</a>
+            </p>
+            <form class="space-y-6">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="text" placeholder="Prénom" class="flex-1 p-3 bg-amu-gray border border-amu-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-amu-accent-purple placeholder-amu-text-gray text-white">
+                    <input type="text" placeholder="Nom de famille" class="flex-1 p-3 bg-amu-gray border border-amu-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-amu-accent-purple placeholder-amu-text-gray text-white">
+                </div>
+                <div>
+                    <input type="email" placeholder="Email" class="w-full p-3 bg-amu-gray border border-amu-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-amu-accent-purple placeholder-amu-text-gray text-white">
+                </div>
+                <div class="relative">
+                    <input type="password" placeholder="Entrez votre mot de passe" class="w-full p-3 pr-10 bg-amu-gray border border-amu-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-amu-accent-purple placeholder-amu-text-gray text-white" id="passwordInput">
+                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-amu-text-gray" onclick="togglePasswordVisibility()">
+                        <svg class="w-6 h-6 text-gray-800 dark:text-white eye-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                            <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                        </svg>
+                        <svg class="w-6 h-6 text-gray-800 dark:text-white eye-slash-icon hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                        </svg>
+                    </span>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="terms" class="form-checkbox h-4 w-4 text-amu-accent-purple bg-amu-gray border-amu-border-gray rounded focus:ring-amu-accent-purple">
+                    <label for="terms" class="ml-2 text-sm text-amu-text-gray">
+                        J'accepte les <a href="#" class="text-amu-accent-purple hover:underline">Conditions générales</a>
+                    </label>
+                </div>
+                <button type="submit" class="w-full bg-amu-accent-purple text-white p-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors shadow-lg">
+                    Créer un compte
+                </button>
+            </form>
+            <div class="relative flex items-center justify-center my-8">
+                <div class="flex-grow border-t border-amu-border-gray"></div>
+                <span class="flex-shrink mx-4 text-amu-text-gray text-sm">Ou s'inscrire avec</span>
+                <div class="flex-grow border-t border-amu-border-gray"></div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button class="flex-1 flex items-center justify-center p-3 bg-amu-gray border border-amu-border-gray rounded-lg text-white font-semibold hover:bg-gray-700 transition-colors shadow-md">
+                    <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.985,9.302-11.983L21.14,12c-0.361,2.057-2.101,3.741-4.043,4.042v-3.928h-3.998V10.239H12.545z"/></svg>
+                    Google
+                </button>
+                <button class="flex-1 flex items-center justify-center p-3 bg-amu-gray border border-amu-border-gray rounded-lg text-white font-semibold hover:bg-gray-700 transition-colors shadow-md">
+                    <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7.589 2 4 5.589 4 10c0 4.162 3.134 7.579 7.186 9.925-.15-.999-.286-2.515.05-3.597.33-1.145 2.139-7.297 2.139-7.297s-.54-.123-.54-1.058c0-1.116.62-1.952 1.39-1.952 1.068 0 1.583.796 1.583 1.75 0 .975-.636 2.423-.966 3.766-.275 1.126.588 2.044 1.742 2.044 2.09 0 3.695-2.205 3.695-5.398 0-2.82-2.042-4.8-4.966-4.8-3.383 0-5.375 2.537-5.375 5.16 0 1.02.392 2.127.882 2.707.097.128.114.267.043.413-.252.445-.822 1.808-.94 2.059-.175.377-.561 1.058-.641 1.258-.113.27-.449.416-.816.416-.669 0-1.168-.683-1.168-1.526 0-1.99 1.443-3.817 1.443-5.17 0-2.673-1.927-5.135-5.272-5.135C2.938 4 0 6.963 0 10c0 5.587 4.688 10.116 10.962 10.116 6.138 0 10.911-4.417 10.911-10.116C21.873 5.589 18.411 2 12 2z"/></svg>
+                    Apple
+                </button>
+            </div>
+        </div>
     </div>
-    	{% include 'includes/footer.html' %}
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('passwordInput');
+            const eyeIcon = document.querySelector('#passwordInput + span .eye-icon');
+            const eyeSlashIcon = document.querySelector('#passwordInput + span .eye-slash-icon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.add('hidden');
+                eyeSlashIcon.classList.remove('hidden');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('hidden');
+                eyeSlashIcon.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
 </html>
