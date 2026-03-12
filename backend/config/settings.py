@@ -38,15 +38,12 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'tailwind',
     'theme',
-    'members',
     'tax_forms',
     'widget_tweaks',
 ]
@@ -59,7 +56,6 @@ MIDDLEWARE = [
      'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
    
@@ -76,7 +72,6 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',
                 'config.context_processors.seo',
@@ -90,44 +85,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-    },
-    'eisphora_db': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='').strip(),
-        'USER': env('DB_USER', default='').strip(),
-        'PASSWORD': env('DB_PASSWORD', default='').strip(),
-        'HOST': env('DB_HOST', default='').strip(),
-        'PORT': env.int('DB_PORT', default=5432),
-
-    },
-    'auth_db': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('AUTH_DB_NAME', default='').strip(),
-        'USER': env('DB_USER', default='').strip(),
-        'PASSWORD': env('DB_PASSWORD', default='').strip(),
-        'HOST': env('DB_HOST', default='').strip(),
-        'PORT': env.int('DB_PORT', default=5432),
-    },
-
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
 }
+# redirection removed
 
-DATABASES['default'] = DATABASES['auth_db']
-#redirection
-LOGIN_REDIRECT_URL = 'dashboard'
-LOGOUT_REDIRECT_URL = 'login'
+# Database Model removed ensuring no users
+# Database configuration removed
 
-# Database Model 
-AUTH_USER_MODEL = 'members.CustomUser'
-# Database configuration
-DATABASE_ROUTERS = ['config.routers.AuthRouter']
 
+# Database Validate removed since we use in-memory sqlite
 # Validate database environment variables
-required_db_vars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'DB_PORT']
-missing_db_vars = [v for v in required_db_vars if not env.str(v, default=None)]
-if missing_db_vars:
-    raise ImproperlyConfigured(
-        f"Missing required database environment variables: {', '.join(missing_db_vars)}"
-    )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -195,7 +164,7 @@ else: # DEBUG =True
     DEFAULT_FROM_EMAIL = f'console@{SITE_DOMAIN}'
     SERVER_EMAIL = f'console-server@{SITE_DOMAIN}'
     ADMINS = []
-    print("🛠 Mode développement détecté : Emails redirigés vers la console.")
+    print("Mode developpement detecte : Emails rediriges vers la console.")
 
 if not DEBUG:
     required_email_vars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM']
@@ -225,13 +194,9 @@ CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = True  
 
 # 🔹 Gestion des logs en production
-# setup_logging(BASE_DIR, debug=DEBUG)
-if not DEBUG:
-    setup_logging(BASE_DIR, debug=DEBUG) 
-    def setup_logging(base_dir: Path, debug: bool = False):
-        if debug:  # Évite l'activation en mode dev
-            print("🛠 Mode développement détecté : logging désactivé.")
-        return
+# Logging completement desactivé pour garantir l'anonymat
+def setup_logging(base_dir: Path, debug: bool = False):
+    pass
     
 # 🔹 Sécurisation des connexions HTTPS
 SECURE_SSL_REDIRECT = not DEBUG  
@@ -254,6 +219,18 @@ LOCALE_PATHS = [
 # Internationalization
 
 TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+# Anonymity & Session Settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-eisphora-cache',
+    }
+}
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# All file uploads strictly in memory to prevent any disk access
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+]
 

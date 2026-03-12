@@ -1,0 +1,26 @@
+{% load i18n tailwind_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "Formulaire" %}{% endblock %}</title>
+    {% tailwind_css %}
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <div class="container mx-auto p-6 pt-20">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer class="bg-white shadow mt-8">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            {% include 'includes/footer.html' %}
+        </div>
+    </footer>
+</body>
+</html>

@@ -5,31 +5,27 @@ from pythonjsonlogger import jsonlogger
 from dotenv import load_dotenv, find_dotenv
 from django.conf import settings 
 
-# Charge .env uniquement s'il est présent
+# Charge .env uniquement s'il st présent
 dotenv_path = find_dotenv()
 if dotenv_path:
     load_dotenv(dotenv_path)
 else:
-    print("⚠️  Fichier .env non trouvé. Mode dev présumé.")
+    print("Fichier .env non trouvé. Mode dev présumer")
 
-# Récupère une variable DEBUG_MODE du .env (True/False), ou False par défaut
+# Récupère une variable DEBUG_MODE du .env (True/False) ou False par défau
 debug_mode = os.getenv("DEBUG", "false").lower() == "true"
-
 
 def setup_logging(base_dir: Path, debug: bool = False):
     logs_dir = base_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
-
     admin_email = os.getenv("ADMIN_EMAIL")
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
     smtp_host = os.getenv("SMTP_HOST", "smtp.example.com")
     smtp_port = int(os.getenv("SMTP_PORT", 587))
-
     enable_telegram = os.getenv("ENABLE_TELEGRAM", "false").lower() == "true"
     telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
     telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID")
-
     class TelegramHandler(logging.Handler):
         def emit(self, record):
             try:
@@ -108,6 +104,6 @@ def setup_logging(base_dir: Path, debug: bool = False):
     logging.config.dictConfig(LOGGING)
 
     if debug_mode:
-        logging.getLogger("eisphora").info("🛠 Mode dev : logs débug activés.")
+        logging.getLogger("eisphora").info("Mode dev : logs débug activés.")
     elif enable_telegram:
-        logging.getLogger("eisphora").info("📬 Telegram logging activé.")
+        logging.getLogger("eisphora").info("Telegram logging activé.")

@@ -17,11 +17,11 @@
         <meta name="description" content="{{ seo.current_meta.description }}">
         <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
     
-        <!-- Hreflang -->
+    
         {% for locale, url in seo.hreflang.items %}
         <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
         {% endfor %}
-        <!-- Open Graph -->
+       
         <meta property="og:site_name" content="{{ seo.site_name }}">
         <meta property="og:title" content="{{ seo.current_meta.title }}">
         <meta property="og:description" content="{{ seo.current_meta.description }}">
