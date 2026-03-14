@@ -2,7 +2,7 @@ django==5.2.1
 requests==2.32.3
 django-environ==0.11.2
 python-decouple==3.8
-python-nextjs==3.2.0
+django-nextjs==3.3.0
 psycopg==3.2.8
 psycopg2==2.9.10
 django-cors-headers==4.7.0
@@ -10,4 +10,6 @@ graphene-django==3.2.3
 django-tailwind==4.0.1
 python-json-logger==3.3.0
 python-dotenv==1.1.0
-django-two-factor-auth==1.17.0django-widget-tweaks 
+django-two-factor-auth==1.17.0
+django-otp==1.5.4
+django-widget-tweaks

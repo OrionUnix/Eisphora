@@ -234,3 +234,12 @@ FILE_UPLOAD_HANDLERS = [
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
 ]
 
+# Security Best Practices
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Memory Limits to prevent OOM (Out of Memory) DoS attacks (5 MB max)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
