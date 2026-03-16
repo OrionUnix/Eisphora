@@ -28,7 +28,8 @@ def form_2048_view(request):
                     'quantity': request.POST.get(f'quantity_{i}'),
                     'price': request.POST.get(f'price_{i}'),
                     'fees': request.POST.get(f'fees_{i}'),
-                    'currency': request.POST.get(f'currency_{i}', 'EUR')
+                    'currency': request.POST.get(f'currency_{i}', 'EUR'),
+                    'tx_hash': request.POST.get(f'tx_hash_{i}')
                 }
                 tx = parse_generic_row(row)
                 if tx:

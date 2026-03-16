@@ -36,6 +36,10 @@
                 <p class="text-[10px] uppercase font-bold text-gray-500">{% trans "Acquisition Restante" %}</p>
                 <p class="text-xl font-black text-gray-700">{{ calc_results.final_acquisition_cost|floatformat:2 }} €</p>
             </div>
+            <div class="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
+                <p class="text-[10px] uppercase font-bold text-indigo-500">{% trans "Lignes Form. 2086" %}</p>
+                <p class="text-xl font-black text-indigo-700">{{ taxable_events|length }}</p>
+            </div>
         </div>
         {% endif %}
     </div>
@@ -46,6 +50,17 @@
             {% csrf_token %}
             <input type="hidden" name="transaction_count" id="transaction_count" value="{{ manual_transactions|length|default:0 }}">
 
+            <!-- Filtre et Actions Rapides -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 px-1 mb-2">
+                <div class="flex items-center gap-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="filter-taxable" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-3 text-sm font-medium text-gray-700">{% trans "Afficher uniquement les ventes imposables (2086)" %}</span>
+                    </label>
+                </div>
+            </div>
+
             <!-- Champs des transactions (Tableau Éditable) -->
             <div class="max-w-5xl mx-auto overflow-x-auto border rounded-xl bg-white shadow-sm max-h-[500px] overflow-y-auto compact-scroll">
                 <table class="min-w-full divide-y divide-gray-100 tx-table">
@@ -54,6 +69,7 @@
                             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Date" %}</th>
                             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Type" %}</th>
                             <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "Actif" %}</th>
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{% trans "TXID" %}</th>
                             <th class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase">{% trans "Quantité" %}</th>
                              <th class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase">{% trans "Prix Unit." %}</th>
                             <th class="px-3 py-2 text-left text-xs font-medium text-gray-400 uppercase">{% trans "Frais" %}</th>
@@ -74,6 +90,9 @@
                                 </span>
                             </td>
                             <td class="text-xs font-bold text-gray-900 field-crypto">{{ tx.crypto_token|default:'' }}</td>
+                            <td class="text-xs text-gray-400 field-hash" title="{{ tx.tx_hash|default:'' }}">
+                                {{ tx.tx_hash|default:'--'|truncatechars:10 }}
+                            </td>
                             <td class="text-xs font-medium field-quantity">{{ tx.quantity|default:0|floatformat:4 }}</td>
                             <td class="text-xs text-gray-500 field-price">{{ tx.price|default:0|floatformat:2 }} €</td>
                             <td class="text-xs text-gray-400 field-fees">{{ tx.fees|default:0|floatformat:2 }} €</td>
@@ -107,6 +126,7 @@
                                 <input type="hidden" name="price_{{ forloop.counter }}" value="{{ tx.price|default:0 }}">
                                 <input type="hidden" name="fees_{{ forloop.counter }}" value="{{ tx.fees|default:0 }}">
                                 <input type="hidden" name="currency_{{ forloop.counter }}" value="{{ tx.currency|default:'EUR' }}">
+                                <input type="hidden" name="tx_hash_{{ forloop.counter }}" value="{{ tx.tx_hash|default:'' }}">
                             </td>
                         </tr>
                         {% endfor %}
@@ -210,6 +230,10 @@
                         <input type="number" step="any" id="modal-fees" class="w-full p-2 border rounded-xl bg-gray-50 focus:bg-white transition">
                     </div>
                     <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">{% trans "TXID (Optionnel)" %}</label>
+                        <input type="text" id="modal-hash" class="w-full p-2 border rounded-xl bg-gray-50 focus:bg-white transition" placeholder="0x...">
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-1">{% trans "Prix d'Acquisition (Est.)" %}</label>
                         <input type="text" id="modal-acq" class="w-full p-2 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed" readonly>
                     </div>
@@ -244,11 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const dField = row.querySelector(`input[name="date_transaction_${id}"]`);
         const tField = row.querySelector(`input[name="operation_type_${id}"]`);
         const cField = row.querySelector(`input[name="crypto_token_${id}"]`);
+        const hField = row.querySelector(`input[name="tx_hash_${id}"]`);
 
         document.getElementById('modal-row-id').value = id;
         document.getElementById('modal-date').value = dField ? dField.value : '';
         document.getElementById('modal-type').value = tField ? tField.value : 'achat';
         document.getElementById('modal-crypto').value = cField ? cField.value : '';
+        document.getElementById('modal-hash').value = hField ? hField.value : '';
         
         // Handle comma for numeric inputs in French locale
         document.getElementById('modal-quantity').value = qField ? qField.value.replace(',', '.') : '0';
@@ -285,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const quantity = parseFloat(document.getElementById('modal-quantity').value) || 0;
         const price = parseFloat(document.getElementById('modal-price').value) || 0;
         const fees = parseFloat(document.getElementById('modal-fees').value) || 0;
+        const hash = document.getElementById('modal-hash').value;
 
         // Update hidden inputs
         const dField = row.querySelector(`input[name="date_transaction_${id}"]`);
@@ -293,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const qField = row.querySelector(`input[name="quantity_${id}"]`);
         const pField = row.querySelector(`input[name="price_${id}"]`);
         const fField = row.querySelector(`input[name="fees_${id}"]`);
+        const hField = row.querySelector(`input[name="tx_hash_${id}"]`);
 
         if (dField) dField.value = date;
         if (tField) tField.value = type;
@@ -300,6 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (qField) qField.value = quantity;
         if (pField) pField.value = price;
         if (fField) fField.value = fees;
+        if (hField) hField.value = hash;
 
         // Update visual display
         row.querySelector('.field-date').textContent = date;
@@ -307,6 +336,12 @@ document.addEventListener('DOMContentLoaded', function() {
         row.querySelector('.field-quantity').textContent = quantity.toFixed(4);
         row.querySelector('.field-price').textContent = price.toFixed(2) + ' €';
         row.querySelector('.field-fees').textContent = fees.toFixed(2) + ' €';
+        
+        const hashCell = row.querySelector('.field-hash');
+        if (hashCell) {
+            hashCell.textContent = hash ? (hash.length > 10 ? hash.substring(0, 10) + '...' : hash) : '--';
+            hashCell.title = hash;
+        }
         
         const badge = row.querySelector('.field-type-badge');
         badge.textContent = type;
@@ -349,6 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <td class="text-xs text-gray-600 font-medium field-date">---</td>
             <td><span class="field-type-badge px-2 py-0.5 rounded text-[10px] font-bold uppercase badge-achat">achat</span></td>
             <td class="text-xs font-bold text-gray-900 field-crypto">---</td>
+            <td class="text-xs text-gray-400 field-hash">--</td>
             <td class="text-xs font-medium field-quantity">0.0000</td>
             <td class="text-xs text-gray-500 field-price">0.00 €</td>
             <td class="text-xs text-gray-400 field-fees">0.00 €</td>
@@ -368,6 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="hidden" name="price_${transactionCounter}" value="0">
                 <input type="hidden" name="fees_${transactionCounter}" value="0">
                 <input type="hidden" name="currency_${transactionCounter}" value="EUR">
+                <input type="hidden" name="tx_hash_${transactionCounter}" value="">
             </td>
         `;
         transactionsContainer.appendChild(tr);
@@ -385,6 +422,36 @@ document.addEventListener('DOMContentLoaded', function() {
     transactionsContainer.querySelectorAll('.transaction-row').forEach(row => {
         attachRemoveEvent(row);
     });
+
+    // Gestion du filtre imposable
+    const filterToggle = document.getElementById('filter-taxable');
+    
+    function applyFilter() {
+        const onlyTaxable = filterToggle ? filterToggle.checked : false;
+        const rows = transactionsContainer.querySelectorAll('.transaction-row');
+        
+        rows.forEach(row => {
+            if (onlyTaxable) {
+                // Une opération est imposable si elle a une plus-value (même de 0) définie par le calculateur
+                const hasPV = row.querySelector('.field-acq').textContent.trim() !== '--';
+                if (!hasPV) {
+                    row.classList.add('hidden');
+                } else {
+                    row.classList.remove('hidden');
+                }
+            } else {
+                row.classList.remove('hidden');
+            }
+        });
+    }
+
+    if (filterToggle) {
+        filterToggle.addEventListener('change', applyFilter);
+        // Appliquer au chargement si des transactions existent
+        if (transactionCounter > 0) {
+            applyFilter();
+        }
+    }
 });
 </script>
 {% endblock %}

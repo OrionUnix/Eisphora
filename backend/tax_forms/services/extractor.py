@@ -331,14 +331,64 @@ import requests
 import os
 
 SCAN_APIS = {
-    "ethereum": "https://api.etherscan.io/api",
-    "polygon": "https://api.polygonscan.com/api",
-    "bsc": "https://api.bscscan.com/api",
-    "avalanche": "https://api.snowtrace.io/api",
-    "fantom": "https://api.ftmscan.com/api",
-    "arbitrum": "https://api.arbiscan.io/api",
-    "optimism": "https://api-optimistic.etherscan.io/api"
+    "ethereum": "https://api.etherscan.io/v2/api",
+    "polygon": "https://api.etherscan.io/v2/api",
+    "bsc": "https://api.etherscan.io/v2/api",
+    "avalanche": "https://api.snowtrace.io/api", # Snowtrace V1 still works for free
+    "fantom": "https://api.etherscan.io/v2/api",
+    "arbitrum": "https://api.etherscan.io/v2/api",
+    "optimism": "https://api.etherscan.io/v2/api"
 }
+
+CHAIN_METADATA = {
+    "ethereum": {"chainid": 1, "symbol": "ETH", "version": "v2"},
+    "polygon": {"chainid": 137, "symbol": "MATIC", "version": "v2"},
+    "bsc": {"chainid": 56, "symbol": "BNB", "version": "v2"},
+    "avalanche": {"chainid": 43114, "symbol": "AVAX", "version": "v1"},
+    "fantom": {"chainid": 146, "symbol": "FTM", "version": "v2"}, # Sonic ID
+    "arbitrum": {"chainid": 42161, "symbol": "ETH", "version": "v2"},
+    "optimism": {"chainid": 10, "symbol": "ETH", "version": "v2"}
+}
+
+PRICE_CACHE = {}
+
+def get_historical_price(symbol, timestamp_str, currency='EUR'):
+    """
+    Récupère le prix historique d'un token via l'API CryptoCompare.
+    Utilise un cache local pour éviter les appels redondants.
+    """
+    try:
+        date_obj = pd.to_datetime(timestamp_str)
+        ts = int(date_obj.timestamp())
+        
+        # Arrondir à l'heure pour augmenter le taux de hit du cache
+        ts_key = (symbol, ts // 3600 * 3600, currency)
+        
+        if ts_key in PRICE_CACHE:
+            return PRICE_CACHE[ts_key]
+            
+        print(f"Fetching historical price for {symbol} at {date_obj}...")
+        url = "https://min-api.cryptocompare.com/data/v2/histohour"
+        params = {
+            'fsym': symbol,
+            'tsym': currency,
+            'limit': 1,
+            'toTs': ts
+        }
+        
+        response = requests.get(url, params=params, timeout=5)
+        data = response.json()
+        
+        if data.get('Response') == 'Success' and data.get('Data', {}).get('Data'):
+            # Prendre le dernier point de données avant ou à l'instant T
+            price = data['Data']['Data'][-1].get('close', 0)
+            PRICE_CACHE[ts_key] = price
+            return price
+            
+    except Exception as e:
+        print(f"Error fetching price for {symbol}: {e}")
+        
+    return 0.0
 
 def fetch_on_chain_transactions(address: str, blockchains: list = None):
     """
@@ -350,12 +400,15 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
         
     for chain in blockchains:
         api_url = SCAN_APIS.get(chain)
-        if not api_url:
+        metadata = CHAIN_METADATA.get(chain)
+        if not api_url or not metadata:
             continue
             
-        # Get API key from env (naming convention: ETHEREUM_SCAN_API_KEY, etc.)
-        api_key_name = f"{chain.upper()}_SCAN_API_KEY"
-        api_key = os.getenv(api_key_name)
+        # Prioritize unified ETHERSCAN_API_KEY, then chain-specific, then fallback
+        api_key = os.getenv("ETHERSCAN_API_KEY") 
+        if not api_key:
+            api_key_name = f"{chain.upper()}_SCAN_API_KEY"
+            api_key = os.getenv(api_key_name)
         
         params = {
             'module': 'account',
@@ -364,11 +417,15 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
             'startblock': 0,
             'endblock': 99999999,
             'sort': 'asc',
-            'apikey': api_key or 'FREE_KEY' # Some explorers allow low-rate free requests
+            'apikey': api_key or 'FREE_KEY'
         }
         
+        # Add chainid for V2 unified endpoints
+        if metadata.get('version') == 'v2':
+            params['chainid'] = metadata['chainid']
+        
         try:
-            print(f"Fetching transactions for {address} on {chain}...")
+            print(f"Fetching transactions for {address} on {chain} (ID: {metadata['chainid']})...")
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
             
@@ -379,18 +436,25 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
                     value_native = float(tx.get('value', 0)) / 10**18
                     if value_native > 0:
                         is_outbound = tx.get('from', '').lower() == address.lower()
+                        date_str = pd.to_datetime(int(tx['timeStamp']), unit='s').strftime('%Y-%m-%d %H:%M:%S')
+                        
+                        # Récupérer le prix historique
+                        price_unit = get_historical_price(metadata['symbol'], date_str)
+                        
                         # Mapping vers le format Eisphora
                         transactions.append({
-                            'date': pd.to_datetime(int(tx['timeStamp']), unit='s').strftime('%Y-%m-%d %H:%M:%S'),
+                            'date': date_str,
                             'operation_type': 'vente' if is_outbound else 'achat',
-                            'crypto_token': chain.upper(),
+                            'crypto_token': metadata['symbol'],
+                            'tx_hash': tx.get('hash'),
                             'quantity': value_native,
-                            'price': 0, # La récupération de prix historique nécessiterait une API type CoinGecko
+                            'price': price_unit,
                             'fees': (float(tx.get('gasUsed', 0)) * float(tx.get('gasPrice', 0))) / 10**18,
                             'currency': 'EUR'
                         })
             else:
-                print(f"No transactions found or error for {chain}: {data.get('message')}")
+                msg = data.get('result') or data.get('message') or "Unknown error"
+                print(f"No transactions found or error for {chain}: {msg}")
         except Exception as e:
             print(f"Error fetching from {chain}: {e}")
             
