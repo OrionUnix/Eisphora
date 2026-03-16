@@ -14,11 +14,11 @@ urlpatterns = [
 def terms_view(request):
     return render(request, 'pages/terms.html') 
 
-from .views import HomeView, OnboardingView
+from .views import HomeView
 # ... (rest of imports)
 urlpatterns += i18n_patterns(
     path('', HomeView.as_view(), name='home'),
-    path('onboarding/', OnboardingView.as_view(), name='onboarding'),
+    # onboarding path removed, replaced by tax_forms:form_2048
     # auth/ routes removed for anonymity
     path('i18n/', include('django.conf.urls.i18n')),
     path('tax/', include('tax_forms.urls', namespace='tax_forms')),
