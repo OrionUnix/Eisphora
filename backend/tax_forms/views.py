@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
-from .services.extractor import parse_csv_file, fetch_on_chain_transactions, parse_generic_row
+from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row
 from .services.calculator import calculate_french_taxes
 
 def form_2048_view(request):
@@ -36,21 +36,36 @@ def form_2048_view(request):
 
             if crypto_address:
                 messages.info(request, _("Adresse crypto fournie. Récupération des transactions en cours..."))
-                chain_txs = fetch_on_chain_transactions(crypto_address)
+                selected_blockchains = form.cleaned_data.get('blockchain', ['ethereum'])
+                chain_txs = fetch_on_chain_transactions(crypto_address, blockchains=selected_blockchains)
                 all_transactions.extend(chain_txs)
                 
             if transaction_file:
                 messages.info(request, _("Fichier de transactions reçu. Analyse sans sauvegarde disque..."))
-                cex_txs = parse_csv_file(transaction_file, cex_type=cex_dex or "generic")
+                cex_txs = parse_transaction_file(transaction_file, cex_type=cex_dex or "generic")
+                if not cex_txs:
+                    messages.warning(request, _("Aucune transaction n'a pu être extraite du fichier. Vérifiez le format (CSV ou Excel)."))
                 all_transactions.extend(cex_txs)
+
+            # S'assurer que chaque transaction a un index pour le formulaire
+            for idx, tx in enumerate(all_transactions):
+                tx['index'] = idx + 1
                 
             calc_results = calculate_french_taxes(all_transactions)
             taxable_profits = calc_results['total_plus_value']
             
+            # Mapper les résultats de plus-value sur les transactions d'origine
+            taxable_events_map = {event['id']: event for event in calc_results['taxable_events']}
+            for tx in all_transactions:
+                event = taxable_events_map.get(tx.get('index'))
+                if event:
+                    tx['plus_value'] = event['plus_value']
+                    tx['prix_cession'] = event['prix_cession']
+                    tx['prix_acquisition'] = event.get('prix_acquisition', 0)
+                    tx['valeur_globale_estimee'] = event['valeur_globale_estimee']
+
             sessions = all_transactions
             taxable_events = calc_results['taxable_events']
-
-
 
             context = {
                 'sessions': sessions,
@@ -60,6 +75,7 @@ def form_2048_view(request):
                 'show_results': True,
                 'taxable_profits': taxable_profits,
                 'cex_dex': cex_dex,
+                'manual_transactions': all_transactions, # On renvoie tout pour édition
             }
             print("Rendu de form_2048.html avec résultats")
             return render(request, 'tax_forms/form_2048.html', context)

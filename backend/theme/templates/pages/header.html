@@ -28,9 +28,9 @@
                 <br>
     
             </h1>
-            <button class="mt-8 px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-700 hover:to-pink-600 transition-all transform hover:scale-105">
-                Get Started
-            </button>
+            <a href="{% url 'onboarding' %}" class="inline-block mt-8 px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-700 hover:to-pink-600 transition-all transform hover:scale-105">
+                {% trans "Get Started" %}
+            </a>
             <div class="mt-10 flex items-center text-sm">
                 <div>
                     <span class="ml-2 text-sm text-gray-300">{% trans "Make with love ❤, Say goodbye to tax headaches. Eisphora is free, open, and designed to make crypto tax compliance finally make sense. " %} 

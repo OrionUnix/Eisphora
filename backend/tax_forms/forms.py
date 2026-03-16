@@ -15,7 +15,31 @@ class Form2048(forms.Form):
     )
     cex_dex = forms.ChoiceField(
         label=_("CEX/DEX utilisé"),
-        choices=[("", "-------"), ("binance", "Binance"), ("kraken", "Kraken"), ("uniswap", "Uniswap")],
+        choices=[
+            ("", "-------"), 
+            ("binance", "Binance"), 
+            ("kraken", "Kraken"), 
+            ("coinbase", "Coinbase"),
+            ("cryptocom", "Crypto.com"),
+            ("kucoin", "KuCoin"),
+            ("bybit", "Bybit"),
+            ("uniswap", "Uniswap")
+        ],
         required=False,
         help_text=_("Indiquez la plateforme utilisée pour cette transaction.")
+    )
+    blockchain = forms.MultipleChoiceField(
+        label=_("Blockchains (EVM)"),
+        choices=[
+            ("ethereum", "Ethereum"),
+            ("polygon", "Polygon"),
+            ("bsc", "Binance Smart Chain"),
+            ("avalanche", "Avalanche"),
+            ("fantom", "Fantom"),
+            ("arbitrum", "Arbitrum"),
+            ("optimism", "Optimism")
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        initial=["ethereum"]
     )

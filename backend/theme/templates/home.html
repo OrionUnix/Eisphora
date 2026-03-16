@@ -4,4 +4,15 @@
 {% block content %}
   {% get_current_language as LANGUAGE_CODE %}
 
+  {% include 'pages/header.html' %}
+
+  <!-- Features Grid -->
+  {% include 'pages/features.html' %}
+
+  <!-- Security Section -->
+  {% include 'pages/security.html' %}
+
+  <!-- CTA Section -->
+  {% include 'pages/cta.html' %}
+
 {% endblock %}
