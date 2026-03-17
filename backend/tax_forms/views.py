@@ -54,6 +54,8 @@ def form_2048_view(request):
                 
             calc_results = calculate_french_taxes(all_transactions)
             taxable_profits = calc_results['total_plus_value']
+            estimated_tax = max(0, taxable_profits * 0.30)  # PFU 12.8% IR + 17.2% PS
+            estimated_tax_bareme = max(0, taxable_profits * (0.30 + 0.172))  # TMI 30% + 17.2% PS
             
             # Mapper les résultats de plus-value sur les transactions d'origine
             taxable_events_map = {event['id']: event for event in calc_results['taxable_events']}
@@ -75,8 +77,10 @@ def form_2048_view(request):
                 'form': form,
                 'show_results': True,
                 'taxable_profits': taxable_profits,
+                'estimated_tax': estimated_tax,
+                'estimated_tax_bareme': estimated_tax_bareme,
                 'cex_dex': cex_dex,
-                'manual_transactions': all_transactions, # On renvoie tout pour édition
+                'manual_transactions': all_transactions,
             }
             print("Rendu de form_2048.html avec résultats")
             return render(request, 'tax_forms/form_2048.html', context)

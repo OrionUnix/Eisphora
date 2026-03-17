@@ -1,6 +1,6 @@
 {% extends "tax_forms/base_form.html" %}
 {% load i18n tailwind_tags widget_tweaks %}
-  {% block title %}{% trans "Formulaire 2048 - Plus-values ou moins-values réalisées directement" %}{% endblock %}
+  {% block title %}{% trans "Déclaration d'actifs numériques - Formulaires 2086 & 2042-C" %}{% endblock %}
 {% block content %}
 
 <style>
@@ -16,14 +16,24 @@
     .badge-achat { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
     .badge-vente { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
     .badge-transfert { background: #f8fafc; color: #475569; border: 1px solid #f1f5f9; }
+
+    .summary-card {
+        background-color: #0f172a; /* Slate 900 for dark premium feel */
+        background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+        color: white;
+    }
+    .summary-item {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 </style>
 
 <div class="space-y-3 mt-10">
     <!-- Section Titre et Résumé Global -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{% trans "Formulaire 2048 - Plus-values immobilières et mobilières" %}</h1>
-            <p class="text-sm text-gray-500">{% trans "Outil anonyme de calcul de l'impôt sur les crypto-actifs." %}</p>
+            <h1 class="text-2xl font-bold text-gray-900">{% trans "Déclaration des Plus-values d'Actifs Numériques" %}</h1>
+            <p class="text-sm text-gray-500">{% trans "Calcul automatique pour les formulaires 2086 et 2042-C." %}</p>
         </div>
         
         {% if show_results %}
@@ -43,6 +53,128 @@
         </div>
         {% endif %}
     </div>
+
+    {% if show_results %}
+    <!-- Nouvelle Section : Summary de Déclaration (REFONTE) -->
+    <div class="summary-card p-4 rounded-xl shadow-xl border border-slate-800 animate-fade-in mb-6" id="tax-summary">
+        <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-500/20 p-1.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color:#60a5fa" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold" style="color:white">{% trans "Résumé de votre déclaration" %}</h2>
+            </div>
+            <button type="button" class="bg-white/10 hover:bg-white/20 text-xs font-bold py-2 px-4 rounded-lg transition-all flex items-center gap-2" style="color:white;border:1px solid rgba(255,255,255,0.1)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" /></svg>
+                {% trans "Télécharger 2086" %}
+            </button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Colonne 1 : Résultat Fiscal -->
+            <div class="summary-item p-3 rounded-lg">
+                <p class="text-[10px] uppercase font-bold mb-2" style="color:#94a3b8">{% trans "Formulaire 2042-C" %}</p>
+                {% if taxable_profits >= 0 %}
+                    <p class="text-xs mb-1" style="color:#86efac">{% trans "Case" %} <strong style="color:#4ade80">3AN</strong></p>
+                    <p class="text-[10px] font-bold uppercase mb-1" style="color:#4ade80">{% trans "Plus-value" %}</p>
+                    <p class="text-2xl font-mono font-black" style="color:#4ade80">{{ taxable_profits|floatformat:0 }} €</p>
+                {% else %}
+                    <p class="text-xs mb-1" style="color:#fca5a5">{% trans "Case" %} <strong style="color:#f87171">3BN</strong></p>
+                    <p class="text-[10px] font-bold uppercase mb-1" style="color:#f87171">{% trans "Moins-value" %}</p>
+                    <p class="text-2xl font-mono font-black" style="color:#f87171">-{{ taxable_profits|floatformat:0|cut:"-" }} €</p>
+                {% endif %}
+            </div>
+
+            <!-- Colonne 2 : PFU (taux ajustable) -->
+            <div class="summary-item p-3 rounded-lg" style="border-left: 2px solid rgba(234,179,8,0.5)">
+                <p class="text-[10px] uppercase font-bold mb-2" style="color:#94a3b8">{% trans "PFU (Flat Tax)" %}</p>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs" style="color:#d1d5db">{% trans "Taux" %} :</span>
+                    <input type="number" id="pfu-rate" value="30" min="0" max="100" step="0.5"
+                           class="w-16 text-center text-xs font-bold rounded px-1 py-0.5"
+                           style="background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.3)"
+                           oninput="updateTaxEstimates()">
+                    <span class="text-xs" style="color:#fbbf24">%</span>
+                </div>
+                {% if taxable_profits > 0 %}
+                    <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "À payer" %}</p>
+                    <p class="text-2xl font-mono font-black" id="pfu-result" style="color:#fbbf24">{{ estimated_tax|floatformat:0 }} €</p>
+                {% else %}
+                    <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "N/A" %}</p>
+                    <p class="text-2xl font-mono font-black" style="color:#475569">0 €</p>
+                {% endif %}
+            </div>
+
+            <!-- Colonne 3 : Barème Progressif (taux ajustable) -->
+            <div class="summary-item p-3 rounded-lg" style="border-left: 2px solid rgba(147,51,234,0.5)">
+                <p class="text-[10px] uppercase font-bold mb-2" style="color:#94a3b8">{% trans "Barème Progressif" %}</p>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs" style="color:#d1d5db">{% trans "TMI" %} :</span>
+                    <select id="bareme-rate"
+                            class="text-xs font-bold rounded px-1 py-0.5"
+                            style="background:rgba(147,51,234,0.15);color:#c084fc;border:1px solid rgba(147,51,234,0.3)"
+                            onchange="updateTaxEstimates()">
+                        <option value="11">11% (TMI 1)</option>
+                        <option value="30" selected>30% (TMI 2)</option>
+                        <option value="41">41% (TMI 3)</option>
+                        <option value="45">45% (TMI 4)</option>
+                    </select>
+                </div>
+                {% if taxable_profits > 0 %}
+                    <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "À payer" %}</p>
+                    <p class="text-2xl font-mono font-black" id="bareme-result" style="color:#c084fc">{{ estimated_tax_bareme|floatformat:0 }} €</p>
+                {% else %}
+                    <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "N/A" %}</p>
+                    <p class="text-2xl font-mono font-black" style="color:#475569">0 €</p>
+                {% endif %}
+            </div>
+
+            <!-- Colonne 4 : Obligations -->
+            <div class="summary-item p-3 rounded-lg">
+                <p class="text-[10px] uppercase font-bold mb-2" style="color:#94a3b8">{% trans "Obligations" %}</p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs">
+                        {% if calc_results.total_prix_cession < 305 %}
+                            <div class="w-2 h-2 rounded-full" style="background:#22c55e"></div>
+                            <span style="color:#d1d5db">{% trans "Exonéré" %} (&lt;305€)</span>
+                        {% else %}
+                            <div class="w-2 h-2 rounded-full" style="background:#ef4444"></div>
+                            <span style="color:#d1d5db">{% trans "Imposable" %} (&gt;305€)</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <div class="w-2 h-2 rounded-full" style="background:#3b82f6"></div>
+                        <span style="color:#d1d5db">{% trans "Annexe 2086" %} : <strong>{{ taxable_events|length }}</strong> {% trans "lignes" %}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <div class="w-2 h-2 rounded-full" style="background:#6b7280"></div>
+                        <span style="color:#d1d5db">{% trans "Cessions" %} : {{ calc_results.total_prix_cession|floatformat:0 }} €</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="text-[9px] mt-2 text-center italic" style="color:#475569">{% trans "* Chiffres indicatifs. Les deux régimes s'excluent mutuellement ; choisissez avec votre conseiller fiscal." %}</p>
+    </div>
+
+    <script>
+    var taxableAmount = {{ taxable_profits }};
+    function updateTaxEstimates() {
+        if (taxableAmount <= 0) return;
+        var pfuRate = parseFloat(document.getElementById('pfu-rate').value) || 0;
+        var baremeRate = parseFloat(document.getElementById('bareme-rate').value) || 0;
+        // PFU: IR (12.8%) + PS (17.2%) = 30%. User can override total rate.
+        var pfuTotal = taxableAmount * pfuRate / 100;
+        // Barème: TMI * gains + PRÉLÈVEMENTS SOCIAUX 17.2%
+        var baremeTotal = taxableAmount * (baremeRate + 17.2) / 100;
+        var pfuEl = document.getElementById('pfu-result');
+        var baremeEl = document.getElementById('bareme-result');
+        if (pfuEl) pfuEl.textContent = Math.round(pfuTotal).toLocaleString('fr-FR') + ' €';
+        if (baremeEl) baremeEl.textContent = Math.round(baremeTotal).toLocaleString('fr-FR') + ' €';
+    }
+    </script>
+    {% endif %}
 
     <!-- Section Principale (Pleine Largeur) -->
     <div class="w-full">
