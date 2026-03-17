@@ -514,6 +514,84 @@ msgstr "Calcul de votre estimation..."
 msgid "Simulation Complete!"
 msgstr "Simulation terminée !"
 
-msgid "Your draft estimate is ready for review."
-msgstr "Votre brouillon d'estimation est prêt à être vérifié."
+msgid "Your draft is ready. Always verify with a professional before filing."
+msgstr "Votre brouillon est prêt. À vérifier avec un professionnel avant déclaration."
+
+msgid "Local data"
+msgstr "Données locales"
+
+msgid "Estimated"
+msgstr "Estimé"
+
+msgid "Generates a FIFO calculation draft to facilitate filling your forms (ex: 2042-C & 2086)."
+msgstr "Génère un brouillon de calcul FIFO pour faciliter le remplissage de vos formulaires (ex : 2042-C & 2086)."
+
+msgid "100% Local Encryption"
+msgstr "Chiffrement 100% Local"
+
+msgid "Your data never leaves your browser. Client-side processing and encryption (XSalsa20-Poly1305)."
+msgstr "Vos données ne quittent jamais votre navigateur. Traitement et chiffrement côté client (XSalsa20-Poly1305)."
+
+msgid "Multilingual & Community"
+msgstr "Multilingue & Communautaire"
+
+msgid "Designed for global use with support for multiple languages (FR, EN, ES, IT...) thanks to the open source community."
+msgstr "Conçu pour une utilisation globale avec le support de multiples langues (FR, EN, ES, IT...) grâce à la communauté open source."
+
+msgid "Open Source & Auditable"
+msgstr "Code Ouvert & Auditable"
+
+msgid "No black box. The source code is public on GitHub. The community can verify the security and calculation logic."
+msgstr "Pas de boîte noire. Le code source est public sur GitHub. La communauté peut vérifier la sécurité et la logique de calcul."
+
+msgid "Simple Import (CSV / API)"
+msgstr "Importation Simple (CSV / API)"
+
+msgid "Easily import your history via CSV or read-only API keys, without ever transmitting them to an external server."
+msgstr "Importez facilement l'historique de vos plateformes via CSV ou clés API en lecture seule, sans jamais les transmettre à un serveur externe."
+
+msgid "Privacy & Anonymity"
+msgstr "Anonymat & Confidentialité"
+
+msgid "No account needed. No personal data collection. Your identity remains protected throughout the simulation process."
+msgstr "Aucun compte requis. Aucune collecte de données personnelles. Votre identité reste protégée tout au long du processus de simulation."
+
+msgid "How it works?"
+msgstr "Comment ça marche ?"
+
+msgid "Import your transactions"
+msgstr "Importez vos transactions"
+
+msgid "Get Started In Minutes."
+msgstr "Commencez en quelques minutes."
+
+msgid "Load your CSV files locally. Your data is never uploaded to any server."
+msgstr "Chargez vos fichiers CSV localement. Vos données ne sont jamais envoyées sur un serveur."
+
+msgid "Eisphora calculates (locally)"
+msgstr "Eisphora calcule (en local)"
+
+msgid "The engine applies the FIFO method and tax rules directly in your browser."
+msgstr "Le moteur applique la méthode FIFO et les règles fiscales directement dans votre navigateur."
+
+msgid "Retrieve ready-to-use figures for your tax forms (ex: 2042-C & 2086)."
+msgstr "Récupérez les chiffres prêts à l'emploi pour vos formulaires fiscaux (ex : 2042-C & 2086)."
+
+msgid "Client-side encryption only"
+msgstr "Chiffrement côté client uniquement"
+
+msgid "No passwords required"
+msgstr "Aucun mot de passe requis"
+
+msgid "No tracking cookies"
+msgstr "Aucun cookie de pistage"
+
+msgid "Zero-Knowledge architecture"
+msgstr "Architecture Zéro-Connaissance (Zero-Knowledge)"
+
+msgid "100% Local processing"
+msgstr "Traitement 100% local"
+
+msgid "No server database"
+msgstr "Aucune base de données serveur"
 
