@@ -221,3 +221,183 @@
 .shield-glow {
   filter: drop-shadow(0 0 20px rgba(192, 132, 252, 0.4));
 }
+
+/* Standardized Vibrant Button */
+.btn-vibrant {
+  position: relative;
+  z-index: 20;
+  display: inline-block;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(to right, #9333ea, #ec4899);
+  color: white !important;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+  text-decoration: none !important;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-vibrant:hover {
+  background: linear-gradient(to right, #7e22ce, #db2777);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.btn-vibrant:active {
+  transform: scale(0.98);
+}
+
+/* Watercolor Wash Background */
+.watercolor-wash {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.watercolor-wash::before,
+.watercolor-wash::after,
+.wash-orb {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: wash-move 20s infinite alternate ease-in-out;
+}
+
+.watercolor-wash::before {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, #9333ea, transparent);
+  top: -10%;
+  left: -10%;
+}
+
+.watercolor-wash::after {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, #ec4899, transparent);
+  bottom: -10%;
+  right: -10%;
+  animation-duration: 25s;
+}
+
+.wash-orb {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #3b82f6, transparent);
+  top: 40%;
+  left: 30%;
+  animation-duration: 30s;
+}
+
+@keyframes wash-move {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(100px, 50px) scale(1.1); }
+}
+
+/* Glass Form Card */
+.glass-card-form {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+.glass-card-form:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.input-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.input-glass:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #9333ea;
+  outline: 2px solid rgba(147, 51, 234, 0.3);
+}
+
+/* Modern Light Dashboard Theme */
+.modern-light-wash {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #f8fafc; /* Slate 50 */
+  overflow: hidden;
+}
+
+.modern-light-wash::before,
+.modern-light-wash::after,
+.modern-light-wash .wash-orb {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12; /* Much softer for light mode */
+  animation: wash-move 20s infinite alternate ease-in-out;
+}
+
+.modern-light-wash::before {
+  width: 1000px;
+  height: 1000px;
+  background: radial-gradient(circle, #9333ea, transparent);
+  top: -20%;
+  left: -10%;
+}
+
+.modern-light-wash::after {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, #ec4899, transparent);
+  bottom: -15%;
+  right: -5%;
+  animation-duration: 25s;
+}
+
+.modern-light-wash .wash-orb {
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, #3b82f6, transparent);
+  top: 30%;
+  left: 40%;
+  animation-duration: 30s;
+}
+
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 25px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -5px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-input {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.dashboard-input:focus {
+  border-color: #9333ea;
+  box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.08);
+  outline: none;
+}

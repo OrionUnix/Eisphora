@@ -1,45 +1,47 @@
 {% load i18n %}
-<footer class="bg-white">
-  <div class="mx-auto max-w-screen-xl space-y-8 px-4 py-16 sm:px-6 lg:space-y-16 lg:px-8">
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div>
-        <div class="text-teal-600">
-          {% include 'includes/logo.html' with size="h-[96px] w-[96px]" %}
-        </div>
+<footer class="bg-[#0B001A] border-t border-white/10 text-gray-400">
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
-        <p class="mt-4 max-w-xs text-gray-500 text-sm">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+
+      <div class="flex items-center gap-4">
+        <div class="opacity-80 hover:opacity-100 transition-opacity">
+          {% include 'includes/logo.html' with size="h-[48px] w-[48px]" %}
+        </div>
+        <p class="hidden md:block max-w-xs text-xs text-gray-500 leading-tight">
           {{ seo.current_meta.description }}
         </p>
       </div>
 
-      <div class="lg:col-span-2 flex flex-col justify-end items-end">
-        <ul class="flex flex-wrap gap-8 text-sm font-medium text-gray-900">
-          <li>
-            <a href="#" class="text-gray-700 transition hover:text-teal-600"> {% trans "About" %} </a>
-          </li>
-          <li>
-            <a href="#" class="text-gray-700 transition hover:text-teal-600"> {% trans "FAQs" %} </a>
-          </li>
-          <li>
-            <a href="{% url 'terms' %}" class="text-gray-700 transition hover:text-teal-600"> {% trans "Terms" %} </a>
-          </li>
-        </ul>
-      </div>
+      <ul class="flex flex-wrap justify-center gap-6 text-sm font-medium">
+        <li>
+          <a href="#" class="text-gray-400 transition hover:text-white">{% trans "About" %}</a>
+        </li>
+        <li>
+          <a href="#" class="text-gray-400 transition hover:text-white">{% trans "FAQs" %}</a>
+        </li>
+        <li>
+          <a href="{% url 'terms' %}" class="text-gray-400 transition hover:text-white">{% trans "Terms" %}</a>
+        </li>
+      </ul>
     </div>
 
-    <div class="border-t border-gray-100 pt-8 mt-8">
-      <p class="text-sm text-gray-400 mb-8 max-w-3xl leading-relaxed">
+    <div class="border-t border-white/5 pt-6 mt-6">
+
+      <p class="text-xs text-gray-500 mb-6 text-center max-w-3xl mx-auto leading-relaxed">
         {% trans "Eisphora is an independent open-source project. Data is processed locally. Results are estimates and do not constitute tax advice." %}
       </p>
 
       <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">
+          &copy; {% now "Y" %}. {{ seo.site_name }}. All rights reserved.
+        </p>
+        <p class="text-[10px] text-gray-500 font-mono uppercase tracking-widest">
+          Made with love by <a href="https://github.com/OrionDeimos" target="_blank" rel="noopener noreferrer"
+            class="font-bold text-gray-300 hover:text-white transition">OrionDeimos</a>
+        </p>
+      </div>
 
-      <p class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-        &copy; {% now "Y" %}. {{ seo.site_name }}. All rights reserved.
-      </p>
-      <p class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
-        Made with love by <span class="font-bold text-gray-600">OrionDeimos</span>
-      </p>
     </div>
   </div>
-</footer>
+</footer>

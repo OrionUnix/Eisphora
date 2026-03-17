@@ -1,81 +1,52 @@
 {% load i18n static tailwind_tags %}
 
-<style>
-    .cta-section-vibrant {
-        position: relative;
-        overflow: hidden;
-        background: linear-gradient(to top right, #ff2fad, #fca311);
-        padding: 6rem 0;
-    }
 
-    .cta-fluid-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        pointer-events: none;
-    }
+<section class="gradient-section1">
 
-    /* Isolated Animations for CTA */
-    @keyframes cta-flow-1 {
-        0% { d: path("M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z"); }
-        50% { d: path("M0,120 C250,0 450,250 700,50 S950,-50 1150,150 S1400,250 1200,120 V600 H0 Z"); }
-        100% { d: path("M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z"); }
-    }
+    <div class="relative z-10 max-w-4xl mx-auto px-6">
 
-    @keyframes cta-flow-2 {
-        0% { d: path("M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z"); }
-        50% { d: path("M0,320 C200,100 400,500 650,200 S900,50 1100,400 S1400,550 1200,320 V600 H0 Z"); }
-        100% { d: path("M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z"); }
-    }
+        <h2 class="text-3xl md:text-5xl font-bold mb-8 text-white tracking-tight uppercase">
+            {% trans "Prêt à estimer vos impôts crypto ?" %}
+        </h2>
 
-    @keyframes cta-grad-flow {
-        0% { stop-color: #ff2fad; }
-        50% { stop-color: #fca311; }
-        100% { stop-color: #ff2fad; }
-    }
+        <p class="text-gray-400 text-lg mb-12 max-w-2xl mx-auto text-white leading-relaxed">
+            {% trans "Simplifiez l'estimation de votre fiscalité crypto en toute confidentialité et autonomie." %}
+        </p>
 
-    .cta-shape-1 {
-        animation: cta-flow-1 25s ease-in-out infinite;
-        opacity: 0.7;
-    }
+        <div class="flex flex-col items-center gap-8">
+            <a href="{% url 'tax_forms:form_2048' %}" class="btn-vibrant px-12 py-5 text-lg">
+                {% trans "Lancer ma simulation" %}
+            </a>
 
-    .cta-shape-2 {
-        animation: cta-flow-2 20s ease-in-out infinite;
-        opacity: 0.5;
-    }
-
-    .cta-stop-1 { animation: cta-grad-flow 12s infinite; }
-    .cta-stop-2 { animation: cta-grad-flow 12s infinite reverse; }
-
-    .cta-card-glass {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 2.5rem;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
-    }
-</style>
-
-<section class="py-24 text-center bg-white px-4">
-    <div class="max-w-4xl mx-auto">
-        <h2 class="text-3xl font-bold mb-8 text-gray-800 uppercase tracking-tight">{% trans "Prêt à estimer vos impôts crypto ?" %}</h2>
-        
-        <a href="{% url 'tax_forms:form_2048' %}" class="inline-block px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-extrabold rounded-2xl shadow-2xl hover:scale-110 transition-transform uppercase tracking-widest text-sm">
-            {% trans "Lancer ma simulation" %}
-        </a>
-
-        <div class="mt-10 flex justify-center space-x-8 text-gray-400 text-xs font-bold uppercase tracking-widest">
-            <span class="flex items-center"><span class="w-2 h-2 bg-gray-200 rounded-full mr-2"></span> {% trans "Open source" %}</span>
-            <span class="flex items-center"><span class="w-2 h-2 bg-gray-200 rounded-full mr-2"></span> {% trans "Gratuit" %}</span>
-            <span class="flex items-center"><span class="w-2 h-2 bg-gray-200 rounded-full mr-2"></span> {% trans "100% Local" %}</span>
+            <div class="flex flex-wrap justify-center gap-6 text-sm">
+                <span class="flex items-center text-gray-300">
+                    <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                    {% trans "Open source" %}
+                </span>
+                <span class="flex items-center text-gray-300">
+                    <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                    {% trans "Gratuit" %}
+                </span>
+                <span class="flex items-center text-gray-300">
+                    <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                    {% trans "100% Local" %}
+                </span>
+            </div>
         </div>
 
-        <p class="mt-8 text-xs text-gray-400 max-w-2xl mx-auto italic">
-            {% trans "Eisphora fournit des estimations de base. Consultez toujours un fiscaliste certifié avant de remplir vos déclarations." %}
+        <p class="mt-12 text-xs text-gray-500 italic max-w-lg mx-auto">
+            {% trans "Eisphora fournit des estimations de base. Consultez toujours un fiscaliste certifié avant de
+            remplir vos déclarations." %}
         </p>
+    </div>
     </div>
 </section>
