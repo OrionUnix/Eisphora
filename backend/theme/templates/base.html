@@ -2,38 +2,31 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
-	<head>
-        <link rel="icon" type="image/png" href="{{ seo.site_favicon }}">
-        <meta name="theme-color" content="#0f172a">
-        <meta name="msapplication-TileColor" content="#1a1a1a">
-        <link rel="mask-icon" href="{{ seo.site_favicon }}" color="#1a1a1a">
-        <meta name="msapplication-TileColor" content="#0f172a">
-        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <!-- SEO dynamique -->
-        <title>{{ seo.current_meta.title }} - {{ seo.site_name }}</title>
-        <meta name="description" content="{{ seo.current_meta.description }}">
-        <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ seo.site_favicon }}">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    
-        {% for locale, url in seo.hreflang.items %}
-        <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
-        {% endfor %}
-       
-        <meta property="og:site_name" content="{{ seo.site_name }}">
-        <meta property="og:title" content="{{ seo.current_meta.title }}">
-        <meta property="og:description" content="{{ seo.current_meta.description }}">
-        <meta property="og:url" content="{{ seo.site_url }}{{ request.path }}">
-        <meta property="og:image" content="{{ seo.site_logo }}">
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{{ seo.current_meta.title }}">
-        <meta name="twitter:description" content="{{ seo.current_meta.description }}">
-        <meta name="twitter:image" content="{{ seo.site_logo }}">
-    
+    <!-- SEO dynamique -->
+    <title>{{ seo.current_meta.title }} - {{ seo.site_name }}</title>
+    <meta name="description" content="{{ seo.current_meta.description }}">
+    <link rel="canonical" href="{{ seo.site_url }}{{ request.get_full_path }}">
+
+    {% for locale, url in seo.hreflang.items %}
+    <link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">
+    {% endfor %}
+   
+    <meta property="og:site_name" content="{{ seo.site_name }}">
+    <meta property="og:title" content="{{ seo.current_meta.title }}">
+    <meta property="og:description" content="{{ seo.current_meta.description }}">
+    <meta property="og:url" content="{{ seo.site_url }}{{ request.path }}">
+    <meta property="og:image" content="{{ seo.site_logo }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ seo.current_meta.title }}">
+    <meta name="twitter:description" content="{{ seo.current_meta.description }}">
+    <meta name="twitter:image" content="{{ seo.site_logo }}">
+
     {% if seo.google_analytics_id %}
-    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ seo.google_analytics_id }}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -42,18 +35,20 @@
       gtag('config', '{{ seo.google_analytics_id }}');
     </script>
     {% endif %}
+
     {% tailwind_css %}
-    <script type="application/ld+json">
-        {{ seo.json_ld|safe|json_script:"eisphora-jsonld" }}
-    </script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+        }
+    </style>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans antialiased">
     <!-- Navbar -->
     {% include 'includes/navbar.html' %}
 
     <div class="min-h-screen flex flex-col">
-        <!-- Bloc pour le contenu spécifique des pages -->
         <main class="flex-grow">
             {% block content %}{% endblock %}
         </main>

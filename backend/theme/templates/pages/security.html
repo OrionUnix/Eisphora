@@ -1,235 +1,72 @@
 {% load i18n static tailwind_tags %}
-
+{% tailwind_css %}
+<link rel="stylesheet" href="{% static 'css/gradient.css' %}">
 <style>
-    .security-section-vibrant {
-        position: relative;
-        overflow: hidden;
-        background: linear-gradient(to bottom right, #ff2fad, #fca311);
-        /* Same as header right side */
-        padding: 8rem 0;
-    }
 
-    .security-fluid-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        pointer-events: none;
-    }
-
-    /* Animations derived from header but isolated */
-    @keyframes security-flow-1 {
-        0% {
-            d: path("M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z");
-        }
-
-        50% {
-            d: path("M0,120 C250,0 450,250 700,50 S950,-50 1150,150 S1400,250 1200,120 V600 H0 Z");
-        }
-
-        100% {
-            d: path("M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z");
-        }
-    }
-
-    @keyframes security-flow-2 {
-        0% {
-            d: path("M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z");
-        }
-
-        50% {
-            d: path("M0,320 C200,100 400,500 650,200 S900,50 1100,400 S1400,550 1200,320 V600 H0 Z");
-        }
-
-        100% {
-            d: path("M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z");
-        }
-    }
-
-    @keyframes security-flow-3 {
-        0% {
-            d: path("M0,500 C50,350 300,650 500,400 S700,300 900,550 S1200,700 1200,500 V600 H0 Z");
-        }
-
-        50% {
-            d: path("M0,480 C150,300 350,700 550,350 S750,200 950,600 S1400,750 1200,480 V600 H0 Z");
-        }
-
-        100% {
-            d: path("M0,500 C50,350 300,650 500,400 S700,300 900,550 S1200,700 1200,500 V600 H0 Z");
-        }
-    }
-
-    /* Gradient Color Animations isolated */
-    @keyframes security-grad-1 {
-        0% {
-            stop-color: rgb(236, 72, 153);
-        }
-
-        50% {
-            stop-color: rgb(239, 68, 68);
-        }
-
-        100% {
-            stop-color: rgb(236, 72, 153);
-        }
-    }
-
-    @keyframes security-grad-2 {
-        0% {
-            stop-color: rgb(239, 68, 68);
-        }
-
-        50% {
-            stop-color: rgb(234, 179, 8);
-        }
-
-        100% {
-            stop-color: rgb(239, 68, 68);
-        }
-    }
-
-    @keyframes security-grad-3 {
-        0% {
-            stop-color: rgb(234, 179, 8);
-        }
-
-        50% {
-            stop-color: rgb(236, 72, 153);
-        }
-
-        100% {
-            stop-color: rgb(234, 179, 8);
-        }
-    }
-
-    .security-shape-1 {
-        animation: security-flow-1 20s ease-in-out infinite;
-        opacity: 0.8;
-    }
-
-    .security-shape-2 {
-        animation: security-flow-2 18s ease-in-out infinite 3s;
-        opacity: 0.8;
-    }
-
-    .security-shape-3 {
-        animation: security-flow-3 22s ease-in-out infinite 6s;
-        opacity: 0.6;
-    }
-
-    .security-stop-v1 {
-        animation: security-grad-1 15s infinite;
-    }
-
-    .security-stop-v2 {
-        animation: security-grad-2 15s infinite;
-    }
-
-    .security-stop-v3 {
-        animation: security-grad-3 15s infinite;
-    }
-
-    .security-card-glass {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 2rem;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .security-card-glass:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.35);
-        background: rgba(255, 255, 255, 0.25);
-    }
 </style>
-
-<section class="security-section-vibrant">
-    <!-- Vibrant Fluid background -->
-    <svg class="security-fluid-bg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice">
-        <defs>
-            <linearGradient id="secVibrantGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" class="security-stop-v1" />
-                <stop offset="100%" class="security-stop-v2" />
-            </linearGradient>
-            <linearGradient id="secVibrantGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" class="security-stop-v2" />
-                <stop offset="100%" class="security-stop-v3" />
-            </linearGradient>
-            <linearGradient id="secVibrantGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" class="security-stop-v3" />
-                <stop offset="100%" class="security-stop-v1" />
-            </linearGradient>
-        </defs>
-
-        <path class="security-shape-1" fill="url(#secVibrantGrad1)"
-            d="M0,100 C150,20 400,200 600,80 S900,-20 1100,100 S1300,200 1200,150 V600 H0 Z" />
-        <path class="security-shape-2" fill="url(#secVibrantGrad2)"
-            d="M0,300 C100,150 350,450 550,250 S800,100 1000,350 S1200,500 1200,300 V600 H0 Z" />
-        <path class="security-shape-3" fill="url(#secVibrantGrad3)"
-            d="M0,500 C50,350 300,650 500,400 S700,300 900,550 S1200,700 1200,500 V600 H0 Z" />
-    </svg>
-
-    <div class="max-w-6xl mx-auto px-6 relative z-10">
+<section class="gradient-section1 relative z-10">
+    <div class="max-w-7xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4 drop-shadow-md">{% trans "Enhanced safety" %}
-            </h2>
-            <div class="w-24 h-1.5 bg-white/30 mx-auto rounded-full backdrop-blur-sm"></div>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">{% trans "Enhanced safety" %}</h2>
+            <p class="text-blue-400 font-semibold tracking-widest uppercase text-sm">
+                {% trans "Protéger votre vie privée est notre mission principale" %}
+            </p>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6 lg:gap-6 max-w-5xl mx-auto">
-            <!-- Card 1 -->
-            <div class="security-card-glass p-8 md:p-10 max-w-md mx-auto w-full">
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+            <div class="p-6 isolate rounded-xl feature-card shadow-lg ring-1 ring-black/5">
                 <div class="flex items-center mb-8">
-                    <div
-                        class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mr-5 shadow-inner border border-white/20">
-                        🔑</div>
+                    <div class="w-12 h-12text-2xl mr-4">🔑</div>
                     <h3 class="font-bold text-2xl text-white">{% trans "Key management" %}</h3>
                 </div>
-                <ul class="space-y-5">
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                <ul class="space-y-4">
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
                         {% trans "Client-side encryption only" %}
                     </li>
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
                         {% trans "No passwords required" %}
                     </li>
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
                         {% trans "No tracking cookies" %}
                     </li>
                 </ul>
             </div>
 
-            <!-- Card 2 -->
-            <div class="security-card-glass p-8 md:p-10 max-w-md mx-auto w-full">
+            <div
+                class="bg-white/10 backdrop-blur-md border border-white/5 p-8 rounded-2xl hover:bg-white/15 transition-all duration-300 shadow-xl group">
                 <div class="flex items-center mb-8">
                     <div
-                        class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mr-5 shadow-inner border border-white/20">
-                        🛡️</div>
-                    <h3 class="font-bold text-2xl text-white">{% trans "Data protection" %}</h3>
+                        class="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-2xl mr-4 shadow-[0_0_15px_rgba(168,85,247,0.2)] group-hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all">
+                        🛡️
+                    </div>
+                    <h3 class="font-bold text-2xl text-white">{% trans "Protection des données" %}</h3>
                 </div>
-                <ul class="space-y-5">
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                <ul class="space-y-4">
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
                         {% trans "Zero-Knowledge architecture" %}
                     </li>
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
                         {% trans "100% Local processing" %}
                     </li>
-                    <li class="flex items-center text-white/90 text-base">
-                        <span class="w-3 h-3 bg-white/40 rounded-full mr-4 shadow-sm"></span>
+                    <li class="flex items-center text-gray-300">
+                        <span
+                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
                         {% trans "No server database" %}
                     </li>
                 </ul>
             </div>
+
         </div>
     </div>
 </section>
