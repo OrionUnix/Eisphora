@@ -24,19 +24,21 @@
                 <span class="text-white">
                   {{ seo.site_name }}</span>
                 <br>
-                <span class="text-outline text-white">{% trans "Clarity. Simplicity. Peace of mind." %}</span>
+                <span class="text-outline text-white">{{ seo.current_meta.3_words }}</span>
                 <br>
     
             </h1>
             <a href="{% url 'tax_forms:form_2048' %}" class="relative z-20 inline-block mt-8 px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:from-purple-700 hover:to-pink-600 transition-all transform hover:scale-105">
-                {% trans "Get Started" %}
+                {% trans "Estimate my taxes" %}
             </a>
             <div class="mt-10 flex items-center text-sm">
-                <div>
-                    <span class="ml-2 text-sm text-gray-300">{% trans "Make with love ❤, Say goodbye to tax headaches. Eisphora is free, open, and designed to make crypto tax compliance finally make sense. " %} 
-                    <a href="#" class="underline hover:text-white font-medium">Learn more</a></span>
+                <div class="bg-black/20 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+                    <span class="text-sm text-gray-200 leading-relaxed italic">
+                        {{ seo.current_meta.make_love|safe }}
+                    </span>
                 </div>        
             </div>           
+
         </div>        
     </div>
  <!-- Right content section avec formes fluides -->
@@ -79,7 +81,7 @@
         </div>
         
         <div class="form-header">
-            <div class="form-title">{% trans "Tax Declaration" %}</div>
+            <div class="form-title">{% trans "Tax Simulation" %}</div>
 
         </div>        
         <div class="form-body">
@@ -136,7 +138,7 @@
             <div class="progress-container">
                 <div class="progress-bar" id="progressBar"></div>
             </div>
-            <div class="progress-text" id="progressText">{% trans "Preparing your form..." %}</div>
+            <div class="progress-text" id="progressText">{% trans "Calculating your estimate..." %}</div>
             
 
             
@@ -144,8 +146,8 @@
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <h3 class="font-bold text-gray-800 mb-1">{% trans "Form Completed!" %}</h3>
-                <p class="text-gray-600">{% trans "Your tax declaration is ready to submit." %}</p>
+                <h3 class="font-bold text-gray-800 mb-1">{% trans "Simulation Complete!" %}</h3>
+                <p class="text-gray-600 text-sm">{% trans "Your draft estimate is ready for review." %}</p>
             </div>
         </div>
     </div>

@@ -27,7 +27,13 @@
       </div>
     </div>
 
-    <div class="border-t border-gray-100 pt-8 mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="border-t border-gray-100 pt-8 mt-8">
+      <p class="text-sm text-gray-400 mb-8 max-w-3xl leading-relaxed">
+        {% trans "Eisphora is an independent open-source project. Data is processed locally. Results are estimates and do not constitute tax advice." %}
+      </p>
+
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+
       <p class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">
         &copy; {% now "Y" %}. {{ seo.site_name }}. All rights reserved.
       </p>

@@ -1,7 +1,7 @@
 {% extends "tax_forms/base_form.html" %}
 {% load i18n tailwind_tags widget_tweaks %}
   {% block title %}{% trans "Déclaration d'actifs numériques - Formulaires 2086 & 2042-C" %}{% endblock %}
-{% block content %}
+{% block form_content %}
 
 <style>
     .tx-table th { padding: 12px 8px !important; font-size: 0.75rem; letter-spacing: 0.05em; }
@@ -109,27 +109,34 @@
 
             <!-- Colonne 3 : Barème Progressif (taux ajustable) -->
             <div class="summary-item p-3 rounded-lg" style="border-left: 2px solid rgba(147,51,234,0.5)">
-                <p class="text-[10px] uppercase font-bold mb-2" style="color:#94a3b8">{% trans "Barème Progressif" %}</p>
+                <p class="text-[10px] uppercase font-bold mb-1" style="color:#94a3b8">{% trans "Barème Progressif 2026" %}</p>
                 <div class="flex items-center gap-2 mb-2">
-                    <span class="text-xs" style="color:#d1d5db">{% trans "TMI" %} :</span>
+                    <span class="text-xs" style="color:#d1d5db">{% trans "Votre TMI" %} :</span>
                     <select id="bareme-rate"
                             class="text-xs font-bold rounded px-1 py-0.5"
                             style="background:rgba(147,51,234,0.15);color:#c084fc;border:1px solid rgba(147,51,234,0.3)"
-                            onchange="updateTaxEstimates()">
-                        <option value="11">11% (TMI 1)</option>
-                        <option value="30" selected>30% (TMI 2)</option>
-                        <option value="41">41% (TMI 3)</option>
-                        <option value="45">45% (TMI 4)</option>
+                            onchange="updateBareme()">
+                        <option value="0">0% (≤ 11 600 €)</option>
+                        <option value="11">11% (≤ 29 579 €)</option>
+                        <option value="30" selected>30% (≤ 84 577 €)</option>
+                        <option value="41">41% (≤ 181 917 €)</option>
+                        <option value="45">45% (> 181 917 €)</option>
                     </select>
                 </div>
                 {% if taxable_profits > 0 %}
-                    <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "À payer" %}</p>
-                    <p class="text-2xl font-mono font-black" id="bareme-result" style="color:#c084fc">{{ estimated_tax_bareme|floatformat:0 }} €</p>
+                    <div class="flex justify-between text-[10px] mb-0.5" style="color:#94a3b8">
+                        <span>IR</span><span id="bareme-ir">{{ bareme_ir|floatformat:0 }} €</span>
+                    </div>
+                    <div class="flex justify-between text-[10px] mb-1" style="color:#94a3b8">
+                        <span>PS (17,2%)</span><span id="bareme-ps">{{ bareme_ps|floatformat:0 }} €</span>
+                    </div>
+                    <p class="text-xl font-mono font-black" id="bareme-result" style="color:#c084fc">{{ estimated_tax_bareme|floatformat:0 }} €</p>
                 {% else %}
                     <p class="text-[10px] uppercase font-bold" style="color:#94a3b8">{% trans "N/A" %}</p>
                     <p class="text-2xl font-mono font-black" style="color:#475569">0 €</p>
                 {% endif %}
             </div>
+
 
             <!-- Colonne 4 : Obligations -->
             <div class="summary-item p-3 rounded-lg">
@@ -158,22 +165,53 @@
         <p class="text-[9px] mt-2 text-center italic" style="color:#475569">{% trans "* Chiffres indicatifs. Les deux régimes s'excluent mutuellement ; choisissez avec votre conseiller fiscal." %}</p>
     </div>
 
+    <span id="tax-data" data-gains="{{ taxable_profits }}" style="display:none"></span>
     <script>
-    var taxableAmount = {{ taxable_profits }};
-    function updateTaxEstimates() {
+    var taxableAmount = parseFloat(document.getElementById('tax-data').dataset.gains) || 0;
+    var PS_RATE = 17.2;
+    // Barème 2026 sur revenus 2025 (côté client, pour mise à jour en temps réel)
+    var BAREME_2026 = [
+        { min: 0,      max: 11600,  rate: 0  },
+        { min: 11601,  max: 29579,  rate: 11 },
+        { min: 29580,  max: 84577,  rate: 30 },
+        { min: 84578,  max: 181917, rate: 41 },
+        { min: 181918, max: null,   rate: 45 }
+    ];
+
+    function computeBareme(gains) {
+        var ir = 0, remaining = gains;
+        for (var i = 0; i < BAREME_2026.length; i++) {
+            var t = BAREME_2026[i];
+            var width = t.max !== null ? (t.max - t.min + 1) : remaining;
+            var inTranche = Math.min(remaining, width);
+            if (inTranche > 0) { ir += inTranche * t.rate / 100; remaining -= inTranche; }
+            if (remaining <= 0) break;
+        }
+        return ir;
+    }
+
+    function updatePfu() {
         if (taxableAmount <= 0) return;
         var pfuRate = parseFloat(document.getElementById('pfu-rate').value) || 0;
-        var baremeRate = parseFloat(document.getElementById('bareme-rate').value) || 0;
-        // PFU: IR (12.8%) + PS (17.2%) = 30%. User can override total rate.
         var pfuTotal = taxableAmount * pfuRate / 100;
-        // Barème: TMI * gains + PRÉLÈVEMENTS SOCIAUX 17.2%
-        var baremeTotal = taxableAmount * (baremeRate + 17.2) / 100;
-        var pfuEl = document.getElementById('pfu-result');
-        var baremeEl = document.getElementById('bareme-result');
-        if (pfuEl) pfuEl.textContent = Math.round(pfuTotal).toLocaleString('fr-FR') + ' €';
-        if (baremeEl) baremeEl.textContent = Math.round(baremeTotal).toLocaleString('fr-FR') + ' €';
+        var el = document.getElementById('pfu-result');
+        if (el) el.textContent = Math.round(pfuTotal).toLocaleString('fr-FR') + ' €';
+    }
+
+    function updateBareme() {
+        if (taxableAmount <= 0) return;
+        var ir = computeBareme(taxableAmount);
+        var ps = taxableAmount * PS_RATE / 100;
+        var total = ir + ps;
+        var irEl = document.getElementById('bareme-ir');
+        var psEl = document.getElementById('bareme-ps');
+        var totEl = document.getElementById('bareme-result');
+        if (irEl) irEl.textContent = Math.round(ir).toLocaleString('fr-FR') + ' €';
+        if (psEl) psEl.textContent = Math.round(ps).toLocaleString('fr-FR') + ' €';
+        if (totEl) totEl.textContent = Math.round(total).toLocaleString('fr-FR') + ' €';
     }
     </script>
+
     {% endif %}
 
     <!-- Section Principale (Pleine Largeur) -->
@@ -280,37 +318,111 @@
 
             <!-- Importation automatique -->
             <div class="border-t pt-4 mt-4">
-                <h2 class="text-lg font-semibold">{% trans "Importation automatique des transactions" %}</h2>
+                <h2 class="text-base font-semibold text-gray-800 mb-3">{% trans "Importation automatique des transactions" %}</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Zone drag-and-drop multi-fichiers -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ form.transaction_file.label }}</label>
-                        {{ form.transaction_file|add_class:"w-full p-2 border rounded-md" }}
-                        {{ form.transaction_file.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ form.crypto_address.label }}</label>
-                        {{ form.crypto_address|add_class:"w-full p-2 border rounded-md" }}
-                        {{ form.crypto_address.errors }}
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ form.cex_dex.label }}</label>
-                        {{ form.cex_dex|add_class:"w-full p-2 border rounded-md" }}
-                        {{ form.cex_dex.errors }}
-                    </div>
-                    <div class="md:col-span-2 mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.blockchain.label }}</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-gray-50 border rounded-xl shadow-inner">
-                            {% for choice in form.blockchain %}
-                                <label class="flex items-center space-x-3 text-sm cursor-pointer group p-2 hover:bg-white rounded-lg transition-all border border-transparent hover:border-blue-100">
-                                    <span class="transform group-hover:scale-110 transition-transform">{{ choice.tag }}</span>
-                                    <span class="text-gray-600 group-hover:text-blue-600 font-medium">{{ choice.choice_label }}</span>
-                                </label>
-                            {% endfor %}
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{% trans "Fichiers de transactions" %} <span class="text-xs text-gray-400">(CSV, XLS, XLSX, PDF)</span></label>
+                        <div id="drop-zone"
+                             class="relative border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all"
+                             ondragover="event.preventDefault(); this.classList.add('border-blue-400','bg-blue-50');"
+                             ondragleave="this.classList.remove('border-blue-400','bg-blue-50');"
+                             ondrop="handleDrop(event)"
+                             onclick="document.getElementById('id_transaction_files').click()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="text-sm text-gray-500">{% trans "Glissez vos fichiers ici ou" %} <span class="text-blue-600 font-semibold">{% trans "cliquez pour parcourir" %}</span></p>
+                            <p class="text-xs text-gray-400 mt-1">{% trans "Multi-fichiers supportés — Coinbase, Binance, Kraken, KuCoin…" %}</p>
+                            <input type="file" id="id_transaction_files" name="transaction_files" multiple
+                                   accept=".csv,.xls,.xlsx,.pdf,.txt"
+                                   class="hidden" onchange="displayFileChips(this.files)">
                         </div>
-                        {{ form.blockchain.errors }}
+                        <div id="file-chips" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
+                    <!-- Adresse crypto (multi, auto-détection) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Adresse(s) crypto" %}
+                            <span id="addr-badge" class="hidden ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#dbeafe;color:#1d4ed8">EVM</span>
+                        </label>
+                        <textarea name="crypto_address" id="id_crypto_address" rows="3"
+                                  placeholder="0x... (EVM)&#10;bc1... (Bitcoin)&#10;T... (Tron)&#10;(une adresse par ligne)"
+                                  class="w-full p-3 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition resize-none"
+                                  oninput="detectAddressLive(this.value)"></textarea>
+                        <p class="text-[11px] text-gray-400 mt-1">{% trans "La blockchain est détectée automatiquement (BTC, Tron, EVM). Une adresse par ligne." %}</p>
+                    </div>
+
+                    <!-- CEX/DEX -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.cex_dex.label }}</label>
+                        {{ form.cex_dex|add_class:"w-full p-2 border rounded-md" }}
                     </div>
                 </div>
             </div>
+
+            <script>
+            // --- Drag-and-drop file chips ---
+            let selectedFiles = new DataTransfer();
+
+            function displayFileChips(fileList) {
+                for (let f of fileList) { selectedFiles.items.add(f); }
+                document.getElementById('id_transaction_files').files = selectedFiles.files;
+                renderChips();
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('drop-zone').classList.remove('border-blue-400','bg-blue-50');
+                displayFileChips(e.dataTransfer.files);
+            }
+
+            function removeFile(name) {
+                let dt = new DataTransfer();
+                for (let f of selectedFiles.files) { if (f.name !== name) dt.items.add(f); }
+                selectedFiles = dt;
+                document.getElementById('id_transaction_files').files = selectedFiles.files;
+                renderChips();
+            }
+
+            function renderChips() {
+                const container = document.getElementById('file-chips');
+                container.innerHTML = '';
+                for (let f of selectedFiles.files) {
+                    const chip = document.createElement('div');
+                    chip.className = 'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium';
+                    chip.style = 'background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe';
+                    chip.innerHTML = `<svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+                    ${f.name.length > 22 ? f.name.substring(0,22)+'…' : f.name}
+                    <button type="button" onclick="removeFile('${f.name}')" style="color:#1d4ed8;font-weight:bold;margin-left:2px">&times;</button>`;
+                    container.appendChild(chip);
+                }
+            }
+
+            // --- Live address type detection ---
+            function detectAddressLive(val) {
+                const badge = document.getElementById('addr-badge');
+                const addresses = val.split('\n').map(a => a.trim()).filter(Boolean);
+                if (!addresses.length) { badge.classList.add('hidden'); return; }
+                const addr = addresses[0];
+                let type = '', color = '';
+                if (/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+                    type = 'EVM (ETH, MATIC…)'; color = 'background:#dbeafe;color:#1d4ed8';
+                } else if (/^(1|3)[1-9A-HJ-NP-Za-km-z]{25,34}$/.test(addr) || /^bc1[a-z0-9]{25,90}$/.test(addr)) {
+                    type = 'Bitcoin'; color = 'background:#fef9c3;color:#854d0e';
+                } else if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(addr)) {
+                    type = 'Tron (TRX)'; color = 'background:#fce7f3;color:#9d174d';
+                } else {
+                    type = '?'; color = 'background:#f3f4f6;color:#6b7280';
+                }
+                badge.textContent = '⚡ ' + type;
+                badge.style.cssText = color;
+                badge.classList.remove('hidden');
+            }
+            </script>
+
 
             <button type="submit" id="submitBtn" data-loading-text="{% trans 'Analyse en cours (RAM Uniquement)...' %}" onclick="this.innerHTML=this.dataset.loadingText; this.classList.add('opacity-50', 'cursor-not-allowed');" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
                 {% trans "Calculer mes impôts anonymement" %}

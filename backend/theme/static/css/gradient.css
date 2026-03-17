@@ -127,3 +127,31 @@
     background: rgba(255, 255, 255, 0.3); /* Slightly more opaque for readability */
     backdrop-filter: blur(10px); /* Optional: Adds a frosted glass effect */
   }
+
+  /* -----------------------------------------------------------------------
+   * Reusable gradient button — use class="btn-gradient" in any template.
+   * Add spacing utilities like mt-8 directly on the element as needed.
+   * ----------------------------------------------------------------------- */
+  .btn-gradient {
+    position: relative;
+    z-index: 20;
+    display: inline-block;
+    padding: 1rem 2rem;       /* py-4 px-8 */
+    border-radius: 0.5rem;    /* rounded-lg */
+    background-image: linear-gradient(to right, #9333ea, #ec4899); /* purple-600 → pink-500 */
+    color: #ffffff;
+    font-weight: 600;         /* font-semibold */
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,.2), 0 4px 6px -4px rgba(0,0,0,.2); /* shadow-lg */
+    transition: background-image 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+  }
+
+  .btn-gradient:hover {
+    background-image: linear-gradient(to right, #7e22ce, #db2777); /* purple-700 → pink-600 */
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,.25), 0 8px 10px -6px rgba(0,0,0,.15);
+  }
+
+  .btn-gradient:active {
+    transform: scale(0.98);
+  }

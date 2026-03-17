@@ -18,100 +18,76 @@ seo_config = {
         'dribbble': 'https://x.com/OrionDeimos',
     },
 
-    #Boost SEO IA
+# Boost SEO IA
     'structured_data': {
-    'en-US': {
-        'organization': {
-            '@type': 'Organization',
-            'name': 'Eisphora',
-            'url': 'http://127.0.0.1:8000/',
-            'sameAs': [
-                'https://github.com/OrionUnix/Eisphora',
-                'https://x.com/OrionDeimos',
-            ]
-        }
-    }
-},
-
-    # Metadata par locale
-'metadata_by_locale': {
         'en-US': {
-            'title': _('Eisphora - Open-Source Tax Platform'),
-            'description': _('File your crypto taxes in seconds. Eisphora is a secure, open-source and multilingual app built for global tax compliance'),
-            '4_words':_('Easy. Secure. Open-source. Global.'),
-            '3_words':_('Clarity. Simplicity. Peace of mind.'),
-            'og':_('No stress, no lock-in. An open-source app to simplify your crypto taxes.'),
-            'make_love':_('Make with love ❤, Say goodbye to tax headaches. Eisphora is free, open, and designed to make crypto tax compliance finally make sense. '),  
+            'organization': {
+                '@type': 'Organization',
+                'name': 'Eisphora',
+                'url': 'http://127.0.0.1:8000/',
+                'sameAs': [
+                    'https://github.com/OrionUnix/Eisphora',
+                    'https://x.com/OrionDeimos',
+                ]
+            }
+        }
+    },
+
+# Metadata par locale (Sécurisées juridiquement)
+    'metadata_by_locale': {
+        'en-US': {
+            'title': _('Eisphora - Crypto Tax Estimation Aid'),
+            'description': _('Eisphora is a free, open-source tool designed to help you estimate your crypto taxes. It provides a baseline calculation, not official financial advice.'),
+            '4_words': _('Easy. Secure. Open-source. Independent.'),
+            '3_words': _('Simulation. Transparency. Aid.'),
+            'og': _('Estimate your crypto taxes with this open-source community tool.'),
+            'make_love': _('Made with love ❤. Eisphora is a free, open-source tool designed to help you estimate your crypto taxes. It provides a baseline calculation, not official financial advice. Always verify with a tax professional.'),  
         },
 
         'fr-FR': {
-            'title': _('Eisphora - Plateforme fiscale open source'),
-            'description': _('Calculez et déclarez vos impôts crypto en quelques clics. Eisphora est open source, multilingue et pensée pour la conformité fiscale.'),
-            '4_words':_(' Facile. Sécurisé. Open-source. Mondial.'),
-            '3_words':_('Transparence. Simplicité. Sérénité.'),
-            'og':_('Open source. Multilingue. Pour simplifier vos impôts crypto.'),
-            'make_love':_('Créée avec amour ❤, construite pour vous simplifier la vie : Eisphora vous aide à reprendre le contrôle de vos obligations fiscales '),  
+            'title': _('Eisphora - Aide à l\'estimation fiscale crypto'),
+            'description': _('Eisphora est un outil gratuit et open source conçu pour vous aider à estimer votre fiscalité crypto. Il fournit une base de calcul indicative et non un conseil financier officiel.'),
+            '4_words': _('Facile. Sécurisé. Open-source. Indépendant.'),
+            '3_words': _('Simulation. Transparence. Aide.'),
+            'og': _('Estimez votre fiscalité crypto avec cet outil open source communautaire.'),
+            'make_love': _('Fait avec amour ❤. Eisphora est un outil gratuit et open source conçu pour vous aider à estimer votre fiscalité crypto. Il fournit une base de calcul indicative et non un conseil financier officiel. Vérifiez toujours avec un professionnel.'),  
         },
 
-         'it-IT': {
-            'title': _('Eisphora - Piattaforma fiscale open source'),
-            'description': _(
-                'Dichiara le tue tasse crypto in pochi secondi. Eisphora è gratuita, sicura, open source e progettata per la conformità globale.'
-            ),
-            '4_words': _('Semplice. Sicura. Open-source. Globale.'),
-            '3_words': _('Chiarezza. Semplicità. Tranquillità.'),
-            'og': _(
-                'Stop allo stress fiscale. Eisphora semplifica la dichiarazione delle tue criptovalute.'
-            ),
-            'make_love': _(
-                'Creata con amore ❤, pensata per aiutarti a gestire le tasse crypto senza stress.'
-            ),
+        'it-IT': {
+            'title': _('Eisphora - Aiuto per la stima fiscale crypto'),
+            'description': _('Eisphora è uno strumento gratuito e open source progettato per aiutarti a stimare le tue tasse crypto. Fornisce un calcolo di base, non una consulenza finanziaria ufficiale.'),
+            '4_words': _('Facile. Sicuro. Open-source. Indipendente.'),
+            '3_words': _('Simulazione. Trasparenza. Aiuto.'),
+            'og': _('Stima le tue tasse crypto con questo strumento open source comunitario.'),
+            'make_love': _('Fatto con amore ❤. Eisphora ti aiuta a stimare le tasse crypto. Fornisce un calcolo di base, non una consulenza ufficiale. Verifica sempre con un professionista.'),
         },
 
         'es-ES': {
-            'title': _('Eisphora - Plataforma fiscal open source'),
-            'description': _(
-                'Declara tus impuestos cripto en segundos. Eisphora es segura, gratuita, multilingüe y diseñada para una fiscalidad clara.'
-            ),
-            '4_words': _('Simple. Segura. Open-source. Global.'),
-            '3_words': _('Claridad. Simplicidad. Tranquilidad.'),
-            'og': _(
-                'Sin estrés fiscal. Eisphora te ayuda a declarar tus criptomonedas sin complicaciones.'
-            ),
-            'make_love': _(
-                'Hecha con amor ❤, construida para simplificar tus impuestos cripto de forma libre y transparente.'
-            ),
+            'title': _('Eisphora - Ayuda para la estimación fiscal cripto'),
+            'description': _('Eisphora es una herramienta gratuita y de código abierto diseñada para ayudarte a estimar tus impuestos cripto. Proporciona un cálculo base, no asesoramiento financiero oficial.'),
+            '4_words': _('Fácil. Seguro. Open-source. Independiente.'),
+            '3_words': _('Simulación. Transparencia. Ayuda.'),
+            'og': _('Estima tus impuestos cripto con esta herramienta de código abierto comunitaria.'),
+            'make_love': _('Hecho con amor ❤. Eisphora te ayuda a estimar tus impuestos cripto. Proporciona un cálculo base, no asesoramiento oficial. Verifica siempre con un profesional.'),
         },
 
         'ja-JP': {
-            'title': _('Eisphora - オープンソースの税務アプリ'),
-            'description': _(
-                '暗号資産の税務申告を数秒で完了。Eisphoraは安全で、多言語対応、オープンソースのグローバルな税務プラットフォームです。'
-            ),
-            '4_words': _('シンプル、安全、オープン、グローバル'),
-            '3_words': _('明確、簡単、安心'),
-            'og': _(
-                '税務のストレスを解消。Eisphoraで暗号資産の申告を簡単に。'
-            ),
-            'make_love': _(
-                '愛を込めて開発 ❤、税務申告を簡単にする自由で透明なツールです。'
-            ),
+            'title': _('Eisphora - 暗号資産の税務見積もり支援'),
+            'description': _('Eisphoraは、暗号資産の税金を見積もるための無料のオープンソースツールです。基本的な計算を提供するものであり、公式な財務アドバイスではありません。'),
+            '4_words': _('簡単・安全・オープン・独立'),
+            '3_words': _('シミュレーション・透明性・支援'),
+            'og': _('このコミュニティ主導のオープンソースツールで暗号資産の税金を見積もりましょう。'),
+            'make_love': _('愛を込めて開発 ❤。Eisphoraは税金の見積もりを支援する無料ツールです。公式なアドバイスではないため、必ず税務の専門家にご確認ください。'),
         },
 
         'ko-KR': {
-            'title': _('Eisphora - 오픈소스 세금 플랫폼'),
-            'description': _(
-                '암호화폐 세금 신고를 몇 초 만에. Eisphora는 안전하고 다국어 지원, 오픈소스 기반의 글로벌 세금 플랫폼입니다.'
-            ),
-            '4_words': _('간단. 안전. 오픈소스. 글로벌.'),
-            '3_words': _('명확성. 단순함. 평온함.'),
-            'og': _(
-                '세금 스트레스 없이. Eisphora로 암호화폐 세금을 쉽게 신고하세요.'
-            ),
-            'make_love': _(
-                '사랑으로 만든 ❤, 암호화폐 세금신고를 단순하고 투명하게 도와주는 무료 툴입니다.'
-            ),
-              },
+            'title': _('Eisphora - 암호화폐 세금 예상 도구'),
+            'description': _('Eisphora는 암호화폐 세금을 예상하는 데 도움을 주기 위해 설계된 무료 오픈소스 도구입니다. 기본적인 계산을 제공하며 공식적인 재무 조언이 아닙니다.'),
+            '4_words': _('쉽고. 안전한. 오픈소스. 독립적인.'),
+            '3_words': _('시뮬레이션. 투명성. 지원.'),
+            'og': _('커뮤니티가 만든 오픈소스 도구로 암호화폐 세금을 예상해보세요.'),
+            'make_love': _('사랑으로 만듦 ❤. Eisphora는 세금 예상을 돕는 무료 도구입니다. 공식적인 조언이 아니므로 반드시 세무 전문가와 확인하세요.'),
+        },
     },
 
     # Valeurs par défaut
@@ -123,7 +99,6 @@ seo_config = {
         'en-US': 'http://127.0.0.1:8000/en',
         'fr-FR': 'http://127.0.0.1:8000/fr',
     },
-
 }
 
 # json_ld 
@@ -141,7 +116,7 @@ def get_json_ld(self, request):
             "priceCurrency": "USD"
         },
         "softwareVersion": "1.0.0",
-        "inLanguage": list(self.meta.keys()),  # ['en', 'fr', 'it', ...]
+ "inLanguage": locales,  # ['en', 'fr', 'it', 'es', 'ja', 'ko']
         "author": {
             "@type": "Organization",
             "name": "Eisphora",

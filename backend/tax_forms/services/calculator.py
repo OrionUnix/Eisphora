@@ -1,4 +1,87 @@
+import json
+import os
 from tax_forms.services.extractor import get_historical_price
+
+# Charger la configuration fiscale
+_TAX_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'tax_config.json')
+
+def load_tax_config(year: str = "2025") -> dict:
+    """Charge les taux fiscaux depuis tax_config.json."""
+    try:
+        with open(_TAX_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return config
+    except Exception as e:
+        print(f"Warning: could not load tax_config.json: {e}")
+        return {}
+
+def get_pfu_rate(year: str = "2025") -> float:
+    """Retourne le taux total PFU pour l'année donnée (défaut 30%)."""
+    config = load_tax_config(year)
+    return config.get('pfu', {}).get(year, {}).get('total_rate', 30.0)
+
+def get_ps_rate(year: str = "2025") -> float:
+    """Retourne le taux de prélèvements sociaux (défaut 17.2%)."""
+    config = load_tax_config(year)
+    return config.get('bareme_progressif', {}).get(year, {}).get('ps_rate', 17.2)
+
+def calculate_bareme_progressif(gains: float, tmi_rate: float, year: str = "2025") -> dict:
+    """
+    Calcule l'impôt selon le barème progressif français.
+    
+    Le barème progressif s'applique à la totalité du revenu fiscal de référence du
+    foyer, pas seulement aux gains crypto. Ce calcul est une ESTIMATION pour les
+    gains crypto seuls (calcul simplifié).
+    
+    Returns:
+        dict avec 'ir' (IR sur gains), 'ps' (prélèvements sociaux), 'total'
+    """
+    if gains <= 0:
+        return {'ir': 0.0, 'ps': 0.0, 'total': 0.0, 'tmi': tmi_rate}
+    
+    config = load_tax_config(year)
+    tranches = config.get('bareme_progressif', {}).get(year, {}).get('tranches', [])
+    ps_rate = config.get('bareme_progressif', {}).get(year, {}).get('ps_rate', 17.2)
+    
+    if not tranches:
+        # Fallback si config absente
+        ir = gains * tmi_rate / 100
+        ps = gains * ps_rate / 100
+        return {'ir': ir, 'ps': ps, 'total': ir + ps, 'tmi': tmi_rate}
+    
+    # Calcul progressif réel sur les gains (estimation crypto seule)
+    ir = 0.0
+    remaining = gains
+    for tranche in sorted(tranches, key=lambda t: t['min']):
+        t_min = tranche['min']
+        t_max = tranche['max']  # None = pas de plafond
+        rate = tranche['rate'] / 100
+        
+        if t_max is None:
+            # Dernière tranche : sans plafond
+            if remaining > 0 and gains > t_min:
+                amount_in_tranche = max(0, gains - t_min) if t_min == 0 else gains - t_min
+                ir += max(0, min(remaining, amount_in_tranche)) * rate
+                remaining = 0
+        else:
+            tranche_width = t_max - t_min + 1
+            amount_in_tranche = min(remaining, tranche_width)
+            if amount_in_tranche > 0:
+                ir += amount_in_tranche * rate
+                remaining -= amount_in_tranche
+        
+        if remaining <= 0:
+            break
+    
+    ps = gains * ps_rate / 100
+    return {
+        'ir': round(ir, 2),
+        'ps': round(ps, 2),
+        'total': round(ir + ps, 2),
+        'tmi': tmi_rate,
+        'ps_rate': ps_rate
+    }
+
 
 def calculate_french_taxes(transactions):
     """

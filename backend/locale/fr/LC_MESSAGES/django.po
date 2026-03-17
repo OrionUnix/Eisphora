@@ -264,6 +264,22 @@ msgstr "Commencer maintenant"
 msgid "Open source • Free • Community-driven"
 msgstr "Open source - Gratuit - Communautaire"
 
+#: .\tax_forms\templates\tax_forms\base_form.html
+msgid "Beta Version"
+msgstr "Version Bêta"
+
+#: .\tax_forms\templates\tax_forms\base_form.html
+msgid ""
+"Eisphora is an open-source tool built by a solo developer to help the community. "
+"While we strive for accuracy, these reports are provided <strong>for informational purposes only</strong>. "
+"Please review your data carefully and consider consulting a certified tax professional before filing."
+msgstr ""
+"Eisphora est un outil open source développé par un passionné pour aider la communauté. "
+"Bien que tout soit fait pour assurer l'exactitude des calculs, cet outil est fourni <strong>à titre indicatif uniquement</strong>. "
+"Vérifiez toujours vos données et n'hésitez pas à consulter un fiscaliste professionnel avant de valider votre déclaration."
+
+
+
 #: .\theme\templates\pages\features.html:5
 msgid "Key Features"
 msgstr "Fonctionnalités clés"
@@ -382,14 +398,122 @@ msgid "Automatic deletion after 30 days of inactivity"
 msgstr ""
 
 #~ msgid ""
-#~ "Multilingual, secure tax reporting. From crypto to global compliance."
+#~ "Simplifiez vos impôts avec une application multilingue, sécurisée et "
+#~ "transparente."
 #~ msgstr ""
 #~ "Simplifiez vos impôts avec une application multilingue, sécurisée et "
 #~ "transparente."
 
-#~ msgid ""
-#~ "Simplifiez vos impôts avec une application multilingue, sécurisée et "
-#~ "transparente."
-#~ msgstr ""
-#~ "Simplifiez vos impôts avec une application multilingue, sécurisée et "
-#~ "transparente."
+msgid "Terms and Conditions of Use (Conditions Générales d'Utilisation) - Eisphora"
+msgstr "Terms and Conditions of Use (Conditions Générales d'Utilisation) - Eisphora"
+
+msgid "Last Updated: March 2026 – Version 1.0"
+msgstr "Dernière mise à jour : Mars 2026 – Version 1.0"
+
+msgid "By accessing, downloading or using the Eisphora application, you agree to be bound by these Terms. If you do not agree, please do not use the application."
+msgstr "En accédant, en téléchargeant ou en utilisant l'application Eisphora, vous acceptez d'être lié par les présentes Conditions. Si vous n'acceptez pas l'une de ces conditions, veuillez ne pas utiliser l'application."
+
+msgid "1. Nature of the Project (Independent & Free)"
+msgstr "1. Nature du Projet (Indépendant & Gratuit)"
+
+msgid "Eisphora is strictly a personal, open-source project developed independently by OrionDeimos in their free time. It is not a commercial corporate product or a certified institutional tool. It is provided for free to help the community."
+msgstr "Eisphora est strictement un projet personnel, open source, développé indépendamment par OrionDeimos sur son temps libre. Ce n'est pas un produit d'entreprise commercial ni un outil institutionnel certifié. Il est fourni gratuitement pour aider la communauté."
+
+msgid "2. Zero Data Collection & Local Security"
+msgstr "2. Zéro Collecte de Donnés & Sécurité Locale"
+
+msgid "Eisphora is built on a strict 'Zero-Knowledge' architecture."
+msgstr "Eisphora est construit sur une architecture stricte \"zéro connaissance\" (Zero-Knowledge)."
+
+msgid "100% Local Processing:"
+msgstr "Traitement 100 % local :"
+
+msgid "We do not collect, store, transmit, or have any access to your personal data, transaction history, or wallet addresses. Everything is processed and encrypted locally on your device."
+msgstr "Nous ne collectons, ne stockons, ne transmettons et n'avons aucun accès à vos données personnelles, historiques de transactions ou adresses de portefeuilles. Tout est traité et chiffré localement sur votre appareil."
+
+msgid "Your Responsibility:"
+msgstr "Votre responsabilité :"
+
+msgid "Since no data is sent to an external server, you are 100% responsible for the security of your own computer and data. In case of browser data clearing, loss of encryption keys, or device compromise, the developer cannot restore anything and declines all responsibility. Remember to make your own backups."
+msgstr "Aucune donnée n'étant envoyée sur un serveur externe, vous êtes à 100 % responsable de la sécurité de votre propre ordinateur et de vos données. En cas d'effacement de vos données de navigation, de perte de vos clés de chiffrement ou de piratage de votre appareil, le développeur ne pourra rien restaurer et décline toute responsabilité. Pensez à faire vos propres sauvegardes."
+
+msgid "3. Tax Responsibility & Crucial Warning"
+msgstr "3. Responsabilité Fiscale & Avertissement Crucial"
+
+msgid "Eisphora is designed as a helper tool for calculating gains and losses on cryptocurrencies. It does not provide official legal, tax, or accounting advice."
+msgstr "Eisphora est conçu comme une base d'aide au calcul des plus et moins-values sur cryptomonnaies. Il ne fournit pas de conseils juridiques, fiscaux ou comptables officiels."
+
+msgid "User Responsibility:"
+msgstr "Responsabilité de l'utilisateur :"
+
+msgid "You are solely responsible for verifying the accuracy of data and calculations. Software bugs or errors may occur. Tax authorities generally do not accept software errors as a valid justification for misreporting."
+msgstr "Vous êtes le seul responsable de la vérification de l'exactitude des données et des calculs. Des bugs logiciels ou des erreurs peuvent survenir. Les autorités fiscales n’acceptent généralement pas les erreurs logicielles comme justification valable en cas de redressement."
+
+msgid "France Specifics (2026):"
+msgstr "Spécificités France (2026) :"
+
+msgid "In France, gains on digital assets (for non-professional individuals) are subject to a Single Flat Tax (PFU or 'flat tax') of 31.4% since January 1st, 2026 (12.8% income tax + 18.6% social contributions). Eisphora uses the FIFO method by default. The tool does not automatically calculate potential exemptions (e.g., disposals < €305/year), deductions, options for the progressive scale, or special regimes."
+msgstr "En France, les plus-values sur actifs numériques (pour les particuliers non professionnels) sont soumises au prélèvement forfaitaire unique (PFU ou « flat tax ») de 31,4 % depuis le 1er janvier 2026 (12,8 % d’impôt sur le revenu + 18,6 % de prélèvements sociaux). Eisphora utilise la méthode FIFO par défaut. L'outil ne calcule pas automatiquement les exonérations éventuelles (ex. : cessions < 305 €/an), abattements, options pour le barème progressif, ni les régimes spéciaux."
+
+msgid "Professional Validation Required:"
+msgstr "Validation professionnelle requise :"
+
+msgid "You must always have your final reports and declarations verified by a certified tax professional (e.g., accountant, tax lawyer) before submitting them to the administration."
+msgstr "Vous devez toujours faire vérifier vos rapports finaux et déclarations par un professionnel de la fiscalité certifié (ex. expert-comptable, avocat fiscaliste) avant de les soumettre à l'administration."
+
+msgid "4. License, Fork and Commercial Use"
+msgstr "4. Licence, Fork et Utilisation Commerciale"
+
+msgid "Eisphora is provided under the BSD 3-Clause License. Copyright (c) 2026, OrionDeimos."
+msgstr "Eisphora est fourni sous la licence BSD 3-Clause. Copyright (c) 2026, OrionDeimos."
+
+msgid "You are legally free to use, modify, distribute, and even use this code as a base for your own commercial projects. However, if you create a derivative product, it is under your full responsibility. The original creator (OrionDeimos) is completely detached from your derivative works and assumes no responsibility for them."
+msgstr "Vous êtes légalement libre d'utiliser, de modifier, de distribuer et même d'utiliser ce code comme base pour vos propres projets commerciaux. Toutefois, si vous créez un produit dérivé, c'est sous votre entière responsabilité. Le créateur original (OrionDeimos) est totalement détaché de vos travaux dérivés et n'en assume aucune responsabilité."
+
+msgid "5. Limitation of Liability ('As Is')"
+msgstr "5. Limitation de Responsabilité (\"As Is\")"
+
+msgid "THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND. In no event shall the developer (OrionDeimos) be liable for any direct or indirect damages (including, but not limited to, financial losses, tax penalties, or data loss) resulting from the use of this software."
+msgstr "LE LOGICIEL EST FOURNI \"TEL QUEL\" (AS IS), SANS GARANTIE D'AUCUNE SORTE. En aucun cas le développeur (OrionDeimos) ne pourra être tenu responsable des dommages directs ou indirects (y compris, mais sans s'y limiter, les pertes financières, les pénalités fiscales ou la perte de données) résultant de l'utilisation de ce logiciel."
+
+msgid "6. Age and Legal Capacity"
+msgstr "6. Âge et Capacité Juridique"
+
+msgid "You must be at least 18 years old and have full legal capacity in your country of residence to use Eisphora."
+msgstr "Vous devez avoir au moins 18 ans et la pleine capacité juridique dans votre pays de résidence pour utiliser Eisphora."
+
+msgid "7. Changes to these Terms"
+msgstr "7. Modifications des présentes conditions"
+
+msgid "We may modify these terms at any time. The most recent version is always available on the application and on the GitHub repository. Continued use of the application after a modification constitutes your acceptance of the new terms."
+msgstr "Nous pouvons modifier ces conditions à tout moment. La version la plus récente est toujours disponible sur l'application et sur le dépôt GitHub. La poursuite de l’utilisation de l’application après une modification constitue votre acceptation des nouvelles conditions."
+msgid "8. Applicable Law and Contact"
+msgstr "8. Droit Applicable et Contact"
+
+msgid "These terms are governed by French law. Any dispute will be submitted to the competent courts of France. In case of contradiction between these Terms and the BSD 3-Clause license, the latter prevails for source code aspects. For any questions or bug reports, please contact us via the GitHub repository."
+msgstr "Ces conditions sont régies par le droit français. Tout litige sera soumis aux tribunaux compétents de France. En cas de contradiction entre ces Conditions et la licence BSD-3-Clause, cette dernière prévaut pour les aspects liés au code source (disponible sur le GitHub). Pour toute question ou signalement de bug, veuillez nous contacter via le dépôt GitHub."
+
+msgid "Estimate my taxes"
+msgstr "Estimer ma fiscalité"
+
+msgid "Tax Estimation Assistant"
+msgstr "Assistant à l'estimation fiscale"
+
+msgid "FIFO Method draft for Forms 2042-C & 2086 (France)"
+msgstr "Brouillon de calcul FIFO pour les formulaires 2042-C & 2086 (France)"
+
+msgid "Eisphora is an independent open-source project. Data is processed locally. Results are estimates and do not constitute tax advice."
+msgstr "Eisphora est un projet indépendant et open source. Les données sont traitées localement. Les résultats sont des estimations et ne constituent pas un conseil fiscal."
+
+msgid "Tax Simulation"
+msgstr "Simulation fiscale"
+
+msgid "Calculating your estimate..."
+msgstr "Calcul de votre estimation..."
+
+msgid "Simulation Complete!"
+msgstr "Simulation terminée !"
+
+msgid "Your draft estimate is ready for review."
+msgstr "Votre brouillon d'estimation est prêt à être vérifié."
+

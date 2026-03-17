@@ -1,45 +1,35 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+
 class Form2048(forms.Form):
-    # Champs pour les transactions manuelles 
-    transaction_file = forms.FileField(
-        label=_("Uploader un fichier de transactions (CSV)"),
-        required=False
-    )
+    """
+    Formulaire principal — les fichiers sont lus directement depuis request.FILES
+    côté vue (request.FILES.getlist('transaction_files')), sans passer par la
+    validation Django pour éviter les conflits avec l'upload multiple.
+    """
     crypto_address = forms.CharField(
-        label=_("Adresse crypto (EVM-compatible)"),
-        max_length=42,
+        label=_("Adresse(s) crypto (BTC, Tron, EVM…)"),
+        max_length=2000,
         required=False,
-        help_text=_("Exemple : 0x1234567890abcdef1234567890abcdef12345678")
+        widget=forms.Textarea(attrs={
+            'rows': 2,
+            'placeholder': '0x... (EVM)\nbc1... (Bitcoin)\nT... (Tron)\n(une adresse par ligne)'
+        }),
+        help_text=_("La blockchain est détectée automatiquement. Entrez une adresse par ligne.")
     )
     cex_dex = forms.ChoiceField(
-        label=_("CEX/DEX utilisé"),
+        label=_("CEX/DEX / Format du fichier"),
         choices=[
-            ("", "-------"), 
-            ("binance", "Binance"), 
-            ("kraken", "Kraken"), 
+            ("", "--- Auto-détection ---"),
+            ("binance", "Binance"),
+            ("kraken", "Kraken"),
             ("coinbase", "Coinbase"),
             ("cryptocom", "Crypto.com"),
             ("kucoin", "KuCoin"),
             ("bybit", "Bybit"),
-            ("uniswap", "Uniswap")
+            ("uniswap", "Uniswap"),
         ],
         required=False,
-        help_text=_("Indiquez la plateforme utilisée pour cette transaction.")
-    )
-    blockchain = forms.MultipleChoiceField(
-        label=_("Blockchains (EVM)"),
-        choices=[
-            ("ethereum", "Ethereum"),
-            ("polygon", "Polygon"),
-            ("bsc", "Binance Smart Chain"),
-            ("avalanche", "Avalanche"),
-            ("fantom", "Fantom"),
-            ("arbitrum", "Arbitrum"),
-            ("optimism", "Optimism")
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        initial=["ethereum"]
+        help_text=_("Optionnel : précisez le format pour améliorer le parsing.")
     )

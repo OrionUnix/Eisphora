@@ -1,26 +1,30 @@
-{% load i18n tailwind_tags %}
+{% extends "base.html" %}
+{% load i18n static tailwind_tags %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% trans "Formulaire" %}{% endblock %}</title>
-    {% tailwind_css %}
-</head>
-<body class="bg-gray-100">
-    <!-- Navbar -->
-    {% include 'includes/navbar.html' %}
+{% block title %}{% trans "Formulaire" %}{% endblock %}
 
-    <div class="container mx-auto p-6 pt-20">
-        {% block content %}
-        {% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 mt-8 lg:mt-16">
+    <!-- Beta Disclaimer -->
+    <div class="border-l-4 border-yellow-400 p-3 mb-6 rounded-r shadow-sm relative z-0 mt-8" style="background:#fefce8">
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style="color:#eab308; width:16px; height:16px; display:block;">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <p class="text-xs" style="color:#854d0e">
+                <strong class="uppercase tracking-wide" style="font-size: 10px;">{% trans "Beta Version" %}</strong> —
+                {% blocktrans trimmed %}
+                Eisphora is an open-source tool built by a solo developer to help the community.
+                While we strive for accuracy, these reports are provided <strong>for informational purposes only</strong>.
+                Please review your data carefully and consider consulting a certified tax professional before filing.
+                {% endblocktrans %}
+            </p>
+        </div>
     </div>
 
-    <footer class="bg-white shadow mt-8">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            {% include 'includes/footer.html' %}
-        </div>
-    </footer>
-</body>
-</html>
+    {% block form_content %}
+    {% endblock %}
+</div>
+{% endblock %}

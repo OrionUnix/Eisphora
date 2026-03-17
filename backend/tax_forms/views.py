@@ -3,22 +3,23 @@ from django.contrib import messages
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
 from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row
-from .services.calculator import calculate_french_taxes
+from .services.calculator import calculate_french_taxes, calculate_bareme_progressif, get_pfu_rate
+
 
 def form_2048_view(request):
     print("Vue form_2048_view appelée pour", request.path)
-    initial_data = {}
 
     if request.method == 'POST':
         form = Form2048(request.POST, request.FILES)
         if form.is_valid():
-            sessions = []
-            transaction_file = form.cleaned_data.get('transaction_file')
-            crypto_address = form.cleaned_data.get('crypto_address')
             cex_dex = form.cleaned_data.get('cex_dex')
+            crypto_addresses_raw = form.cleaned_data.get('crypto_address', '')
+            # Lire les fichiers directement depuis request.FILES (évite conflits validation Django)
+            transaction_files = request.FILES.getlist('transaction_files')
 
             all_transactions = []
-            
+
+            # --- 1. Transactions saisies manuellement dans le tableau ---
             transaction_count = int(request.POST.get('transaction_count', 0))
             for i in range(1, transaction_count + 1):
                 row = {
@@ -35,29 +36,43 @@ def form_2048_view(request):
                 if tx:
                     all_transactions.append(tx)
 
-            if crypto_address:
-                messages.info(request, _("Adresse crypto fournie. Récupération des transactions en cours..."))
-                selected_blockchains = form.cleaned_data.get('blockchain', ['ethereum'])
-                chain_txs = fetch_on_chain_transactions(crypto_address, blockchains=selected_blockchains)
-                all_transactions.extend(chain_txs)
-                
-            if transaction_file:
-                messages.info(request, _("Fichier de transactions reçu. Analyse sans sauvegarde disque..."))
-                cex_txs = parse_transaction_file(transaction_file, cex_type=cex_dex or "generic")
-                if not cex_txs:
-                    messages.warning(request, _("Aucune transaction n'a pu être extraite du fichier. Vérifiez le format (CSV ou Excel)."))
-                all_transactions.extend(cex_txs)
+            # --- 2. Adresses crypto (BTC, Tron, EVM — auto-détectées) ---
+            if crypto_addresses_raw:
+                addresses = [a.strip() for a in crypto_addresses_raw.splitlines() if a.strip()]
+                for addr in addresses:
+                    messages.info(request, _(f"Récupération des transactions pour {addr[:12]}..."))
+                    chain_txs = fetch_on_chain_transactions(addr)
+                    all_transactions.extend(chain_txs)
 
-            # S'assurer que chaque transaction a un index pour le formulaire
+            # --- 3. Fichiers importés (CSV, XLS, XLSX, PDF — multi-fichiers) ---
+            if transaction_files:
+                for uploaded_file in transaction_files:
+                    print(f"Processing file: {uploaded_file.name} ({uploaded_file.size} bytes)")
+                    messages.info(request, _(f"Analyse du fichier : {uploaded_file.name}"))
+                    cex_txs = parse_transaction_file(uploaded_file, cex_type=cex_dex or "generic")
+                    if not cex_txs:
+                        messages.warning(request, _(f"Aucune transaction extraite de {uploaded_file.name}. Vérifiez le format."))
+                    else:
+                        messages.success(request, _(f"{len(cex_txs)} transactions extraites de {uploaded_file.name}."))
+                    all_transactions.extend(cex_txs)
+
+            # --- Indexer toutes les transactions ---
             for idx, tx in enumerate(all_transactions):
                 tx['index'] = idx + 1
-                
+
+            # --- Calcul fiscal ---
             calc_results = calculate_french_taxes(all_transactions)
             taxable_profits = calc_results['total_plus_value']
-            estimated_tax = max(0, taxable_profits * 0.30)  # PFU 12.8% IR + 17.2% PS
-            estimated_tax_bareme = max(0, taxable_profits * (0.30 + 0.172))  # TMI 30% + 17.2% PS
-            
-            # Mapper les résultats de plus-value sur les transactions d'origine
+
+            # PFU depuis tax_config.json
+            pfu_rate = get_pfu_rate("2025")
+            estimated_tax = max(0, taxable_profits * pfu_rate / 100)
+
+            # Barème progressif — TMI 30% par défaut (le plus courant)
+            bareme_result = calculate_bareme_progressif(taxable_profits, tmi_rate=30, year="2025")
+            estimated_tax_bareme = bareme_result['total']
+
+            # --- Mapper les résultats sur les transactions ---
             taxable_events_map = {event['id']: event for event in calc_results['taxable_events']}
             for tx in all_transactions:
                 event = taxable_events_map.get(tx.get('index'))
@@ -67,27 +82,29 @@ def form_2048_view(request):
                     tx['prix_acquisition'] = event.get('prix_acquisition', 0)
                     tx['valeur_globale_estimee'] = event['valeur_globale_estimee']
 
-            sessions = all_transactions
-            taxable_events = calc_results['taxable_events']
-
             context = {
-                'sessions': sessions,
-                'taxable_events': taxable_events,
+                'sessions': all_transactions,
+                'taxable_events': calc_results['taxable_events'],
                 'calc_results': calc_results,
                 'form': form,
                 'show_results': True,
                 'taxable_profits': taxable_profits,
                 'estimated_tax': estimated_tax,
                 'estimated_tax_bareme': estimated_tax_bareme,
+                'pfu_rate': pfu_rate,
+                'bareme_ir': bareme_result['ir'],
+                'bareme_ps': bareme_result['ps'],
                 'cex_dex': cex_dex,
                 'manual_transactions': all_transactions,
+                'file_count': len(transaction_files),
             }
-            print("Rendu de form_2048.html avec résultats")
+            print(f"Rendu de form_2048.html avec {len(all_transactions)} transactions ({len(transaction_files)} fichiers)")
             return render(request, 'tax_forms/form_2048.html', context)
         else:
+            print("Form errors:", form.errors)
             messages.error(request, _("Veuillez corriger les erreurs dans le formulaire."))
     else:
-        form = Form2048(initial=initial_data)
+        form = Form2048()
 
     print("Rendu de form_2048.html sans résultats")
     return render(request, 'tax_forms/form_2048.html', {'form': form})

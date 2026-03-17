@@ -1,8 +1,149 @@
 import pandas as pd
 import io
 import re
+import os
+import requests
 import pdfplumber
 from django.core.files.uploadedfile import InMemoryUploadedFile
+
+# ---------------------------------------------------------------------------
+# Address Auto-Detection
+# ---------------------------------------------------------------------------
+
+EVM_CHAINS = ['ethereum', 'polygon', 'bsc', 'avalanche', 'fantom', 'arbitrum', 'optimism']
+
+def detect_address_type(address: str) -> dict:
+    """
+    Détecte automatiquement le type d'une adresse blockchain.
+    Retourne un dict: {'type': 'evm'|'btc'|'tron'|'unknown', 'chains': [...]}
+    """
+    address = address.strip()
+    # EVM (Ethereum et compatibles) : commence par 0x, 42 chars hex
+    if re.match(r'^0x[0-9a-fA-F]{40}$', address):
+        return {'type': 'evm', 'chains': EVM_CHAINS}
+    # Bitcoin (Legacy P2PKH, P2SH, Bech32)
+    if re.match(r'^(1|3)[1-9A-HJ-NP-Za-km-z]{25,34}$', address) or re.match(r'^bc1[a-z0-9]{25,90}$', address):
+        return {'type': 'btc', 'chains': ['bitcoin']}
+    # Tron : T + 33 chars base58
+    if re.match(r'^T[1-9A-HJ-NP-Za-km-z]{33}$', address):
+        return {'type': 'tron', 'chains': ['tron']}
+    return {'type': 'unknown', 'chains': []}
+
+
+# ---------------------------------------------------------------------------
+# Bitcoin Fetcher (Blockstream, sans clé API)
+# ---------------------------------------------------------------------------
+
+def fetch_btc_transactions(address: str) -> list:
+    """
+    Récupère les transactions Bitcoin via l'API publique Blockstream.
+    """
+    transactions = []
+    try:
+        url = f"https://blockstream.info/api/address/{address}/txs"
+        response = requests.get(url, timeout=15)
+        if response.status_code != 200:
+            print(f"Blockstream API error for {address}: {response.status_code}")
+            return []
+        txs = response.json()
+        print(f"Found {len(txs)} BTC transactions for {address}.")
+        for tx in txs:
+            status = tx.get('status', {})
+            if not status.get('confirmed'):
+                continue
+            block_time = status.get('block_time', 0)
+            date_str = pd.to_datetime(block_time, unit='s').strftime('%Y-%m-%d %H:%M:%S') if block_time else None
+            if not date_str:
+                continue
+
+            # Calculer le mouvement BTC pour cette adresse
+            received = sum(
+                vout.get('value', 0) / 1e8
+                for vout in tx.get('vout', [])
+                if address in [vout.get('scriptpubkey_address', '')]
+            )
+            sent = sum(
+                vin.get('prevout', {}).get('value', 0) / 1e8
+                for vin in tx.get('vin', [])
+                if address in [vin.get('prevout', {}).get('scriptpubkey_address', '')]
+            )
+            fees_btc = tx.get('fee', 0) / 1e8
+            net = received - sent
+            op_type = 'achat' if net > 0 else 'vente'
+            quantity = abs(net)
+
+            if quantity < 1e-9:
+                continue
+
+            price_unit = get_historical_price('BTC', date_str)
+            transactions.append({
+                'date': date_str,
+                'operation_type': op_type,
+                'crypto_token': 'BTC',
+                'tx_hash': tx.get('txid'),
+                'quantity': quantity,
+                'price': price_unit,
+                'fees': fees_btc if op_type == 'vente' else 0,
+                'currency': 'EUR'
+            })
+    except Exception as e:
+        print(f"Error fetching BTC transactions for {address}: {e}")
+    return transactions
+
+
+# ---------------------------------------------------------------------------
+# Tron Fetcher (TronGrid, gratuit)
+# ---------------------------------------------------------------------------
+
+def fetch_tron_transactions(address: str) -> list:
+    """
+    Récupère les transactions TRX natives via l'API TronGrid.
+    """
+    transactions = []
+    try:
+        url = f"https://api.trongrid.io/v1/accounts/{address}/transactions"
+        params = {'limit': 200, 'only_confirmed': True}
+        tron_api_key = os.getenv('TRON_API_KEY', '')
+        headers = {'TRON-PRO-API-KEY': tron_api_key} if tron_api_key else {}
+        response = requests.get(url, params=params, headers=headers, timeout=15)
+        if response.status_code != 200:
+            print(f"TronGrid API error for {address}: {response.status_code}")
+            return []
+        data = response.json()
+        txs = data.get('data', [])
+        print(f"Found {len(txs)} Tron transactions for {address}.")
+        for tx in txs:
+            raw_data = tx.get('raw_data', {}).get('contract', [{}])[0]
+            contract_type = raw_data.get('type', '')
+            if contract_type != 'TransferContract':
+                continue
+            value_data = raw_data.get('parameter', {}).get('value', {})
+            amount_sun = value_data.get('amount', 0)
+            amount_trx = amount_sun / 1e6
+            if amount_trx < 0.001:
+                continue
+            timestamp_ms = tx.get('block_timestamp', 0)
+            date_str = pd.to_datetime(timestamp_ms, unit='ms').strftime('%Y-%m-%d %H:%M:%S') if timestamp_ms else None
+            if not date_str:
+                continue
+            from_addr = value_data.get('owner_address', '')
+            op_type = 'vente' if from_addr == address else 'achat'
+            price_unit = get_historical_price('TRX', date_str)
+            transactions.append({
+                'date': date_str,
+                'operation_type': op_type,
+                'crypto_token': 'TRX',
+                'tx_hash': tx.get('txID'),
+                'quantity': amount_trx,
+                'price': price_unit,
+                'fees': 0,
+                'currency': 'EUR'
+            })
+    except Exception as e:
+        print(f"Error fetching Tron transactions for {address}: {e}")
+    return transactions
+
+
 
 def parse_transaction_file(file: InMemoryUploadedFile, cex_type: str = "generic"):
     file.seek(0)
@@ -390,26 +531,45 @@ def get_historical_price(symbol, timestamp_str, currency='EUR'):
         
     return 0.0
 
-def fetch_on_chain_transactions(address: str, blockchains: list = None):
+
+def fetch_on_chain_transactions(address: str, blockchains: list = None) -> list:
+    """
+    Récupère les transactions on-chain en détectant automatiquement le type d'adresse.
+    Supporte Bitcoin, Tron et toutes les blockchains EVM.
+    """
+    address = address.strip()
+    detected = detect_address_type(address)
+    addr_type = detected['type']
+    print(f"Address {address[:12]}... detected as type: {addr_type}")
+
+    if addr_type == 'btc':
+        return fetch_btc_transactions(address)
+    elif addr_type == 'tron':
+        return fetch_tron_transactions(address)
+    elif addr_type == 'evm':
+        # Utiliser les chaînes fournies si présentes, sinon scanner toutes les EVM
+        chains_to_scan = blockchains if blockchains else EVM_CHAINS
+        return _fetch_evm_transactions(address, chains_to_scan)
+    else:
+        print(f"Unknown address type for: {address}")
+        return []
+
+
+def _fetch_evm_transactions(address: str, blockchains: list) -> list:
     """
     Récupère les transactions natives des blockchains EVM spécifiées.
     """
     transactions = []
-    if not blockchains:
-        blockchains = ['ethereum']
-        
     for chain in blockchains:
         api_url = SCAN_APIS.get(chain)
         metadata = CHAIN_METADATA.get(chain)
         if not api_url or not metadata:
             continue
-            
-        # Prioritize unified ETHERSCAN_API_KEY, then chain-specific, then fallback
-        api_key = os.getenv("ETHERSCAN_API_KEY") 
+
+        api_key = os.getenv("ETHERSCAN_API_KEY")
         if not api_key:
-            api_key_name = f"{chain.upper()}_SCAN_API_KEY"
-            api_key = os.getenv(api_key_name)
-        
+            api_key = os.getenv(f"{chain.upper()}_SCAN_API_KEY")
+
         params = {
             'module': 'account',
             'action': 'txlist',
@@ -419,16 +579,14 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
             'sort': 'asc',
             'apikey': api_key or 'FREE_KEY'
         }
-        
-        # Add chainid for V2 unified endpoints
         if metadata.get('version') == 'v2':
             params['chainid'] = metadata['chainid']
-        
+
         try:
             print(f"Fetching transactions for {address} on {chain} (ID: {metadata['chainid']})...")
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
-            
+
             if data.get('status') == '1' and 'result' in data:
                 raw_txs = data['result']
                 print(f"Found {len(raw_txs)} raw transactions on {chain}.")
@@ -437,11 +595,7 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
                     if value_native > 0:
                         is_outbound = tx.get('from', '').lower() == address.lower()
                         date_str = pd.to_datetime(int(tx['timeStamp']), unit='s').strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        # Récupérer le prix historique
                         price_unit = get_historical_price(metadata['symbol'], date_str)
-                        
-                        # Mapping vers le format Eisphora
                         transactions.append({
                             'date': date_str,
                             'operation_type': 'vente' if is_outbound else 'achat',
@@ -457,5 +611,5 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None):
                 print(f"No transactions found or error for {chain}: {msg}")
         except Exception as e:
             print(f"Error fetching from {chain}: {e}")
-            
+
     return transactions

@@ -1,50 +1,69 @@
+{% extends "base.html" %}
 {% load i18n static tailwind_tags %}
-{% get_current_language as LANGUAGE_CODE %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{% trans "Terms and Conditions of Use - Eisphora" %}</title>
-</head>
-<body>
-<h1>{% trans "Terms and Conditions of Use" %}</h1>
+{% block title %}{% trans "Terms and Conditions of Use (Conditions Générales d'Utilisation) - Eisphora" %}{% endblock %}
 
-```
-<h2>{% trans "1. Acceptance of Terms" %}</h2>
-<p>{% trans "By accessing or using the Eisphora application, available at <https://github.com/OrionUnix/Eisphora>, you agree to be bound by these Terms and Conditions of Use. If you do not agree, please do not use the application." %}</p>
+{% block content %}
+<div class="container mx-auto px-4 py-12 lg:py-16">
+    <div class="prose prose-slate max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <h1 class="text-3xl font-black text-gray-900 mb-2 border-b pb-4">{% trans "Terms and Conditions of Use" %}</h1>
+        <p class="text-sm text-gray-400 mb-8 italic">{% trans "Last Updated: March 2026 – Version 1.0" %}</p>
 
-<h2>{% trans "2. License" %}</h2>
-<p>{% trans "Eisphora is provided under the BSD 3-Clause License. Copyright (c) 2025, OrionDeimos. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:" %}</p>
-<ul>
-    <li>{% trans "Redistributions of source code must retain the above copyright notice, this list of conditions, and the following disclaimer." %}</li>
-    <li>{% trans "Redistributions in binary form must reproduce the above copyright notice, this list of conditions, and the following disclaimer in the documentation and/or other materials provided with the distribution." %}</li>
-    <li>{% trans "Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission." %}</li>
-</ul>
-<p>{% trans "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE." %}</p>
+        <div class="space-y-8 text-gray-600">
+            <p class="font-medium text-gray-700">
+                {% trans "By accessing, downloading or using the Eisphora application, you agree to be bound by these Terms. If you do not agree, please do not use the application." %}
+            </p>
 
-<h2>{% trans "3. Use of the Application" %}</h2>
-<p>{% trans "Eisphora is designed for calculating tax gains/losses on cryptocurrency transactions and analyzing wallet addresses. You are responsible for ensuring the accuracy of the data you enter (e.g., wallet addresses, transaction details)." %}</p>
-<p>{% trans "You may not use Eisphora for illegal purposes, including but not limited to money laundering or tax evasion." %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "1. Nature of the Project (Independent & Free)" %}</h2>
+                <p>{% trans "Eisphora is strictly a personal, open-source project developed independently by OrionDeimos in their free time. It is not a commercial corporate product or a certified institutional tool. It is provided for free to help the community." %}</p>
+            </section>
 
-<h2>{% trans "4. Privacy and Data Security" %}</h2>
-<p>{% trans "Your data is encrypted client-side using PBKDF2/Argon2 and stored in IndexedDB. Master keys are managed via Azure Key Vault. We comply with GDPR regulations via django-gdpr-assistant." %}</p>
-<p>{% trans "By using Eisphora, you consent to the collection and processing of your transaction data for the purpose of tax calculations and wallet analysis." %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "2. Zero Data Collection & Local Security" %}</h2>
+                <p>{% trans "Eisphora is built on a strict 'Zero-Knowledge' architecture." %}</p>
+                <div class="mt-4 space-y-4">
+                    <p><strong>{% trans "100% Local Processing:" %}</strong> {% trans "We do not collect, store, transmit, or have any access to your personal data, transaction history, or wallet addresses. Everything is processed and encrypted locally on your device." %}</p>
+                    <p><strong>{% trans "Your Responsibility:" %}</strong> {% trans "Since no data is sent to an external server, you are 100% responsible for the security of your own computer and data. In case of browser data clearing, loss of encryption keys, or device compromise, the developer cannot restore anything and declines all responsibility. Remember to make your own backups." %}</p>
+                </div>
+            </section>
 
-<h2>{% trans "5. Limitation of Liability" %}</h2>
-<p>{% trans "Eisphora is provided 'as is' without warranties of any kind. The developers are not liable for any financial losses, tax penalties, or damages resulting from the use of this application." %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "3. Tax Responsibility & Crucial Warning" %}</h2>
+                <p>{% trans "Eisphora is designed as a helper tool for calculating gains and losses on cryptocurrencies. It does not provide official legal, tax, or accounting advice." %}</p>
+                <div class="mt-4 space-y-4">
+                    <p><strong>{% trans "User Responsibility:" %}</strong> {% trans "You are solely responsible for verifying the accuracy of data and calculations. Software bugs or errors may occur. Tax authorities generally do not accept software errors as a valid justification for misreporting." %}</p>
+                    <p><strong>{% trans "France Specifics (2026):" %}</strong> {% trans "In France, gains on digital assets (for non-professional individuals) are subject to a Single Flat Tax (PFU or 'flat tax') of 31.4% since January 1st, 2026 (12.8% income tax + 18.6% social contributions). Eisphora uses the FIFO method by default. The tool does not automatically calculate potential exemptions (e.g., disposals < €305/year), deductions, options for the progressive scale, or special regimes." %}</p>
+                    <p><strong>{% trans "Professional Validation Required:" %}</strong> {% trans "You must always have your final reports and declarations verified by a certified tax professional (e.g., accountant, tax lawyer) before submitting them to the administration." %}</p>
+                </div>
+            </section>
 
-<h2>{% trans "6. Termination" %}</h2>
-<p>{% trans "We reserve the right to terminate or suspend your access to Eisphora at our discretion, with or without cause, and with or without notice." %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "4. License, Fork and Commercial Use" %}</h2>
+                <p>{% trans "Eisphora is provided under the BSD 3-Clause License. Copyright (c) 2026, OrionDeimos." %}</p>
+                <p class="mt-2">{% trans "You are legally free to use, modify, distribute, and even use this code as a base for your own commercial projects. However, if you create a derivative product, it is under your full responsibility. The original creator (OrionDeimos) is completely detached from your derivative works and assumes no responsibility for them." %}</p>
+            </section>
 
-<h2>{% trans "7. Changes to Terms" %}</h2>
-<p>{% trans "These Terms may be updated periodically. Continued use of Eisphora after changes constitutes acceptance of the new Terms." %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "5. Limitation of Liability ('As Is')" %}</h2>
+                <p class="uppercase text-sm">{% trans "THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND. In no event shall the developer (OrionDeimos) be liable for any direct or indirect damages (including, but not limited to, financial losses, tax penalties, or data loss) resulting from the use of this software." %}</p>
+            </section>
 
-<h2>{% trans "8. Contact" %}</h2>
-<p>{% trans "For questions or concerns, contact us at your.email@example.com or via the GitHub repository at <https://github.com/OrionUnix/Eisphora."> %}</p>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "6. Age and Legal Capacity" %}</h2>
+                <p>{% trans "You must be at least 18 years old and have full legal capacity in your country of residence to use Eisphora." %}</p>
+            </section>
 
-```
-	{% include 'includes/footer.html' %}
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "7. Changes to these Terms" %}</h2>
+                <p>{% trans "We may modify these terms at any time. The most recent version is always available on the application and on the GitHub repository. Continued use of the application after a modification constitutes your acceptance of the new terms." %}</p>
+            </section>
 
-</body>
-</html>
+            <section>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">{% trans "8. Applicable Law and Contact" %}</h2>
+                <p>{% trans "These terms are governed by French law. Any dispute will be submitted to the competent courts of France. In case of contradiction between these Terms and the BSD 3-Clause license, the latter prevails for source code aspects. For any questions or bug reports, please contact us via the GitHub repository." %}</p>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

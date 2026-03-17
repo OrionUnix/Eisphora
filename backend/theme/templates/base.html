@@ -46,15 +46,24 @@
     <script type="application/ld+json">
         {{ seo.json_ld|safe|json_script:"eisphora-jsonld" }}
     </script>
-	</head>
+    <style>
+        @media (min-width: 1024px) {
+            body { padding-top: 100px; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <!-- Navbar -->
     {% include 'includes/navbar.html' %}
 
-	<body>
-    <div class="min-h-screen">
+    <div class="min-h-screen flex flex-col">
         <!-- Bloc pour le contenu spécifique des pages -->
-        {% block content %}{% endblock %}
+        <main class="flex-grow">
+            {% block content %}{% endblock %}
+        </main>
 
         {% include 'includes/footer.html' %}
     </div>
-	</body>
+</body>
 </html>
