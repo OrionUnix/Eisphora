@@ -154,12 +154,24 @@
   z-index: 1;
 }
 
-/* Optional: Adjust card styles for better contrast */
+/* Modern Feature Card with Glassmorphism */
 .feature-card {
-  background: rgba(255, 255, 255, 0.3);
-  /* Slightly more opaque for readability */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
   backdrop-filter: blur(10px);
-  /* Optional: Adds a frosted glass effect */
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+  box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* -----------------------------------------------------------------------
@@ -194,4 +206,18 @@
 
 .btn-gradient:active {
   transform: scale(0.98);
+}
+
+/* Security Section Redesign Support */
+.bg-security-dark {
+  background-color: #0a0a1a !important;
+}
+
+.circuit-pattern {
+  opacity: 0.15;
+  filter: drop-shadow(0 0 10px rgba(132, 204, 22, 0.2));
+}
+
+.shield-glow {
+  filter: drop-shadow(0 0 20px rgba(192, 132, 252, 0.4));
 }

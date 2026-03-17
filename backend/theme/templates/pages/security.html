@@ -4,69 +4,68 @@
 <style>
 
 </style>
-<section class="gradient-section1 relative z-10">
-    <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">{% trans "Enhanced safety" %}</h2>
-            <p class="text-blue-400 font-semibold tracking-widest uppercase text-sm">
-                {% trans "Protéger votre vie privée est notre mission principale" %}
-            </p>
-        </div>
+{% load i18n static tailwind_tags %}
+<link rel="stylesheet" href="{% static 'css/gradient.css' %}">
+<section class="relative py-24 overflow-hidden gradient-section1">
 
-        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
 
-            <div class="p-6 isolate rounded-xl feature-card shadow-lg ring-1 ring-black/5">
-                <div class="flex items-center mb-8">
-                    <div class="w-12 h-12text-2xl mr-4">🔑</div>
-                    <h3 class="font-bold text-2xl text-white">{% trans "Key management" %}</h3>
-                </div>
-                <ul class="space-y-4">
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-                        {% trans "Client-side encryption only" %}
-                    </li>
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-                        {% trans "No passwords required" %}
-                    </li>
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-blue-400 rounded-full mr-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-                        {% trans "No tracking cookies" %}
-                    </li>
-                </ul>
-            </div>
+    <div class="relative z-10 max-w-7xl mx-auto px-6 flex flex-col items-center">
+        <!-- Title & List Section -->
+        <div class="w-full max-w-2xl mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-8 tracking-tight">
+                {% trans "Sécurité de Niveau Entreprise" %}
+            </h2>
 
-            <div
-                class="bg-white/10 backdrop-blur-md border border-white/5 p-8 rounded-2xl hover:bg-white/15 transition-all duration-300 shadow-xl group">
-                <div class="flex items-center mb-8">
+            <ul class="space-y-6">
+                <li class="flex items-start text-gray-300 text-lg group">
                     <div
-                        class="w-12 h-12 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-2xl mr-4 shadow-[0_0_15px_rgba(168,85,247,0.2)] group-hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] transition-all">
-                        🛡️
+                        class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mr-4 mt-1">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd" />
+                        </svg>
                     </div>
-                    <h3 class="font-bold text-2xl text-white">{% trans "Protection des données" %}</h3>
-                </div>
-                <ul class="space-y-4">
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
-                        {% trans "Zero-Knowledge architecture" %}
-                    </li>
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
-                        {% trans "100% Local processing" %}
-                    </li>
-                    <li class="flex items-center text-gray-300">
-                        <span
-                            class="w-2 h-2 bg-purple-400 rounded-full mr-3 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
-                        {% trans "No server database" %}
-                    </li>
-                </ul>
-            </div>
-
+                    <span>{% trans "Approche de sécurité multi-couches pour vos calculs & données" %}</span>
+                </li>
+                <li class="flex items-start text-gray-300 text-lg group">
+                    <div
+                        class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mr-4 mt-1">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <span>{% trans "Architecture Zero-Knowledge : nous ne voyons jamais vos clés" %}</span>
+                </li>
+                <li class="flex items-start text-gray-300 text-lg group">
+                    <div
+                        class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mr-4 mt-1">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <span>{% trans "Contrôles d'autorisation avancés et chiffrement local (XSalsa20)" %}</span>
+                </li>
+                <li class="flex items-start text-gray-300 text-lg group">
+                    <div
+                        class="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mr-4 mt-1">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <span>{% trans "Gouvernance des données 100% locale, sans serveur central" %}</span>
+                </li>
+            </ul>
         </div>
+
+
     </div>
+
+
 </section>
