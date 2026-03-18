@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
-from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row
+from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row, get_historical_price, parse_custom_csv
 from .services.calculator import calculate_french_taxes, get_pfu_rate
 
 
@@ -32,10 +32,12 @@ def form_2048_view(request):
                     'acq_price': request.POST.get(f'acq_price_{i}', 0),
                     'fees': request.POST.get(f'fees_{i}'),
                     'currency': request.POST.get(f'currency_{i}', 'EUR'),
-                    'tx_hash': request.POST.get(f'tx_hash_{i}')
+                    'tx_hash': request.POST.get(f'tx_hash_{i}'),
+                    'source': request.POST.get(f'source_{i}', 'Manuel')
                 }
                 tx = parse_generic_row(row)
                 if tx:
+                    tx['source'] = row['source']
                     all_transactions.append(tx)
 
             # --- 2. Adresses crypto (BTC, Tron, EVM — auto-détectées) ---
@@ -48,10 +50,18 @@ def form_2048_view(request):
 
             # --- 3. Fichiers importés (CSV, XLS, XLSX, PDF — multi-fichiers) ---
             if transaction_files:
+                mapping_json = request.POST.get('custom_mapping_json')
+                custom_delimiter = request.POST.get('custom_mapping_delimiter', ',')
+
                 for uploaded_file in transaction_files:
                     print(f"Processing file: {uploaded_file.name} ({uploaded_file.size} bytes)")
                     messages.info(request, _(f"Analyse du fichier : {uploaded_file.name}"))
-                    cex_txs = parse_transaction_file(uploaded_file, cex_type=cex_dex or "generic")
+                    
+                    if mapping_json and uploaded_file.name.endswith('.csv'):
+                        cex_txs = parse_custom_csv(uploaded_file, mapping_json, custom_delimiter)
+                    else:
+                        cex_txs = parse_transaction_file(uploaded_file, cex_type=cex_dex or "generic")
+                        
                     if not cex_txs:
                         messages.warning(request, _(f"Aucune transaction extraite de {uploaded_file.name}. Vérifiez le format."))
                     else:
@@ -76,12 +86,55 @@ def form_2048_view(request):
             # --- Mapper les résultats sur les transactions ---
             taxable_events_map = {event.get('id'): event for event in calc_results['taxable_events']}
             for tx in all_transactions:
+                # Ensure every transaction has basic keys for the template
+                tx.setdefault('acq_price', 0)
+                tx.setdefault('price', 0)
+                tx.setdefault('plus_value', 0)
+                
                 event = taxable_events_map.get(tx.get('index'))
                 if event:
+                    # Map calculation results back to the transaction
                     tx['plus_value'] = event.get('plus_value', 0)
                     tx['prix_cession'] = event.get('prix_cession_net', 0)
                     tx['prix_acquisition'] = event.get('prix_acq_fractionne', 0)
                     tx['valeur_globale_estimee'] = event.get('valeur_globale', 0)
+                    
+                    # Update acq_price and price for display if they were missing or 0
+                    if not tx.get('acq_price'):
+                        tx['acq_price'] = tx['prix_acquisition']
+                    if not tx.get('price'):
+                        tx['price'] = tx['prix_cession']
+
+            # --- Portfolio Distribution ---
+            remaining_portfolio = calc_results.get('remaining_portfolio', {})
+            portfolio_distribution = []
+            total_portfolio_value = 0
+            from datetime import datetime
+            today_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            for asset, qty in remaining_portfolio.items():
+                # Get current price for valuation
+                price = get_historical_price(asset, today_str)
+                val = qty * price
+                if val > 0.01:  # Ignore dust
+                    portfolio_distribution.append({
+                        'asset': asset,
+                        'qty': qty,
+                        'price': price,
+                        'value': val
+                    })
+                    total_portfolio_value += val
+
+            # Calculate percentages
+            if total_portfolio_value > 0:
+                for item in portfolio_distribution:
+                    item['percentage'] = round((item['value'] / total_portfolio_value) * 100, 1)
+            
+            # Sort by value
+            portfolio_distribution = sorted(portfolio_distribution, key=lambda x: x['value'], reverse=True)
+
+            # --- Sources Actives ---
+            unique_sources = sorted(list({str(tx.get('source')) for tx in all_transactions if tx.get('source') and tx.get('source') != 'Manuel'}))
 
             context = {
                 'sessions': all_transactions,
@@ -98,6 +151,9 @@ def form_2048_view(request):
                 'cex_dex': cex_dex,
                 'manual_transactions': all_transactions,
                 'file_count': len(transaction_files),
+                'unique_sources': unique_sources,
+                'portfolio_distribution': portfolio_distribution,
+                'total_portfolio_value': total_portfolio_value,
                 'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
             }
             print(f"Rendu de form_2048.html avec {len(all_transactions)} transactions ({len(transaction_files)} fichiers)")

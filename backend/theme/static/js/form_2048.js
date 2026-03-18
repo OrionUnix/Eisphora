@@ -118,18 +118,39 @@ window.initChart = function() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const chartColors = ['#f59e0b', '#6366f1', '#14b8a6', '#94a3b8', '#ec4899', '#8b5cf6'];
-    const dataValues = [45, 30, 15, 10];
-    const total = dataValues.reduce((a, b) => a + b, 0);
-
-    if (document.getElementById('portfolio-total-value')) {
-        document.getElementById('portfolio-total-value').textContent = total + '%';
+    // Get dynamic data from the script tags
+    let rawData = [];
+    let totalPortfolioValue = 0;
+    try {
+        const dataEl = document.getElementById('portfolio-data');
+        const totalEl = document.getElementById('portfolio-total-val-json');
+        if (dataEl) rawData = JSON.parse(dataEl.textContent);
+        if (totalEl) totalPortfolioValue = parseFloat(totalEl.textContent) || 0;
+    } catch (e) {
+        console.error("Error parsing portfolio data:", e);
     }
 
-    new Chart(ctx, {
+    // Default data if empty
+    if (rawData.length === 0) {
+        rawData = [{ asset: 'Aucun actif', percentage: 100 }];
+    }
+
+    const labels = rawData.map(item => item.asset);
+    const dataValues = rawData.map(item => item.percentage);
+    const chartColors = ['#f59e0b', '#6366f1', '#14b8a6', '#94a3b8', '#ec4899', '#8b5cf6', '#34d399', '#60a5fa'];
+
+    if (document.getElementById('portfolio-total-value')) {
+        document.getElementById('portfolio-total-value').textContent = 
+            totalPortfolioValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
+    }
+
+    // Destroy existing chart if it exists to avoid overlaps on re-init
+    if (window.myPortfolioChart) window.myPortfolioChart.destroy();
+
+    window.myPortfolioChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Bitcoin (BTC)', 'Ethereum (ETH)', 'Solana (SOL)', 'Stablecoins'],
+            labels: labels,
             datasets: [{
                 data: dataValues,
                 backgroundColor: chartColors,
@@ -147,12 +168,12 @@ window.initChart = function() {
             cutout: '78%',
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom', // Legend at bottom ensures the doughnut is horizontally centered inside the wrapper
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        padding: 25,
-                        font: { family: "'Inter', sans-serif", size: 12, weight: '600' },
+                        padding: 15,
+                        font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
                         color: '#64748b'
                     }
                 },
@@ -278,10 +299,14 @@ window.updateRowStyle = function(select) {
     if (type === 'achat') select.classList.add('bg-blue-50', 'text-blue-700');
     else if (type === 'vente') select.classList.add('bg-orange-50', 'text-orange-700');
     else select.classList.add('bg-slate-100', 'text-slate-600');
+    
+    // Update the indicator count
+    if (typeof updateTaxableCount === 'function') updateTaxableCount();
 };
 
 window.updateRowTotal = function(input) {
     const row = input.closest('tr');
+    if (!row) return;
     const qty = parseFloat(row.querySelector('input[name^="quantity_"]').value) || 0;
     const price = parseFloat(row.querySelector('input[name^="price_"]').value) || 0;
     const acqPrice = parseFloat(row.querySelector('input[name^="acq_price_"]').value) || 0;
@@ -290,16 +315,21 @@ window.updateRowTotal = function(input) {
     const total = qty * price;
     row.querySelector('.row-total').textContent = total.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
 
-    let gain = 0;
+    const gainEl = row.querySelector('.row-gain');
+    if (!gainEl) return;
+
     if (type === 'vente') {
         const cost = qty * acqPrice;
-        gain = total - cost;
+        const gain = total - cost;
+        gainEl.textContent = (gain > 0 ? '+ ' : '') + gain.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+        gainEl.classList.toggle('text-emerald-600', gain > 0);
+        gainEl.classList.toggle('text-red-500', gain < 0);
+        gainEl.classList.toggle('text-slate-400', gain === 0);
+    } else {
+        gainEl.textContent = '-- €';
+        gainEl.classList.remove('text-emerald-600', 'text-red-500');
+        gainEl.classList.add('text-slate-400');
     }
-    const gainEl = row.querySelector('.row-gain');
-    gainEl.textContent = (gain > 0 ? '+ ' : '') + gain.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
-    gainEl.classList.toggle('text-emerald-600', gain > 0);
-    gainEl.classList.toggle('text-red-500', gain < 0);
-    gainEl.classList.toggle('text-slate-400', gain === 0);
 };
 
 window.updatePagination = function() {
@@ -384,12 +414,14 @@ window.addTransactionRow = function() {
             <div class="flex items-center justify-center gap-2">
                 <button type="button" class="remove-transaction w-9 h-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-sm"></i></button>
             </div>
+            <input type="hidden" name="source_${counter}" value="Manuel" class="tx-source">
         </td>
     `;
 
     container.appendChild(tr);
     currentPage = Math.ceil(document.querySelectorAll('.transaction-row').length / rowsPerPage);
     updatePagination();
+    if (typeof updateTaxableCount === 'function') updateTaxableCount();
     tr.querySelector('input').focus();
 };
 
@@ -402,7 +434,145 @@ window.clearAllTransactions = function() {
         document.getElementById('transactions-container').innerHTML = '';
         document.getElementById('transaction_count').value = '0';
         updatePagination();
+        if (typeof updateTaxableCount === 'function') updateTaxableCount();
     }
+};
+
+window.removeSource = function(sourceName, tagId) {
+    if (confirm(`Voulez-vous supprimer toutes les transactions importées depuis : ${sourceName} ?`)) {
+        const rows = document.querySelectorAll('.transaction-row');
+        rows.forEach(row => {
+            const sourceInput = row.querySelector('.tx-source');
+            if (sourceInput && sourceInput.value === sourceName) {
+                row.remove();
+            }
+        });
+        
+        const tag = document.getElementById(tagId);
+        if (tag) tag.remove();
+        
+        const container = document.getElementById('active-sources-container');
+        if (container && container.querySelectorAll('.source-tag').length === 0) {
+            container.remove();
+        }
+        
+        updatePagination();
+        updateTaxes();
+        updateTaxableCount();
+    }
+};
+
+window.updateTaxableCount = function() {
+    const rows = document.querySelectorAll('.transaction-row');
+    let taxableCount = 0;
+    rows.forEach(row => {
+        const select = row.querySelector('select[name^="operation_type_"]');
+        if (select && select.value === 'vente') {
+            taxableCount++;
+        }
+    });
+    const valTx = document.getElementById('val-tx');
+    if (valTx) {
+        valTx.textContent = taxableCount;
+    }
+};
+
+// --- CUSTOM CSV MAPPER ---
+let customFileToParse = null;
+
+window.extractHeadersFromCSV = function(csvText, separator) {
+    const lines = csvText.split('\n');
+    for (let i = 0; i < Math.min(20, lines.length); i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const columns = line.split(separator).map(h => h.trim().replace(/"/g, ''));
+        if (columns.length > 3) {
+            console.log("Vraie ligne d'en-tête trouvée à la ligne", i + 1);
+            return columns;
+        }
+    }
+    return [];
+};
+
+window.readCustomCSVHeaders = function() {
+    const fileInput = document.getElementById('custom-csv-input');
+    const delimiter = document.getElementById('custom-delimiter').value;
+    
+    if (!fileInput.files.length) return alert("Veuillez sélectionner un fichier CSV.");
+    
+    customFileToParse = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const headers = extractHeadersFromCSV(text, delimiter);
+        
+        if (headers.length < 3) {
+            alert("Impossible de lire suffisamment de colonnes. Le séparateur est-il correct ?");
+            return;
+        }
+        
+        // Remplir les menus déroulants de mappage avec les colonnes trouvées
+        populateMappingSelects(headers);
+        document.getElementById('mapping-step-2').classList.remove('hidden');
+    };
+    
+    reader.readAsText(customFileToParse);
+};
+
+window.populateMappingSelects = function(headers) {
+    const selects = document.querySelectorAll('.custom-map-select');
+    
+    selects.forEach(select => {
+        select.innerHTML = '<option value="">-- Ignorer / Non présent --</option>';
+        headers.forEach(header => {
+            if (header) {
+                const option = document.createElement('option');
+                option.value = header;
+                option.textContent = header;
+                select.appendChild(option);
+            }
+        });
+    });
+};
+
+window.applyCustomMapping = function() {
+    const mapping = {
+        date: document.getElementById('map-date').value,
+        operation_type: document.getElementById('map-type').value,
+        crypto_token: document.getElementById('map-asset').value,
+        quantity: document.getElementById('map-qty').value,
+        price: document.getElementById('map-price').value,
+        fees: document.getElementById('map-fees').value,
+        currency: document.getElementById('map-currency').value
+    };
+    
+    if (!mapping.date || !mapping.operation_type || !mapping.crypto_token || !mapping.quantity) {
+        return alert("Veuillez au moins mapper la Date, le Type, l'Actif et la Quantité.");
+    }
+    
+    // Injecter le JSON dans le champ caché
+    document.getElementById('custom_mapping_json').value = JSON.stringify(mapping);
+    document.getElementById('custom_mapping_delimiter').value = document.getElementById('custom-delimiter').value;
+    
+    // Assigner le fichier au vrai file input pour qu'il soit envoyé au bouton Simuler
+    const mainFileInput = document.getElementById('file-input');
+    const dt = new DataTransfer();
+    
+    // Keep existing files if any
+    if (mainFileInput.files) {
+        for (let f of mainFileInput.files) {
+            dt.items.add(f);
+        }
+    }
+    dt.items.add(customFileToParse);
+    mainFileInput.files = dt.files;
+    
+    selectedFiles = dt;
+    if(typeof renderFileChips === "function") renderFileChips();
+    
+    document.getElementById('customMapperModal').classList.add('hidden');
+    alert("Mappage enregistré avec succès ! Veuillez cliquer sur 'Simuler mes impôts' pour lancer l'analyse.");
 };
 
 // --- DOM READY ---
@@ -419,6 +589,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const row = e.target.closest('.transaction-row');
             row.remove();
             updatePagination();
+            updateTaxableCount();
         }
     });
 
@@ -429,4 +600,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const inputs = row.querySelectorAll('input');
         if (inputs.length > 0) updateRowTotal(inputs[0]);
     });
+    
+    updateTaxableCount();
 });
