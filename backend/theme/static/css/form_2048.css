@@ -25,13 +25,13 @@
 /* Badges modernisés */
 .badge-achat {
     background: #eff6ff;
-    color: #2563eb;
+    color: #1d4ed8;
     border: 1px solid #bfdbfe;
 }
 
 .badge-vente {
     background: #fff7ed;
-    color: #ea580c;
+    color: #c2410c;
     border: 1px solid #fed7aa;
 }
 
@@ -39,6 +39,22 @@
     background: #f8fafc;
     color: #475569;
     border: 1px solid #e2e8f0;
+}
+
+/* Inputs dynamiques de la table */
+.dynamic-table-input {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #1e293b;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.dynamic-table-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background-color: #ffffff;
 }
 
 /* Scrollbar personnalisée pour le tableau et adresses */

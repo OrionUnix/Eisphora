@@ -1,0 +1,116 @@
+{% load i18n %}
+
+<div class="mt-8">
+    <h2 class="text-lg md:text-xl font-bold text-slate-800 pt-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fas fa-list-ul"></i>
+        </div>
+        {% trans "Détail des Transactions" %}
+    </h2>
+
+    <div class="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden mt-4">
+        
+        <!-- Table Header Actions -->
+        <div class="p-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-xs text-slate-500 font-semibold"><i class="fas fa-info-circle mr-1"></i> {% trans "Vous pouvez modifier ou supprimer les lignes avant de lancer la simulation." %}</p>
+            <div class="flex gap-2">
+                <button type="button" id="add-transaction" class="px-4 py-2 bg-indigo-50 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors">
+                    <i class="fas fa-plus mr-1"></i> {% trans "Ajouter ligne" %}
+                </button>
+                {% if manual_transactions %}
+                <button type="button" onclick="clearAllTransactions()" class="px-4 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">
+                    <i class="fas fa-trash-alt mr-1"></i> {% trans "Tout effacer" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Scrollable Table -->
+        <div class="overflow-x-auto custom-scrollbar" id="tx-table-container">
+            <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                <thead class="bg-white border-b border-slate-100">
+                    <tr>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest">{% trans "Date" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest">{% trans "Type" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest">{% trans "Actif" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-right">{% trans "Quantité" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-right">{% trans "Prix Acq." %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-right">{% trans "Prix Unit." %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-right">{% trans "Total (€)" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-right">{% trans "Gain/Perte (€)" %}</th>
+                        <th class="px-5 py-4 text-[10px] md:text-xs font-extrabold text-slate-500 uppercase tracking-widest text-center">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="transactions-container" class="divide-y divide-slate-100">
+                    {% for tx in manual_transactions %}
+                    <tr class="hover:bg-indigo-50/30 transition-colors group transaction-row" id="tr-row-{{ forloop.counter }}">
+                        <td class="px-5 py-3">
+                            <input type="text" name="date_transaction_{{ forloop.counter }}" value="{{ tx.date|default:'' }}" oninput="validateDate(this)" class="w-32 dynamic-table-input text-xs md:text-sm font-mono px-2 py-1.5" />
+                            <div class="date-status mt-1"></div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <div class="relative">
+                                <select name="operation_type_{{ forloop.counter }}" onchange="updateRowStyle(this)" class="w-full px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide border border-slate-200 hover:border-indigo-300 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer appearance-none transition-all {% if tx.operation_type == 'achat' %}bg-blue-50 text-blue-700{% elif tx.operation_type == 'vente' %}bg-orange-50 text-orange-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                                    <option value="achat" {% if tx.operation_type == 'achat' %}selected{% endif %}>{% trans "Achat" %}</option>
+                                    <option value="vente" {% if tx.operation_type == 'vente' %}selected{% endif %}>{% trans "Vente" %}</option>
+                                    <option value="transfert" {% if tx.operation_type == 'transfert' or not tx.operation_type %}selected{% endif %}>{% trans "Transfert" %}</option>
+                                </select>
+                                <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50"><i class="fas fa-chevron-down text-[8px]"></i></div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-3">
+                            <input type="text" name="crypto_token_{{ forloop.counter }}" value="{{ tx.crypto_token|default:'' }}" class="w-16 dynamic-table-input text-xs md:text-sm font-bold uppercase px-2 py-1.5" />
+                        </td>
+                        <td class="px-5 py-3 text-right">
+                            <input type="number" step="any" name="quantity_{{ forloop.counter }}" value="{{ tx.quantity|default:0|stringformat:".6f" }}" oninput="updateRowTotal(this)" class="w-28 text-right dynamic-table-input text-xs md:text-sm font-mono px-2 py-1.5" />
+                        </td>
+                        <td class="px-5 py-3 text-right">
+                            <input type="number" step="any" name="acq_price_{{ forloop.counter }}" value="{{ tx.acq_price|default:0|stringformat:".2f" }}" oninput="updateRowTotal(this)" class="w-24 text-right dynamic-table-input text-xs md:text-sm font-mono px-2 py-1.5" />
+                            <span class="text-[10px] text-slate-400">€</span>
+                        </td>
+                        <td class="px-5 py-3 text-right">
+                            <input type="number" step="any" name="price_{{ forloop.counter }}" value="{{ tx.price|default:0|stringformat:".2f" }}" oninput="updateRowTotal(this)" class="w-24 text-right dynamic-table-input text-xs md:text-sm font-mono px-2 py-1.5" />
+                            <span class="text-[10px] text-slate-400">€</span>
+                        </td>
+                        <td class="px-5 py-3 text-xs md:text-sm font-mono font-bold text-right row-total">-- €</td>
+                        <td class="px-5 py-3 text-xs md:text-sm font-mono font-bold text-right row-gain">-- €</td>
+                        <td class="px-5 py-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" onclick="focusRow(this)" class="w-9 h-9 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent transition-all flex items-center justify-center" title="{% trans 'Modifier la ligne' %}"><i class="fas fa-pen text-sm"></i></button>
+                                <button type="button" class="remove-transaction w-9 h-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent transition-all flex items-center justify-center" title="{% trans 'Supprimer' %}"><i class="fas fa-trash-alt text-sm"></i></button>
+                            </div>
+                            <input type="hidden" name="fees_{{ forloop.counter }}" value="{{ tx.fees|default:0 }}">
+                            <input type="hidden" name="tx_hash_{{ forloop.counter }}" value="{{ tx.tx_hash|default:'' }}">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination-container" class="bg-white px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 hidden">
+            <span class="text-xs font-medium text-slate-500" id="pagination-info">{% trans "Affichage de X sur Y transactions" %}</span>
+            <div class="flex items-center gap-3">
+                <select id="rows-per-page" onchange="updatePageSize()" class="text-xs border border-slate-200 rounded px-2 py-1 outline-none">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                </select>
+                <div class="flex gap-2">
+                    <button type="button" onclick="prevPage()" class="px-4 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50" id="prev-btn">{% trans "Précédent" %}</button>
+                    <button type="button" onclick="nextPage()" class="px-4 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50" id="next-btn">{% trans "Suivant" %}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="tx-empty-state" class="text-center py-12 hidden m-4 border-2 border-dashed border-slate-200 rounded-[20px] bg-slate-50">
+            <div class="w-16 h-16 bg-white text-slate-300 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-list text-2xl"></i>
+            </div>
+            <p class="text-slate-700 font-bold">{% trans "Aucune transaction manuelle" %}</p>
+            <p class="text-slate-400 text-sm mt-1">{% trans "Ajoutez-en une pour affiner votre calcul." %}</p>
+        </div>
+    </div>
+</div>

@@ -42,6 +42,7 @@
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body class="bg-gray-100 font-sans antialiased">
@@ -55,5 +56,6 @@
 
         {% include 'includes/footer.html' %}
     </div>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

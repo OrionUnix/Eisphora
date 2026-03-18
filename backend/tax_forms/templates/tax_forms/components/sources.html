@@ -1,0 +1,83 @@
+{% load i18n %}
+
+<h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 md:pt-4 mt-8">{% trans "Sources de Données & Portefeuille" %}</h2>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
+
+    <!-- Importer Documents -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shrink-0">
+                <i class="fas fa-file-import"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-bold text-slate-800">{% trans "Importer documents" %}</h3>
+        </div>
+
+        <div id="drop-zone" class="relative flex-grow bg-slate-50 group border-2 border-dashed border-slate-300 rounded-xl p-6 md:p-8 text-center cursor-pointer hover:border-[#7c5cbf] hover:bg-purple-50/50 transition-all duration-300">
+            <div class="mb-3 transform group-hover:-translate-y-1 transition-transform">
+                <div class="w-10 h-10 md:w-12 md:h-12 mx-auto bg-white text-[#7c5cbf] rounded-full flex items-center justify-center shadow-sm">
+                    <i class="fas fa-cloud-upload-alt md:text-xl"></i>
+                </div>
+            </div>
+            <p class="text-sm md:text-base text-slate-700 font-bold mb-1">{% trans "Glissez vos fichiers ici" %}</p>
+            <p class="text-slate-400 text-[10px] md:text-xs mb-4">{% trans "ou cliquez pour parcourir" %}</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <span class="px-2 py-1 md:px-3 md:py-1 bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold rounded-md uppercase tracking-wider">CSV</span>
+                <span class="px-2 py-1 md:px-3 md:py-1 bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold rounded-md uppercase tracking-wider">XLSX</span>
+                <span class="px-2 py-1 md:px-3 md:py-1 bg-slate-200 text-slate-600 text-[9px] md:text-[10px] font-bold rounded-md uppercase tracking-wider">PDF</span>
+            </div>
+            <input type="file" id="file-input" name="transaction_files" multiple accept=".csv,.xls,.xlsx,.pdf,.txt" class="hidden">
+        </div>
+        <div id="file-chips" class="flex flex-wrap gap-2 mt-4 min-h-[32px]"></div>
+    </div>
+
+    <!-- Adresses Blockchain -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-sm shrink-0">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-bold text-slate-800">{% trans "Adresses Blockchain" %}</h3>
+        </div>
+
+        <div class="relative flex-grow flex flex-col">
+            <p class="text-xs md:text-sm text-slate-500 mb-3 font-medium">{% trans "Saisissez vos clés publiques (EVM, Bitcoin...). Une par ligne." %}</p>
+            <textarea name="crypto_address" id="id_crypto_address"
+                class="w-full flex-grow p-3 md:p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-mono text-xs md:text-sm resize-none custom-scrollbar focus:ring-2 focus:ring-[#7c5cbf] focus:border-[#7c5cbf] transition-all placeholder-slate-400 min-h-[120px] md:min-h-[140px]"
+                placeholder="Ex: 0x71C... (Ethereum/BSC)&#10;Ex: bc1qxy... (Bitcoin)">{{ crypto_address|default:'' }}</textarea>
+
+            <div class="absolute bottom-3 right-3 md:bottom-4 md:right-4 pointer-events-none">
+                <span id="network-badge" class="hidden text-[9px] md:text-[10px] font-black px-2 py-1 md:px-3 md:py-1.5 rounded-full bg-[#7c5cbf]/10 text-[#7c5cbf] shadow-sm backdrop-blur-sm border border-[#7c5cbf]/20 animate-pulse flex items-center gap-1.5">
+                    <i class="fas fa-bolt text-yellow-500"></i> <span id="network-text">EVM</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition Chart -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shrink-0">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3 class="text-base md:text-lg font-bold text-slate-800">{% trans "Répartition" %}</h3>
+        </div>
+
+        <div class="relative flex-grow flex flex-col items-center justify-center min-h-[220px]">
+            <div class="w-full h-full max-h-[200px] flex items-center justify-center relative">
+                <canvas id="portfolioChart"></canvas>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                    <span id="portfolio-total-value" class="text-lg font-black text-slate-800">100%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="flex justify-center pt-8 pb-2">
+    <button type="submit" id="simulate-btn"
+        class="w-full sm:w-auto px-10 py-4 md:px-12 md:py-5 bg-[#7c5cbf] hover:bg-[#6849a3] text-white rounded-2xl font-black text-lg md:text-xl shadow-xl shadow-purple-500/30 transform transition-all hover:-translate-y-1 flex items-center justify-center gap-3 group">
+        <i class="fas fa-calculator text-xl group-hover:rotate-12 transition-transform"></i>
+        {% trans "Simuler mes impôts" %}
+    </button>
+</div>

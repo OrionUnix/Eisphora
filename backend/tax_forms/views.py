@@ -4,7 +4,7 @@ from django.contrib import messages
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
 from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row
-from .services.calculator import calculate_french_taxes, calculate_bareme_progressif, get_pfu_rate
+from .services.calculator import calculate_french_taxes, get_pfu_rate
 
 
 def form_2048_view(request):
@@ -29,6 +29,7 @@ def form_2048_view(request):
                     'crypto': request.POST.get(f'crypto_token_{i}'),
                     'quantity': request.POST.get(f'quantity_{i}'),
                     'price': request.POST.get(f'price_{i}'),
+                    'acq_price': request.POST.get(f'acq_price_{i}', 0),
                     'fees': request.POST.get(f'fees_{i}'),
                     'currency': request.POST.get(f'currency_{i}', 'EUR'),
                     'tx_hash': request.POST.get(f'tx_hash_{i}')
@@ -63,25 +64,24 @@ def form_2048_view(request):
 
             # --- Calcul fiscal ---
             calc_results = calculate_french_taxes(all_transactions)
-            taxable_profits = calc_results['total_plus_value']
+            taxable_profits = calc_results.get('total_plus_value_imposable', 0)
 
             # PFU depuis tax_config.json
             pfu_rate = get_pfu_rate("2025")
             estimated_tax = max(0, taxable_profits * pfu_rate / 100)
 
-            # Barème progressif — TMI 30% par défaut (le plus courant)
-            bareme_result = calculate_bareme_progressif(taxable_profits, tmi_rate=30, year="2025")
-            estimated_tax_bareme = bareme_result['total']
+            # Le barème progressif a été retiré pour simplification
+            estimated_tax_bareme = 0
 
             # --- Mapper les résultats sur les transactions ---
-            taxable_events_map = {event['id']: event for event in calc_results['taxable_events']}
+            taxable_events_map = {event.get('id'): event for event in calc_results['taxable_events']}
             for tx in all_transactions:
                 event = taxable_events_map.get(tx.get('index'))
                 if event:
-                    tx['plus_value'] = event['plus_value']
-                    tx['prix_cession'] = event['prix_cession']
-                    tx['prix_acquisition'] = event.get('prix_acquisition', 0)
-                    tx['valeur_globale_estimee'] = event['valeur_globale_estimee']
+                    tx['plus_value'] = event.get('plus_value', 0)
+                    tx['prix_cession'] = event.get('prix_cession_net', 0)
+                    tx['prix_acquisition'] = event.get('prix_acq_fractionne', 0)
+                    tx['valeur_globale_estimee'] = event.get('valeur_globale', 0)
 
             context = {
                 'sessions': all_transactions,
@@ -93,8 +93,8 @@ def form_2048_view(request):
                 'estimated_tax': estimated_tax,
                 'estimated_tax_bareme': estimated_tax_bareme,
                 'pfu_rate': pfu_rate,
-                'bareme_ir': bareme_result['ir'],
-                'bareme_ps': bareme_result['ps'],
+                'bareme_ir': 0,
+                'bareme_ps': 0,
                 'cex_dex': cex_dex,
                 'manual_transactions': all_transactions,
                 'file_count': len(transaction_files),

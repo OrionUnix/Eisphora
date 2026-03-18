@@ -1,0 +1,67 @@
+{% load i18n %}
+
+{% if show_results %}
+<span id="tax-data" data-gains="{{ taxable_profits|default:0 }}" style="display:none"></span>
+
+<h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 animate-fade-in-up">{% trans "Indicateurs Globaux" %}</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 animate-fade-in-up">
+
+    <!-- Transactions Card -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col justify-between transition-transform hover:-translate-y-1 hover:shadow-md duration-300">
+        <div class="flex items-center gap-4 mb-4 md:mb-6">
+            <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg md:text-xl shadow-inner shrink-0">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div>
+                <h3 class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">{% trans "Transactions" %}</h3>
+                <p class="text-xs md:text-sm font-semibold text-slate-600">{% trans "Prises en compte" %}</p>
+            </div>
+        </div>
+        <div>
+            <p id="val-tx" class="text-4xl lg:text-5xl font-black text-slate-800 tracking-tight">{{ manual_transactions|length|default:0 }}</p>
+            <p class="text-[10px] md:text-xs text-slate-400 mt-2 font-medium"><i class="fas fa-clock mr-1"></i>
+                {% trans "Calculées sur l'année fiscale" %}</p>
+        </div>
+    </div>
+
+    <!-- Plus-values Card -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col justify-between transition-transform hover:-translate-y-1 hover:shadow-md duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-emerald-50 rounded-bl-[100px] -z-0 opacity-50"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-4 md:mb-6">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-lg md:text-xl shadow-inner shrink-0">
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
+                <div>
+                    <h3 class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">{% trans "Montant Global" %}</h3>
+                    <p class="text-xs md:text-sm font-semibold text-slate-600">{% trans "Plus-values" %}</p>
+                </div>
+            </div>
+            <div>
+                <p id="val-plus" class="text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-500 tracking-tight">+ 0 €</p>
+                <p class="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">{% trans "Bénéfices réalisés sur vos cessions" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moins-values Card -->
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col justify-between transition-transform hover:-translate-y-1 hover:shadow-md duration-300 relative overflow-hidden sm:col-span-2 md:col-span-1">
+        <div class="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-red-50 rounded-bl-[100px] -z-0 opacity-50"></div>
+        <div class="relative z-10">
+            <div class="flex items-center gap-4 mb-4 md:mb-6">
+                <div class="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center text-lg md:text-xl shadow-inner shrink-0">
+                    <i class="fas fa-arrow-trend-down"></i>
+                </div>
+                <div>
+                    <h3 class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">{% trans "Montant Global" %}</h3>
+                    <p class="text-xs md:text-sm font-semibold text-slate-600">{% trans "Moins-values" %}</p>
+                </div>
+            </div>
+            <div>
+                <p id="val-minus" class="text-3xl sm:text-4xl lg:text-5xl font-black text-red-500 tracking-tight">- 0 €</p>
+                <p class="text-[10px] md:text-xs text-slate-400 mt-2 font-medium">{% trans "Pertes réalisées sur vos cessions" %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
