@@ -31,10 +31,10 @@ if env_file.exists():
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', default=True)
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Allowed hosts for development
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# Allowed hosts for production (Render)
+ALLOWED_HOSTS = ['*'] if not DEBUG else ['localhost', '127.0.0.1', '[::1]']
 
 # Application definition
 INSTALLED_APPS = [
@@ -52,13 +52,13 @@ INSTALLED_APPS = [
 # AUTH_USER_MODEL = 'users.CustomUser'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-     'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-   
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 # redirection removed
@@ -110,6 +110,7 @@ AUTH_PASSWORD_VALIDATORS = [
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (user-uploaded content)
 MEDIA_URL = '/media/'
@@ -185,10 +186,11 @@ if not DEBUG:
         "es": os.getenv("ERROR_MESSAGE_ES", "Se ha producido un error interno."),
     }.get(CURRENT_LANGUAGE, "An error occurred.")
 
-# CSRF trusted origins to allow local development
+# CSRF trusted origins to allow local development and Render
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://*.onrender.com',
 ]
 CSRF_COOKIE_SECURE = not DEBUG  
 CSRF_COOKIE_HTTPONLY = True  
