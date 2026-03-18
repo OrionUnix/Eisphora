@@ -1,0 +1,83 @@
+/* Animations personnalisées et transitions fluides */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Effet Glassmorphism subtil */
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Badges modernisés */
+.badge-achat {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+.badge-vente {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+}
+
+.badge-transfert {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+/* Scrollbar personnalisée pour le tableau et adresses */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 8px;
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Loader d'IA */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #7c5cbf;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Style simple pour le contenu généré par l'IA */
+.ai-content p { margin-bottom: 1rem; color: #475569; line-height: 1.6; font-size: 0.95rem; }
+@media (min-width: 768px) { .ai-content p { font-size: 1rem; } }
+.ai-content strong { color: #1e293b; }
+.ai-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; color: #475569; }

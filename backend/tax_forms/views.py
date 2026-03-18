@@ -1,3 +1,4 @@
+import os
 from django.shortcuts import render
 from django.contrib import messages
 from .forms import Form2048
@@ -97,6 +98,7 @@ def form_2048_view(request):
                 'cex_dex': cex_dex,
                 'manual_transactions': all_transactions,
                 'file_count': len(transaction_files),
+                'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
             }
             print(f"Rendu de form_2048.html avec {len(all_transactions)} transactions ({len(transaction_files)} fichiers)")
             return render(request, 'tax_forms/form_2048.html', context)
