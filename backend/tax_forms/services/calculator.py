@@ -100,9 +100,8 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
         elif op in ('vente', 'sell', 'cession', 'fiat_withdrawal'):
             available = portfolio.get(crypto, 0.0)
             if available < qty:
-                print(f"[WARN] Vente ignorée pour {crypto} : stock {available:.8f} < vente {qty:.8f}")
-                tx['remaining_quantity'] = available
-                continue
+                print(f"[WARN] Vente ignorée pour {crypto} : stock {available:.8f} < vente {qty:.8f}. Calcul forcé avec coût d'acquisition de 0 sur la diff.")
+                # On ne bloque plus, on force le calcul pour que l'estimation fiscale se fasse (PMP à 0)
 
             # A. Calcul du Prix de Cession Net
             prix_cession_net = (qty * unit_price) - fees
@@ -151,9 +150,9 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
             total_acquisition_cost = max(0.0, total_acquisition_cost - prix_acq_fractionne)
 
             # F. Mise à jour du portefeuille
-            portfolio[crypto] -= qty
+            portfolio[crypto] = portfolio.get(crypto, 0.0) - qty
             if portfolio[crypto] <= 0:
-                del portfolio[crypto]
+                portfolio.pop(crypto, None)
 
             tx['remaining_quantity'] = portfolio.get(crypto, 0.0)
 
@@ -181,9 +180,9 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
                 continue
 
             # 1. On retire la crypto cédée
-            portfolio[crypto] -= qty
+            portfolio[crypto] = portfolio.get(crypto, 0.0) - qty
             if portfolio[crypto] <= 0:
-                del portfolio[crypto]
+                portfolio.pop(crypto, None)
 
             # 2. On ajoute la crypto reçue
             received_token = str(tx.get('received_token', '')).strip().upper()
