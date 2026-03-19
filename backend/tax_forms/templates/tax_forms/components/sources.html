@@ -1,11 +1,10 @@
 {% load i18n %}
 
-<h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 md:pt-4 mt-8">{% trans "Sources de Données & Portefeuille"
-    %}</h2>
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
+<h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 md:pt-4 mt-8">{% trans "Sources de Données" %}</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
     <!-- Importer Documents -->
-    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col">
         <div class="flex items-center gap-3 mb-4">
             <div
                 class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shrink-0">
@@ -51,7 +50,7 @@
     </div>
 
     <!-- Adresses Blockchain -->
-    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
+    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col">
         <div class="flex items-center gap-3 mb-4">
             <div
                 class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-sm shrink-0">
@@ -76,39 +75,7 @@
         </div>
     </div>
 
-    <!-- Répartition Chart -->
-    <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col xl:col-span-1">
-        <div class="flex items-center gap-3 mb-4">
-            <div
-                class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shrink-0">
-                <i class="fas fa-chart-pie"></i>
-            </div>
-            <h3 class="text-base md:text-lg font-bold text-slate-800">{% trans "Répartition" %}</h3>
-        </div>
-
-        <div class="relative flex-grow flex flex-col items-center justify-center min-h-[220px]">
-            <!-- Wrapper for strictly the doughnut to ensure absolute centering is actually centered on the circle -->
-            <div class="relative w-full max-w-[200px] aspect-square flex items-center justify-center"
-                id="chart-wrapper">
-                <canvas id="portfolioChart"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-0">
-                    <span
-                        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Total</span>
-                    <span id="portfolio-total-value" class="text-lg md:text-xl font-black text-slate-800 leading-none">0
-                        €</span>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
-
-<!-- Dynamic data for the chart -->
-<script id="portfolio-data" type="application/json">
-    {{ portfolio_distribution|safe }}
-</script>
-<script id="portfolio-total-val-json" type="application/json">
-    {{ total_portfolio_value|default:0 }}
-</script>
 
 <div class="flex flex-col-reverse md:flex-row items-center justify-center gap-4 mt-8 pb-2">
     <!-- Bouton Effacer -->

@@ -112,96 +112,6 @@ function updateTaxBadges(pfuTotal, baremeTotal) {
     }
 }
 
-// --- INITIALISATION DU GRAPHIQUE (Chart.js) ---
-window.initChart = function() {
-    const canvas = document.getElementById('portfolioChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    // Get dynamic data from the script tags
-    let rawData = [];
-    let totalPortfolioValue = 0;
-    try {
-        const dataEl = document.getElementById('portfolio-data');
-        const totalEl = document.getElementById('portfolio-total-val-json');
-        if (dataEl) rawData = JSON.parse(dataEl.textContent);
-        if (totalEl) totalPortfolioValue = parseFloat(totalEl.textContent) || 0;
-    } catch (e) {
-        console.error("Error parsing portfolio data:", e);
-    }
-
-    // Default data if empty
-    if (rawData.length === 0) {
-        rawData = [{ asset: 'Aucun actif', percentage: 100 }];
-    }
-
-    const labels = rawData.map(item => item.asset);
-    const dataValues = rawData.map(item => item.percentage);
-    const chartColors = ['#f59e0b', '#6366f1', '#14b8a6', '#94a3b8', '#ec4899', '#8b5cf6', '#34d399', '#60a5fa'];
-
-    if (document.getElementById('portfolio-total-value')) {
-        document.getElementById('portfolio-total-value').textContent = 
-            totalPortfolioValue.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €';
-    }
-
-    // Destroy existing chart if it exists to avoid overlaps on re-init
-    if (window.myPortfolioChart) window.myPortfolioChart.destroy();
-
-    window.myPortfolioChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: dataValues,
-                backgroundColor: chartColors,
-                hoverBackgroundColor: chartColors.map(c => c + 'dd'),
-                borderWidth: 4,
-                borderColor: '#ffffff',
-                hoverOffset: 12,
-                borderRadius: 10,
-                spacing: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '78%',
-            plugins: {
-                legend: {
-                    position: 'bottom', // Legend at bottom ensures the doughnut is horizontally centered inside the wrapper
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 15,
-                        font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
-                        color: '#64748b'
-                    }
-                },
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: '#1e293b',
-                    titleFont: { size: 13, weight: 'bold' },
-                    bodyFont: { size: 12 },
-                    padding: 12,
-                    cornerRadius: 12,
-                    displayColors: true,
-                    callbacks: {
-                        label: function (context) {
-                            return ' ' + context.label + ' : ' + context.raw + '%';
-                        }
-                    }
-                }
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true,
-                duration: 1500,
-                easing: 'easeOutQuart'
-            }
-        }
-    });
-};
-
 // --- GESTION DES FICHIERS (Drag & Drop) ---
 let selectedFiles = new DataTransfer();
 
@@ -410,11 +320,15 @@ window.addTransactionRow = function() {
         </td>
         <td class="px-5 py-3 text-xs md:text-sm font-mono font-bold text-right row-total">0,00 €</td>
         <td class="px-5 py-3 text-xs md:text-sm font-mono font-bold text-right row-gain">0,00 €</td>
+        <td class="px-5 py-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-100 italic">Manuel</span>
+        </td>
         <td class="px-5 py-3 text-center">
             <div class="flex items-center justify-center gap-2">
-                <button type="button" class="remove-transaction w-9 h-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent transition-all flex items-center justify-center"><i class="fas fa-trash-alt text-sm"></i></button>
+                <button type="button" class="remove-transaction w-9 h-9 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent transition-all flex items-center justify-center shadow-sm"><i class="fas fa-trash-alt text-sm"></i></button>
             </div>
             <input type="hidden" name="source_${counter}" value="Manuel" class="tx-source">
+            <input type="hidden" name="source_type_${counter}" value="Manuel" class="tx-source-type">
         </td>
     `;
 
@@ -423,6 +337,74 @@ window.addTransactionRow = function() {
     updatePagination();
     if (typeof updateTaxableCount === 'function') updateTaxableCount();
     tr.querySelector('input').focus();
+};
+
+// --- FILTRAGE SESSIONS IMPOSABLES ---
+window.initFilters = function() {
+    const toggle = document.getElementById('toggle-taxable-only');
+    if (!toggle) return;
+
+    toggle.addEventListener('change', function() {
+        updatePagination(); // Repagine tout en tenant compte du filtre
+    });
+};
+
+// Modification de updatePagination pour prendre en compte le filtre
+const originalUpdatePagination = window.updatePagination;
+window.updatePagination = function() {
+    const toggle = document.getElementById('toggle-taxable-only');
+    const taxableOnly = toggle ? toggle.checked : false;
+    const rows = Array.from(document.querySelectorAll('.transaction-row'));
+    const tableContainer = document.getElementById('tx-table-container');
+    const paginationContainer = document.getElementById('pagination-container');
+    const emptyState = document.getElementById('tx-empty-state');
+
+    // Filtrer les lignes visibles selon le bouton
+    let visibleRows = rows;
+    if (taxableOnly) {
+        visibleRows = rows.filter(row => {
+            const gainCell = row.querySelector('.row-gain');
+            if (!gainCell) return false;
+            const gainText = gainCell.textContent.trim().replace('€', '').replace(',', '.');
+            const gainVal = parseFloat(gainText);
+            return !isNaN(gainVal) && gainVal !== 0;
+        });
+        // Cacher les lignes qui ne correspondent pas au filtre
+        rows.forEach(row => {
+            if (!visibleRows.includes(row)) row.classList.add('hidden');
+        });
+    }
+
+    if (visibleRows.length === 0 && rows.length > 0) {
+        emptyState?.classList.remove('hidden');
+        tableContainer?.classList.add('hidden');
+        paginationContainer?.classList.add('hidden');
+        return;
+    }
+
+    emptyState?.classList.add('hidden');
+    tableContainer?.classList.remove('hidden');
+    paginationContainer?.classList.remove('hidden');
+
+    const total = visibleRows.length;
+    const totalPages = Math.ceil(total / rowsPerPage);
+    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    // Affichage paginé des lignes filtrées ONLY
+    visibleRows.forEach((row, index) => {
+        row.classList.toggle('hidden', index < start || index >= end);
+    });
+
+    const info = document.getElementById('pagination-info');
+    if (info) {
+        info.textContent = `Affichage de ${total === 0 ? 0 : start + 1} à ${Math.min(end, total)} sur ${total} sessions`;
+    }
+
+    document.getElementById('prev-btn').disabled = currentPage === 1;
+    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
 };
 
 window.prevPage = function() { if (currentPage > 1) { currentPage--; updatePagination(); } };
@@ -578,9 +560,9 @@ window.applyCustomMapping = function() {
 // --- DOM READY ---
 document.addEventListener('DOMContentLoaded', function () {
     updateTaxes();
-    initChart();
     initFileUpload();
     initWalletDetection();
+    initFilters();
     updatePagination();
 
     // Event delegation for remove buttons

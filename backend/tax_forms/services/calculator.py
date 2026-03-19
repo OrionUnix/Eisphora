@@ -197,7 +197,20 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
             tx['remaining_quantity'] = portfolio.get(crypto, 0.0)
 
         # ==========================================
-        # AUTRES OPÉRATIONS (Transfert intra-wallet, etc.)
+        # OPÉRATION : MOUVEMENT DE STOCK (Non taxable)
+        # ==========================================
+        elif op in ('depot', 'deposit', 'receive', 'reçu', 'staking', 'reward', 'earn', 'income'):
+            portfolio[crypto] = portfolio.get(crypto, 0.0) + qty
+            tx['remaining_quantity'] = portfolio[crypto]
+
+        elif op in ('retrait', 'withdrawal', 'send', 'envoi'):
+            portfolio[crypto] = max(0.0, portfolio.get(crypto, 0.0) - qty)
+            if portfolio[crypto] <= 1e-10:
+                portfolio.pop(crypto, None)
+            tx['remaining_quantity'] = portfolio.get(crypto, 0.0)
+
+        # ==========================================
+        # AUTRES OPÉRATIONS
         # ==========================================
         else:
             tx['remaining_quantity'] = portfolio.get(crypto, 0.0)

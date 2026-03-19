@@ -32,12 +32,13 @@ def form_2048_view(request):
                     'acq_price': request.POST.get(f'acq_price_{i}', 0),
                     'fees': request.POST.get(f'fees_{i}'),
                     'currency': request.POST.get(f'currency_{i}', 'EUR'),
-                    'tx_hash': request.POST.get(f'tx_hash_{i}'),
-                    'source': request.POST.get(f'source_{i}', 'Manuel')
+                    'source': request.POST.get(f'source_{i}', 'Manuel'),
+                    'source_type': request.POST.get(f'source_type_{i}', 'Manuel')
                 }
                 tx = parse_generic_row(row)
                 if tx:
                     tx['source'] = row['source']
+                    tx['source_type'] = row['source_type']
                     all_transactions.append(tx)
 
             # --- 2. Adresses crypto (BTC, Tron, EVM — auto-détectées) ---
@@ -133,8 +134,24 @@ def form_2048_view(request):
             # Sort by value
             portfolio_distribution = sorted(portfolio_distribution, key=lambda x: x['value'], reverse=True)
 
-            # --- Sources Actives ---
-            unique_sources = sorted(list({str(tx.get('source')) for tx in all_transactions if tx.get('source') and tx.get('source') != 'Manuel'}))
+            # JSON encoding for the template
+            import json
+            portfolio_distribution_json = json.dumps(portfolio_distribution)
+            print(f"Portfolio Distribution: {len(portfolio_distribution)} assets, Total: {total_portfolio_value:.2f} €")
+
+            # --- Sources Actives (Filtré pour la vue) ---
+            sources_map = {}
+            for tx in all_transactions:
+                s_name = str(tx.get('source', ''))
+                s_type = tx.get('source_type', 'Manuel')
+                if s_name and s_name != 'Manuel' and s_name not in sources_map:
+                    sources_map[s_name] = s_type
+            
+            unique_sources = []
+            for name, stype in sources_map.items():
+                unique_sources.append({'name': name, 'type': stype})
+            
+            unique_sources = sorted(unique_sources, key=lambda x: x['name'])
 
             context = {
                 'sessions': all_transactions,
@@ -152,7 +169,7 @@ def form_2048_view(request):
                 'manual_transactions': all_transactions,
                 'file_count': len(transaction_files),
                 'unique_sources': unique_sources,
-                'portfolio_distribution': portfolio_distribution,
+                'portfolio_distribution': portfolio_distribution_json,
                 'total_portfolio_value': total_portfolio_value,
                 'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
             }
