@@ -12,7 +12,18 @@
 > ✦ Built without exposing a REST API or relying on external frontend runtimes like Next.js.
 
 ---
+![alt text](image.png)
 
+## 🔒 The "Stateless" Security Model
+
+Most tax applications store your financial history in databases (PostgreSQL, MongoDB), requiring complex encryption mechanisms (AES-256) and creating massive honeypots for hackers. 
+
+**Eisphora takes a different approach:**
+1. **In-Memory Processing:** Uploaded CSV files (like Coinbase exports) are handled strictly in RAM via Django's `MemoryFileUploadHandler`.
+2. **Zero-Disk Policy:** Once the FIFO calculations are done and the HTML results are rendered to your screen, the memory is wiped. 
+3. **No User Accounts Needed:** By not forcing users to create accounts, we eliminate the risks of token leakage, password breaches, or identity theft.
+
+---
 ## 🔒 Why This Architecture?
 
 The project originally used a React/Next.js frontend connected to Django via REST APIs. This introduced:
