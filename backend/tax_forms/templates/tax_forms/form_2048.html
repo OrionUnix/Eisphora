@@ -60,4 +60,67 @@
         {% include "tax_forms/components/modal_mapper.html" %}
     </div>
 </div>
+
+<!-- Loading Overlay (Modal Sablier) -->
+<div id="loading-overlay" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-8 md:p-12 shadow-2xl max-w-md w-full mx-4 text-center transform transition-all scale-100">
+        <div class="mb-8 relative inline-block">
+            <div class="w-24 h-24 rounded-full bg-indigo-50 flex items-center justify-center mx-auto">
+                <i class="fas fa-hourglass-half text-4xl text-indigo-600 animate-spin-slow"></i>
+            </div>
+            <div class="absolute -top-2 -right-2">
+                <span class="flex h-6 w-6 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-6 w-6 bg-indigo-500"></span>
+                </span>
+            </div>
+        </div>
+        <h2 class="text-2xl font-black text-slate-800 mb-4">{% trans "Analyse en cours..." %}</h2>
+        <p class="text-slate-500 font-medium leading-relaxed">
+            {% trans "Nous récupérons vos transactions blockchain et calculons vos plus-values. Selon le nombre de transactions, cela peut prendre jusqu'à une minute." %}
+        </p>
+        <div class="mt-8 flex justify-center gap-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0s"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce" style="animation-delay: 0.4s"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+        animation: spin-slow 3s linear infinite;
+    }
+</style>
+
+<script>
+    // Animation de chargement pour la simulation
+    const form = document.getElementById('main-tx-form');
+    const btnSimuler = document.getElementById('btn-simuler');
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    if (form && btnSimuler && loadingOverlay) {
+        form.addEventListener('submit', function() {
+            // Affiche l'overlay de chargement
+            loadingOverlay.classList.remove('hidden');
+            
+            // Désactive le bouton pour empêcher le double-clic
+            btnSimuler.disabled = true;
+            btnSimuler.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+    }
+
+    // Fonction pour effacer les données
+    function effacerDonnees() {
+        if(confirm('{% trans "Êtes-vous sûr de vouloir supprimer définitivement toutes vos données de cette session ?" %}')) {
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = window.location.pathname;
+        }
+    }
+</script>
 {% endblock %}
