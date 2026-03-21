@@ -6,7 +6,6 @@ from django.views.generic import RedirectView
 from django.shortcuts import render
 
 # Débogage pour vérifier les URLs
-print("Chargement des URLs principales")
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/fr-fr/', permanent=False)),

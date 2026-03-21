@@ -60,8 +60,6 @@ def get_historical_price(symbol: str, timestamp_str: str, currency: str = 'EUR')
         if ts_key in PRICE_CACHE:
             return PRICE_CACHE[ts_key]
             
-        print(f"Fetching historical price for {symbol} at {date_obj}...")
-        
         # 1. Tentative CryptoCompare
         url = "https://min-api.cryptocompare.com/data/v2/histohour"
         params = {'fsym': symbol.upper(), 'tsym': currency.upper(), 'limit': 1, 'toTs': ts}
@@ -94,7 +92,7 @@ def get_historical_price(symbol: str, timestamp_str: str, currency: str = 'EUR')
                 return price
                 
     except Exception as e:
-        print(f"Error fetching price for {symbol}: {e}")
+        pass
         
     return 0.0
 
@@ -126,7 +124,6 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None) -> list:
     address = address.strip()
     detected = detect_address_type(address)
     addr_type = detected['type']
-    print(f"Address {address[:12]}... detected as type: {addr_type}")
 
     if addr_type == 'btc':
         return fetch_btc_transactions(address)
@@ -136,7 +133,6 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None) -> list:
         chains_to_scan = blockchains if blockchains else detected['chains']
         return _fetch_evm_transactions(address, chains_to_scan)
     else:
-        print(f"Unknown address type for: {address}")
         return []
 
 def _fetch_evm_transactions(address: str, blockchains: list) -> list:
@@ -165,7 +161,6 @@ def _fetch_evm_transactions(address: str, blockchains: list) -> list:
             params['chainid'] = metadata['chainid']
 
         try:
-            print(f"Fetching transactions for {address} on {chain} (ID: {metadata['chainid']})...")
             response = requests.get(api_url, params=params, timeout=10)
             data = response.json()
 
@@ -192,11 +187,9 @@ def _fetch_evm_transactions(address: str, blockchains: list) -> list:
                             'currency': 'EUR',
                             'source': address
                         })
-            else:
-                print(f"No transactions found on {chain}.")
                 
         except Exception as e:
-            print(f"Error fetching from {chain}: {e}")
+            pass
             
         # Éviter le Rate Limit d'Etherscan (max 5 req/sec sur le plan gratuit)
         time.sleep(0.25)
@@ -246,7 +239,7 @@ def fetch_btc_transactions(address: str) -> list:
                 'source': address
             })
     except Exception as e:
-        print(f"Error fetching BTC transactions: {e}")
+        pass
     return transactions
 
 def fetch_tron_transactions(address: str) -> list:
@@ -293,7 +286,7 @@ def fetch_tron_transactions(address: str) -> list:
                 'source': address
             })
     except Exception as e:
-        print(f"Error fetching Tron transactions: {e}")
+        pass
     return transactions
 
 # ---------------------------------------------------------------------------
@@ -421,7 +414,6 @@ def parse_custom_csv(file: InMemoryUploadedFile, mapping_json: str, delimiter: s
         return transactions
 
     except Exception as e:
-        print(f"Erreur lors du parsing custom CSV : {e}")
         return []
 
 def parse_transaction_file(file: InMemoryUploadedFile, cex_type: str = "generic"):
@@ -480,7 +472,6 @@ def parse_transaction_file(file: InMemoryUploadedFile, cex_type: str = "generic"
             
         return transactions
     except Exception as e:
-        print(f"Error reading file {filename}: {e}")
         return []
 
 def attempt_csv_parse(file, filename):

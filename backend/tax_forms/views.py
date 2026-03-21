@@ -1,14 +1,15 @@
 import os
 from django.shortcuts import render
 from django.contrib import messages
+from django.views.decorators.debug import sensitive_post_parameters
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
 from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row, get_historical_price, parse_custom_csv
 from .services.calculator import calculate_french_taxes, get_pfu_rate
 
 
+@sensitive_post_parameters('transaction_files', 'crypto_address', 'custom_mapping_json')
 def form_2048_view(request):
-    print("Vue form_2048_view appelée pour", request.path)
 
     if request.method == 'POST':
         form = Form2048(request.POST, request.FILES)
@@ -55,7 +56,6 @@ def form_2048_view(request):
                 custom_delimiter = request.POST.get('custom_mapping_delimiter', ',')
 
                 for uploaded_file in transaction_files:
-                    print(f"Processing file: {uploaded_file.name} ({uploaded_file.size} bytes)")
                     messages.info(request, _(f"Analyse du fichier : {uploaded_file.name}"))
                     
                     if mapping_json and uploaded_file.name.endswith('.csv'):
@@ -137,7 +137,6 @@ def form_2048_view(request):
             # JSON encoding for the template
             import json
             portfolio_distribution_json = json.dumps(portfolio_distribution)
-            print(f"Portfolio Distribution: {len(portfolio_distribution)} assets, Total: {total_portfolio_value:.2f} €")
 
             # --- Sources Actives (Filtré pour la vue) ---
             sources_map = {}
@@ -173,13 +172,10 @@ def form_2048_view(request):
                 'total_portfolio_value': total_portfolio_value,
                 'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
             }
-            print(f"Rendu de form_2048.html avec {len(all_transactions)} transactions ({len(transaction_files)} fichiers)")
             return render(request, 'tax_forms/form_2048.html', context)
         else:
-            print("Form errors:", form.errors)
             messages.error(request, _("Veuillez corriger les erreurs dans le formulaire."))
     else:
         form = Form2048()
 
-    print("Rendu de form_2048.html sans résultats")
     return render(request, 'tax_forms/form_2048.html', {'form': form})

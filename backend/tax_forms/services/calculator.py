@@ -15,7 +15,6 @@ def load_tax_config(year: str = "2026") -> dict:
         with open(_TAX_CONFIG_PATH, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"⚠️ Impossible de charger tax_config.json : {e}")
         return {}
 
 
@@ -100,8 +99,8 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
         elif op in ('vente', 'sell', 'cession', 'fiat_withdrawal'):
             available = portfolio.get(crypto, 0.0)
             if available < qty:
-                print(f"[WARN] Vente ignorée pour {crypto} : stock {available:.8f} < vente {qty:.8f}. Calcul forcé avec coût d'acquisition de 0 sur la diff.")
                 # On ne bloque plus, on force le calcul pour que l'estimation fiscale se fasse (PMP à 0)
+                pass
 
             # A. Calcul du Prix de Cession Net
             prix_cession_net = (qty * unit_price) - fees
@@ -122,7 +121,6 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
                             # On récupère le prix historique (ou 0 si introuvable)
                             price_cache[cache_key] = get_historical_price(asset, date) or 0.0
                         except Exception as e:
-                            print(f"[ERR] Prix historique {asset} le {date} : {e}")
                             price_cache[cache_key] = 0.0
                     p = price_cache[cache_key]
                     
@@ -175,7 +173,6 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
         elif op in ('echange', 'swap', 'exchange', 'transfert crypto', 'crypto_to_crypto'):
             available = portfolio.get(crypto, 0.0)
             if available < qty:
-                print(f"[WARN] Échange ignoré pour {crypto} : stock {available:.8f} < échange {qty:.8f}")
                 tx['remaining_quantity'] = available
                 continue
 

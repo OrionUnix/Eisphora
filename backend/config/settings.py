@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy as _
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(os.path.dirname(__file__))
 # Initialize django-environ
-env = environ.Env(DEBUG=(bool, True))
+env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env()
 
 # Check the environment variable first, otherwise try to detect it in the PATH
@@ -165,7 +165,6 @@ else: # DEBUG =True
     DEFAULT_FROM_EMAIL = f'console@{SITE_DOMAIN}'
     SERVER_EMAIL = f'console-server@{SITE_DOMAIN}'
     ADMINS = []
-    print("Mode developpement detecte : Emails rediriges vers la console.")
 
 if not DEBUG:
     required_email_vars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM']
