@@ -5,6 +5,37 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/form_2048.css' %}">
+<style>
+    /* Ces règles ne s'activent QUE lors de la création du PDF / Impression */
+    @media print {
+        /* On force un fond blanc et texte noir partout */
+        body { background: white !important; color: black !important; }
+        
+        /* On cache tout ce qui ne sert à rien sur un PDF (Menu, boutons, footer...) */
+        header, nav, footer, .print-hidden, .print\:hidden { display: none !important; }
+        
+        /* Ajustements pour que le tableau tienne sur la page */
+        table { 
+            width: 100% !important; 
+            font-size: 10px !important; /* Police plus petite pour tout faire rentrer */
+            border-collapse: collapse;
+        }
+        th, td { 
+            padding: 4px !important; 
+            border: 1px solid #ccc !important; 
+            word-wrap: break-word;
+        }
+        
+        /* On évite qu'une ligne du tableau soit coupée en deux entre deux pages */
+        tr { page-break-inside: avoid; }
+        
+        /* On enlève les ombres et les arrondis des cartes pour un style "document" */
+        .shadow-lg, .rounded-xl { box-shadow: none !important; border-radius: 0 !important; }
+        
+        /* Le bloc d'avertissement qu'on a créé tout à l'heure : on le met bien en évidence */
+        .bg-amber-50, .bg-red-50 { border: 2px solid black !important; background: white !important; color: black !important; }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -24,6 +55,7 @@
             </div>
         </div>
 
+        <div id="zone-a-imprimer">
         <!-- Warning Disclaimer -->
         <div class="bg-red-50 border-l-4 border-red-500 p-4 md:p-5 rounded-r-2xl shadow-sm flex items-start gap-4 animate-fade-in">
             <div class="text-red-500 mt-0.5 text-lg">
@@ -44,6 +76,17 @@
         <!-- Tax Estimation Cards -->
         {% include "tax_forms/components/tax_cards.html" %}
 
+        <!-- Boutons d'export (PDF & CSV) -->
+        <div class="flex flex-col md:flex-row gap-4 mt-8 mb-4 items-center justify-end print-hidden print:hidden">
+            <button type="button" onclick="exporterCSV()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
+                <i class="fas fa-file-csv text-slate-500"></i> {% trans "Exporter le détail (CSV)" %}
+            </button>
+
+            <button type="button" id="btn-export-pdf" onclick="exporterPDF()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg">
+                <i class="fas fa-file-pdf"></i> <span id="text-export-pdf">{% trans "Télécharger le PDF" %}</span>
+            </button>
+        </div>
+
         <!-- Main Form Wrapper -->
         <form method="post" enctype="multipart/form-data" id="main-tx-form" class="animate-fade-in-up" style="animation-delay: 0.2s;">
             {% csrf_token %}
@@ -55,6 +98,7 @@
             <!-- Transaction Table Detail -->
             {% include "tax_forms/components/table.html" %}
         </form>
+        </div>
 
         <!-- Custom CSV Mapper Modal (Placed outside animated containers) -->
         {% include "tax_forms/components/modal_mapper.html" %}
@@ -97,6 +141,9 @@
     }
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.2.0/dom-to-image-more.min.js"></script>
+
 <script>
     // Animation de chargement pour la simulation
     const form = document.getElementById('main-tx-form');
@@ -121,6 +168,130 @@
             localStorage.clear();
             window.location.href = window.location.pathname;
         }
+    }
+
+    // Export CSV Client-Side
+    function exporterCSV() {
+        const table = document.getElementById('transactions-table'); 
+        if (!table) {
+            alert('{% trans "Aucune donnée à exporter." %}');
+            return;
+        }
+
+        let csvContent = "";
+        
+        // 1. Avertissement
+        csvContent += '"AVERTISSEMENT LÉGAL : Ce document est une simulation générée à titre informatif par l\'application Eisphora.";\n';
+        csvContent += '"Il est impératif de consulter un expert en fiscalité ou un avocat pour valider ces calculs avant toute déclaration officielle.";\n';
+        csvContent += ';\n';
+        
+        // 2. RÉSUMÉ DES INDICATEURS ET DE L'IMPÔT
+        const nbTx = document.getElementById('val-tx') ? document.getElementById('val-tx').innerText : "N/A";
+        const plusValues = document.getElementById('val-plus') ? document.getElementById('val-plus').innerText : "N/A";
+        const impotPFU = document.getElementById('val-pfu') ? document.getElementById('val-pfu').innerText : "N/A";
+        const impotBareme = document.getElementById('val-bareme') ? document.getElementById('val-bareme').innerText : "N/A";
+
+        csvContent += '"--- RÉSUMÉ DE LA SIMULATION ---";\n';
+        csvContent += '"Transactions taxables :";"' + nbTx + '"\n';
+        csvContent += '"Montant global Plus-values :";"' + plusValues + '"\n';
+        csvContent += '"Impôt estimé (Prélèvement Forfaitaire Unique) :";"' + impotPFU + '"\n';
+        csvContent += '"Impôt estimé (Barème Progressif) :";"' + impotBareme + '"\n';
+        csvContent += ';\n'; // Ligne vide avant le tableau
+        
+        const rows = table.querySelectorAll('tr');
+        
+        rows.forEach(function(row) {
+            let rowData = [];
+            const cols = row.querySelectorAll('td, th');
+            
+            cols.forEach(function(col, index) {
+                // On exclut la colonne Actions (index 9)
+                if (index === 9) return;
+
+                let data = "";
+                // Les valeurs se trouvent souvent dans les inputs créés dynamiquement
+                let input = col.querySelector('input:not([type="hidden"]), select');
+                if (input && input.value !== undefined) {
+                    if (input.tagName === 'SELECT') {
+                        data = input.options[input.selectedIndex].text;
+                    } else {
+                        data = input.value;
+                    }
+                } else {
+                    data = col.innerText;
+                }
+
+                // Nettoyage classique
+                data = data.replace(/(\r\n|\n|\r)/gm, "").trim();
+                data = data.replace(/"/g, '""');
+                rowData.push('"' + data + '"');
+            });
+            
+            csvContent += rowData.join(";") + "\n";
+        });
+
+        // BOM UTF-8 pour Excel
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+        const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Eisphora_Simulation_Fiscale.csv");
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Export PDF Client-Side via DOM-to-Image et jsPDF (Compatible modern CSS / oklch)
+    function exporterPDF() {
+        const element = document.getElementById('zone-a-imprimer'); 
+        const btnText = document.getElementById('text-export-pdf');
+        const icon = document.querySelector('#btn-export-pdf i');
+        const originalText = btnText.innerText;
+        
+        // Indicateur de chargement
+        btnText.innerText = "{% trans 'Génération...' %}";
+        icon.className = "fas fa-spinner fa-spin";
+        
+        // Cacher temporairement les boutons d'export pendant la capture
+        const hiddenElements = document.querySelectorAll('.print-hidden, .print\\:hidden');
+        hiddenElements.forEach(el => el.style.display = 'none');
+
+        // Capture la div telle qu'elle est à l'écran, en SVG/PNG natif
+        domtoimage.toPng(element, { bgcolor: '#F8FAFC' }) 
+            .then(function (dataUrl) {
+                const { jsPDF } = window.jspdf;
+                // Landscape (l), millimeters (mm), A4 format
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                
+                const img = new Image();
+                img.src = dataUrl;
+                img.onload = function() {
+                    const imgProps = pdf.getImageProperties(img);
+                    // On calcule la hauteur pour garder les proportions exactes
+                    const pdfImgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfImgHeight);
+                    pdf.save('Eisphora_Simulation_Fiscale.pdf');
+                    
+                    // Restaurer l'affichage
+                    hiddenElements.forEach(el => el.style.display = '');
+                    btnText.innerText = originalText;
+                    icon.className = "fas fa-file-pdf";
+                };
+            })
+            .catch(function (error) {
+                console.error("Erreur d'export PDF :", error);
+                alert("{% trans 'Une erreur est survenue lors de la création du PDF. Veuillez utiliser CSV.' %}");
+                hiddenElements.forEach(el => el.style.display = '');
+                btnText.innerText = originalText;
+                icon.className = "fas fa-file-pdf";
+            });
     }
 </script>
 {% endblock %}
