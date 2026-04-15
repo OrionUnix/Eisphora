@@ -220,7 +220,8 @@ window.updateRowTotal = function(input) {
     const qty = parseFloat(row.querySelector('input[name^="quantity_"]').value) || 0;
     const price = parseFloat(row.querySelector('input[name^="price_"]').value) || 0;
     const acqPrice = parseFloat(row.querySelector('input[name^="acq_price_"]').value) || 0;
-    const type = row.querySelector('select[name^="operation_type_"]').value;
+    const typeElement = row.querySelector('[name^="operation_type_"]');
+    const type = typeElement ? typeElement.value : 'transfert';
 
     const total = qty * price;
     row.querySelector('.row-total').textContent = total.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
