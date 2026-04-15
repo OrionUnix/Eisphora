@@ -381,13 +381,19 @@ def parse_custom_csv(file: InMemoryUploadedFile, mapping_json: str, delimiter: s
                 continue
                 
             # Normalisation du type (Achat, Vente, Transfert)
-            if any(w in raw_type for w in ['buy', 'achat', 'receive', 'deposit', 'income']):
-                if any(w in raw_type for w in ['buy', 'achat']):
-                    op_type = 'achat'
-                elif any(w in raw_type for w in ['sell', 'vente']):
-                    op_type = 'vente'
-                else:
-                    op_type = 'transfert'
+            # Normalisation du type (Achat, Vente, Transfert)
+            if any(w in raw_type for w in ['buy', 'achat']):
+                op_type = 'achat'
+            elif any(w in raw_type for w in ['sell', 'vente']):
+                op_type = 'vente'
+            elif any(w in raw_type for w in ['receive', 'reçu']):
+                op_type = 'achat'      # Réception externe = nouvelle acquisition → augmente le PTA
+            elif any(w in raw_type for w in ['staking', 'earn', 'reward', 'income']):
+                op_type = 'staking'    # Gains passifs → augmente le PTA au prix marché
+            elif any(w in raw_type for w in ['deposit', 'dépôt']):
+                op_type = 'depot'      # Auto-transfert entrant
+            elif any(w in raw_type for w in ['withdrawal', 'retrait', 'send', 'envoi']):
+                op_type = 'retrait'    # Envoi externe
             else:
                 op_type = 'transfert'
 
@@ -516,21 +522,71 @@ def attempt_csv_parse(file, filename):
     return None
 
 def parse_pdf_file(file):
+    """
+    Extrait des transactions depuis un PDF.
+    Stratégie 1 : tableaux structurés via pdfplumber.extract_table().
+    Stratégie 2 : texte brut via extract_text() passé à parse_unstructured_text().
+    """
+    HEADER_KEYWORDS = {'date', 'type', 'asset', 'actif', 'amount', 'quantity',
+                       'montant', 'quantité', 'transaction', 'time', 'timestamp', 'opération'}
     all_data = []
     headers = []
-    with pdfplumber.open(file) as pdf:
-        for page in pdf.pages:
-            table = page.extract_table()
-            if table:
-                for row in table:
-                    row = [str(c).replace('\n', ' ').strip() if c else '' for c in row]
-                    if not any(row): continue
-                    if not headers:
-                        if any(kw in [c.lower() for c in row] for kw in ['date', 'type', 'asset', 'actif']):
-                            headers = row
-                        continue
-                    if len(row) == len(headers): all_data.append(row)
-    return pd.DataFrame(all_data, columns=headers) if all_data and headers else None
+    full_text_lines = []
+
+    try:
+        file.seek(0)
+        with pdfplumber.open(file) as pdf:
+            for page in pdf.pages:
+                # --- Stratégie 1 : Tableaux ---
+                tables = page.extract_tables() or []
+                for table in tables:
+                    local_headers = []
+                    for row in table:
+                        row = [str(c).replace('\n', ' ').strip() if c else '' for c in row]
+                        if not any(row):
+                            continue
+                        row_lower = [c.lower() for c in row]
+                        # Détection souple de l'en-tête
+                        if not local_headers and any(kw in cell for cell in row_lower for kw in HEADER_KEYWORDS):
+                            local_headers = row
+                            if not headers:
+                                headers = local_headers
+                            continue
+                        # Si on a déjà des headers globaux, on essaie de mapper
+                        if not local_headers and headers:
+                            local_headers = headers
+                        if local_headers and len(row) == len(local_headers):
+                            all_data.append(row)
+                        elif local_headers and len(row) > 0:
+                            # Compléter ou tronquer pour éviter les erreurs de DataFrame
+                            padded = (row + [''] * len(local_headers))[:len(local_headers)]
+                            all_data.append(padded)
+
+                # --- Stratégie 2 : Texte brut (fallback) ---
+                text = page.extract_text() or ''
+                full_text_lines.extend(text.splitlines())
+
+    except Exception:
+        pass
+
+    # Si tableaux extraits avec succès → retourner le DataFrame
+    if all_data and headers:
+        try:
+            df = pd.DataFrame(all_data, columns=headers)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+            return df
+        except Exception:
+            pass
+
+    # Sinon → fallback texte brut
+    if full_text_lines:
+        import io as _io
+        text_bytes = '\n'.join(full_text_lines).encode('utf-8')
+        fake_file = _io.BytesIO(text_bytes)
+        fake_file.name = 'extracted.txt'
+        return parse_unstructured_text(fake_file)
+
+    return None
 
 def parse_unstructured_text(file):
     file.seek(0)
@@ -560,15 +616,19 @@ def parse_coinbase_row(row: dict):
         fees = row.get('fees and/or spread') or row.get('fees') or row.get('fee') or 0
         currency = row.get('price currency') or row.get('spot price currency') or row.get('currency') or row.get('quote asset') or 'EUR'
 
-        # 🚨 CORRECTION : Intégration de 'staking', 'income', et 'advanced trade'
+        # Classification granulaire pour le calcul fiscal PMP (art. 150 VH bis)
         if any(word in op_type_raw for word in ['buy', 'achat', 'match', 'advanced trade buy']):
-            op_type = 'achat'
+            op_type = 'achat'          # Achat fiat→crypto : augmente le PTA
         elif any(word in op_type_raw for word in ['sell', 'vente', 'advanced trade sell']):
-            op_type = 'vente'
-        elif any(word in op_type_raw for word in ['receive', 'reçu', 'deposit', 'dépôt', 'withdrawal', 'retrait', 'send', 'envoi', 'staking', 'income', 'reward', 'earn']):
-            op_type = 'transfert'
+            op_type = 'vente'          # Vente crypto→fiat : événement imposable
+        elif any(word in op_type_raw for word in ['receive', 'reçu']):
+            op_type = 'achat'          # Réception externe = nouvelle acquisition : augmente le PTA
+        elif any(word in op_type_raw for word in ['staking', 'income', 'reward', 'earn', 'interest', 'cashback', 'referral']):
+            op_type = 'staking'        # Gains passifs : nouvelles unités au prix marché → augmente le PTA
+        elif any(word in op_type_raw for word in ['withdrawal', 'retrait', 'send', 'envoi']):
+            op_type = 'retrait'        # Envoi vers wallet externe : PTA inchangé
         else:
-            op_type = 'transfert'
+            op_type = 'depot'          # Dépôt fiat / auto-transfert entrant : PTA inchangé
 
         return {
             'date': date,
@@ -589,8 +649,15 @@ def parse_binance_row(row: dict):
             op_type = 'achat'
         elif any(word in op_type_raw for word in ['sell', 'vente']):
             op_type = 'vente'
+        elif any(word in op_type_raw for word in ['staking', 'earn', 'interest', 'reward', 'cashback', 'referral', 'distribution', 'airdrop']):
+            op_type = 'staking'    # Gains passifs Binance → augmente le PTA
+        elif any(word in op_type_raw for word in ['deposit', 'receive', 'in']):
+            op_type = 'depot'      # Dépôt / auto-transfert entrant
+        elif any(word in op_type_raw for word in ['withdraw', 'send', 'out']):
+            op_type = 'retrait'    # Retrait vers wallet externe
+        elif any(word in op_type_raw for word in ['convert', 'swap', 'exchange', 'transfer']):
+            op_type = 'echange'    # Swap crypto↔crypto : sursis d'imposition
         else:
-            # Tout le reste (Staking, Deposit, Withdraw, Transfer, Earn)
             op_type = 'transfert'
 
         market = row.get('market') or ''
@@ -601,7 +668,7 @@ def parse_binance_row(row: dict):
             'date': row.get('date(utc)') or row.get('date') or row.get('time'),
             'operation_type': op_type,
             'crypto_token': crypto,
-            'quantity': clean_numeric(row.get('amount') or row.get('quantity')),
+            'quantity': abs(clean_numeric(row.get('amount') or row.get('quantity'))),
             'price': clean_numeric(row.get('price')),
             'fees': clean_numeric(row.get('fee') or row.get('fees')),
             'currency': currency
@@ -626,8 +693,13 @@ def parse_kraken_row(row: dict):
             op_type = 'achat'
         elif 'sell' in op_type_raw:
             op_type = 'vente'
+        elif any(w in op_type_raw for w in ['staking', 'reward', 'earn', 'interest']):
+            op_type = 'staking'    # Gains passifs Kraken → augmente le PTA
+        elif any(w in op_type_raw for w in ['deposit', 'receive']):
+            op_type = 'depot'
+        elif any(w in op_type_raw for w in ['withdrawal', 'send']):
+            op_type = 'retrait'
         else:
-            # Deposit, Withdrawal, Staking, Earn
             op_type = 'transfert'
 
         return {
@@ -656,16 +728,22 @@ def parse_generic_row(row: dict):
             op_type = 'achat'
         elif any(word in op_type_raw for word in ['sell', 'vente']):
             op_type = 'vente'
-        elif any(word in op_type_raw for word in ['deposit', 'dépôt', 'reçu', 'receive', 'withdrawal', 'retrait', 'envoi', 'send', 'staking', 'reward', 'earn', 'income']):
-            op_type = 'transfert'
+        elif any(word in op_type_raw for word in ['receive', 'reçu']):
+            op_type = 'achat'      # Réception externe = acquisition → augmente le PTA
+        elif any(word in op_type_raw for word in ['staking', 'reward', 'earn', 'income', 'interest', 'airdrop']):
+            op_type = 'staking'    # Gains passifs → augmente le PTA au prix marché
+        elif any(word in op_type_raw for word in ['deposit', 'dépôt']):
+            op_type = 'depot'      # Auto-transfert entrant : PTA inchangé
+        elif any(word in op_type_raw for word in ['withdrawal', 'retrait', 'send', 'envoi']):
+            op_type = 'retrait'    # Envoi externe : PTA inchangé
         else:
-            op_type = 'transfert'
+            op_type = 'transfert'  # Neutre : auto-transfert inconnu
 
         return {
             'date': date,
             'operation_type': op_type,
             'crypto_token': asset,
-            'quantity': clean_numeric(quantity),
+            'quantity': abs(clean_numeric(quantity)),
             'price': clean_numeric(price),
             'acq_price': clean_numeric(acq_price),
             'fees': clean_numeric(fees),

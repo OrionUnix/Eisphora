@@ -1,0 +1,121 @@
+{% load i18n %}
+
+<div id="form-2086-container" class="hidden mt-8 max-w-4xl mx-auto pb-12 animate-fade-in text-slate-800">
+    <div class="mb-8 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 text-blue-600 mb-4 shadow-sm border border-blue-100">
+            <i class="fas fa-file-invoice text-2xl"></i>
+        </div>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">{% trans "Assistant Formulaire 2086" %}</h2>
+        <p class="text-slate-500 mt-2 font-medium max-w-2xl mx-auto">
+            {% trans "Recopiez simplement les valeurs ci-dessous dans votre déclaration (Annexe 2086). Chaque fiche correspond à une cession (vente)." %}
+        </p>
+    </div>
+
+    {% if taxable_events %}
+        <div class="space-y-6">
+            {% for event in taxable_events %}
+            <div class="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <span class="bg-slate-800 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs shadow-sm">{{ event.id }}</span>
+                        {% trans "Cession de" %} {{ event.crypto }}
+                    </h3>
+                    <span class="text-sm font-semibold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+                        <i class="far fa-calendar-alt mr-1"></i> {{ event.date|slice:":10" }}
+                    </span>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        
+                        <!-- Lignes 211 à 214 -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">211</span> {% trans "Date de la cession" %}
+                                </span>
+                                <span class="font-mono font-bold text-slate-800">{{ event.date|slice:":10" }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">212</span> {% trans "Valeur globale du portefeuille" %}
+                                </span>
+                                <span class="font-mono font-bold text-indigo-600">{{ event.valeur_globale|stringformat:".2f" }} €</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">213</span> {% trans "Prix de cession brut" %}
+                                </span>
+                                <span class="font-mono font-medium text-slate-800">{{ event.prix_cession_brut|default:event.prix_cession_net|stringformat:".2f" }} €</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">214</span> {% trans "Frais de cession" %}
+                                </span>
+                                <span class="font-mono text-slate-600">{{ event.frais_cession|default:"0.00"|stringformat:".2f" }} €</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
+                                <span class="text-sm font-semibold text-indigo-900">
+                                    <span class="font-bold text-indigo-400 w-8 inline-block">215</span> {% trans "Prix de cession net" %}
+                                </span>
+                                <span class="font-mono font-bold text-indigo-700">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
+                            </div>
+                        </div>
+
+                        <!-- Lignes 216 à 220 -->
+                        <div class="space-y-3 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-8">
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">216</span> {% trans "Prix total d'acquisition" %}
+                                </span>
+                                <span class="font-mono text-slate-800">{{ event.montant_global_acquisition|default:"0.00"|stringformat:".2f" }} €</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors opacity-75">
+                                <span class="text-sm text-slate-500">
+                                    <span class="font-bold text-slate-300 w-8 inline-block">217</span> {% trans "Fraction de capital" %}
+                                </span>
+                                <span class="font-mono text-xs text-slate-400">{% trans "Auto" %}</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors opacity-75">
+                                <span class="text-sm text-slate-500">
+                                    <span class="font-bold text-slate-300 w-8 inline-block">218</span> {% trans "Frais d'acquisition" %}
+                                </span>
+                                <span class="font-mono text-xs text-slate-400">0.00 €</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">219</span> {% trans "Prix d'acq. fractionné global" %}
+                                </span>
+                                <span class="font-mono font-bold text-slate-800">{{ event.prix_acq_fractionne|stringformat:".2f" }} €</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 mt-2 rounded-xl border {% if event.plus_value > 0 %}bg-emerald-50 border-emerald-200{% elif event.plus_value < 0 %}bg-red-50 border-red-200{% else %}bg-slate-50 border-slate-200{% endif %}">
+                                <span class="text-sm font-bold {% if event.plus_value > 0 %}text-emerald-800{% elif event.plus_value < 0 %}text-red-800{% else %}text-slate-600{% endif %}">
+                                    <span class="font-black opacity-50 w-8 inline-block">220</span> {% trans "PV ou MV brute" %}
+                                </span>
+                                <span class="font-mono font-black text-lg {% if event.plus_value > 0 %}text-emerald-600{% elif event.plus_value < 0 %}text-red-600{% else %}text-slate-600{% endif %}">
+                                    {% if event.plus_value > 0 %}+{% endif %}{{ event.plus_value|stringformat:".2f" }} €
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-16 bg-white border border-slate-200 rounded-[24px]">
+            <i class="fas fa-check-circle text-4xl text-emerald-400 mb-3"></i>
+            <h3 class="text-lg font-bold text-slate-800">{% trans "Aucune session imposable" %}</h3>
+            <p class="text-slate-500 mt-1">{% trans "Vous n'avez enregistré aucune vente cryptomonnaie vers monnaie fiat (EUR)." %}</p>
+        </div>
+    {% endif %}
+</div>

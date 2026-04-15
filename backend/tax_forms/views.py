@@ -86,6 +86,13 @@ def form_2048_view(request):
 
             # --- Mapper les résultats sur les transactions ---
             taxable_events_map = {event.get('id'): event for event in calc_results['taxable_events']}
+            
+            FIAT_CURRENCIES = {
+                'EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'NZD',
+                'NOK', 'SEK', 'DKK', 'HKD', 'SGD', 'KRW', 'BRL', 'MXN',
+                'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'TRY', 'ZAR', 'INR'
+            }
+            
             for tx in all_transactions:
                 # Ensure every transaction has basic keys for the template
                 tx.setdefault('acq_price', 0)
@@ -96,6 +103,7 @@ def form_2048_view(request):
                 if event:
                     # Map calculation results back to the transaction
                     tx['plus_value'] = event.get('plus_value', 0)
+                    tx['valeur_cession'] = event.get('prix_cession_net', 0)
                     tx['prix_cession'] = event.get('prix_cession_net', 0)
                     tx['prix_acquisition'] = event.get('prix_acq_fractionne', 0)
                     tx['valeur_globale_estimee'] = event.get('valeur_globale', 0)
@@ -105,6 +113,10 @@ def form_2048_view(request):
                         tx['acq_price'] = tx['prix_acquisition']
                     if not tx.get('price'):
                         tx['price'] = tx['prix_cession']
+
+                # Marquer si la transaction doit être affichée dans le tableau des cessions
+                tx['is_taxable_sale'] = (str(tx.get('operation_type')).lower() == 'vente' and 
+                                         str(tx.get('currency', '')).upper() in FIAT_CURRENCIES)
 
             # --- Portfolio Distribution ---
             remaining_portfolio = calc_results.get('remaining_portfolio', {})

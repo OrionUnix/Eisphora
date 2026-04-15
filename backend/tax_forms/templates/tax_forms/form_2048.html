@@ -78,6 +78,10 @@
 
         <!-- Boutons d'export (PDF & CSV) -->
         <div class="flex flex-col md:flex-row gap-4 mt-8 mb-4 items-center justify-end print-hidden print:hidden">
+            <button type="button" onclick="toggleForm2086()" id="btn-toggle-2086" class="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-blue-200 shadow-sm mr-auto">
+                <i class="fas fa-file-invoice"></i> <span id="text-toggle-2086">{% trans "Ouvrir l'Assistant 2086" %}</span>
+            </button>
+
             <button type="button" onclick="exporterCSV()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
                 <i class="fas fa-file-csv text-slate-500"></i> {% trans "Exporter le détail (CSV)" %}
             </button>
@@ -92,11 +96,18 @@
             {% csrf_token %}
             <input type="hidden" name="transaction_count" id="transaction_count" value="{{ manual_transactions|length|default:0 }}">
 
-            <!-- Data Sources (Import, Wallet, Chart) -->
-            {% include "tax_forms/components/sources.html" %}
+            <div id="view-dashboard">
+                <!-- Data Sources (Import, Wallet, Chart) -->
+                {% include "tax_forms/components/sources.html" %}
 
-            <!-- Transaction Table Detail -->
-            {% include "tax_forms/components/table.html" %}
+                <!-- Transaction Table Detail -->
+                {% include "tax_forms/components/table.html" %}
+            </div>
+            
+            <!-- Assistant Cerfa 2086 -->
+            <div id="view-2086" class="hidden">
+                {% include "tax_forms/components/form_2086.html" %}
+            </div>
         </form>
         </div>
 
@@ -292,6 +303,34 @@
                 btnText.innerText = originalText;
                 icon.className = "fas fa-file-pdf";
             });
+    }
+
+    // Toggle Mode Assistant 2086 / Mode Dashboard
+    function toggleForm2086() {
+        const dashboard = document.getElementById('view-dashboard');
+        const view2086 = document.getElementById('view-2086');
+        const btnText = document.getElementById('text-toggle-2086');
+        const btnIcon = document.querySelector('#btn-toggle-2086 i');
+
+        if (view2086.classList.contains('hidden')) {
+            // Afficher le 2086
+            dashboard.classList.add('hidden');
+            view2086.classList.remove('hidden');
+            btnText.innerText = "{% trans "Retour au tableau" %}";
+            btnIcon.className = "fas fa-arrow-left";
+            document.getElementById('btn-toggle-2086').classList.replace('bg-blue-50', 'bg-slate-800');
+            document.getElementById('btn-toggle-2086').classList.replace('text-blue-700', 'text-white');
+            document.getElementById('btn-toggle-2086').classList.replace('hover:bg-blue-100', 'hover:bg-slate-700');
+        } else {
+            // Afficher le tableau
+            view2086.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            btnText.innerText = "{% trans "Ouvrir l'Assistant 2086" %}";
+            btnIcon.className = "fas fa-file-invoice";
+            document.getElementById('btn-toggle-2086').classList.replace('bg-slate-800', 'bg-blue-50');
+            document.getElementById('btn-toggle-2086').classList.replace('text-white', 'text-blue-700');
+            document.getElementById('btn-toggle-2086').classList.replace('hover:bg-slate-700', 'hover:bg-blue-100');
+        }
     }
 </script>
 {% endblock %}
