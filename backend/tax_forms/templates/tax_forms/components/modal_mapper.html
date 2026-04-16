@@ -1,9 +1,9 @@
-fuite de données par les logs{% load i18n %}
-
+{% load i18n %}
 <!-- Custom CSV Mapper Modal -->
-<div id="customMapperModal" class="hidden fixed inset-0 z-[100] overflow-y-auto bg-slate-900/50 backdrop-blur-sm transition-opacity flex items-center justify-center p-4">
+<div id="customMapperModal"
+    class="hidden fixed inset-0 z-[100] overflow-y-auto bg-slate-900/50 backdrop-blur-sm transition-opacity flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl md:rounded-[24px] w-full max-w-2xl shadow-2xl relative animate-fade-in-up my-auto">
-        
+
         <!-- Header -->
         <div class="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -12,7 +12,8 @@ fuite de données par les logs{% load i18n %}
                 </div>
                 <h3 class="text-lg md:text-xl font-bold text-slate-800">{% trans "Import Sur Mesure" %}</h3>
             </div>
-            <button type="button" onclick="document.getElementById('customMapperModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 focus:outline-none">
+            <button type="button" onclick="document.getElementById('customMapperModal').classList.add('hidden')"
+                class="text-slate-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 focus:outline-none">
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
@@ -24,12 +25,17 @@ fuite de données par les logs{% load i18n %}
                 <h4 class="font-bold text-slate-700 text-sm mb-3">1. Sélectionnez votre fichier</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fichier CSV</label>
-                        <input type="file" id="custom-csv-input" accept=".csv,.txt" class="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#7c5cbf]/10 file:text-[#7c5cbf] hover:file:bg-[#7c5cbf]/20 transition-all cursor-pointer border border-slate-200 rounded-lg bg-white">
+                        <label
+                            class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Fichier
+                            CSV</label>
+                        <input type="file" id="custom-csv-input" accept=".csv,.txt"
+                            class="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#7c5cbf]/10 file:text-[#7c5cbf] hover:file:bg-[#7c5cbf]/20 transition-all cursor-pointer border border-slate-200 rounded-lg bg-white">
                     </div>
                     <div>
-                        <label class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Séparateur</label>
-                        <select id="custom-delimiter" class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-[#7c5cbf] focus:border-[#7c5cbf] transition-all">
+                        <label
+                            class="block text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Séparateur</label>
+                        <select id="custom-delimiter"
+                            class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-[#7c5cbf] focus:border-[#7c5cbf] transition-all">
                             <option value=",">Virgule (,)</option>
                             <option value=";">Point-virgule (;)</option>
                             <option value="\t">Tabulation</option>
@@ -37,7 +43,8 @@ fuite de données par les logs{% load i18n %}
                     </div>
                 </div>
                 <div class="mt-4 text-center">
-                    <button type="button" onclick="readCustomCSVHeaders()" class="px-6 py-2.5 bg-[#7c5cbf]/10 hover:bg-[#7c5cbf] text-[#7c5cbf] hover:text-white border border-[#7c5cbf]/20 text-sm font-bold rounded-xl shadow-sm transition-all focus:outline-none">
+                    <button type="button" onclick="readCustomCSVHeaders()"
+                        class="px-6 py-2.5 bg-[#7c5cbf]/10 hover:bg-[#7c5cbf] text-[#7c5cbf] hover:text-white border border-[#7c5cbf]/20 text-sm font-bold rounded-xl shadow-sm transition-all focus:outline-none">
                         <i class="fas fa-magic mr-1.5"></i> Lire les colonnes
                     </button>
                 </div>
@@ -47,41 +54,55 @@ fuite de données par les logs{% load i18n %}
             <div id="mapping-step-2" class="hidden">
                 <div class="flex items-center gap-2 mb-4">
                     <h4 class="font-bold text-slate-700 text-sm">2. Reliez vos colonnes</h4>
-                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">Colonnes détectées !</span>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">Colonnes
+                        détectées !</span>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Date <span class="text-red-500">*</span></label>
-                            <select id="map-date" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Date <span
+                                    class="text-red-500">*</span></label>
+                            <select id="map-date"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Type d'opération <span class="text-red-500">*</span></label>
-                            <select id="map-type" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Type d'opération <span
+                                    class="text-red-500">*</span></label>
+                            <select id="map-type"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Actif (Crypto) <span class="text-red-500">*</span></label>
-                            <select id="map-asset" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Actif (Crypto) <span
+                                    class="text-red-500">*</span></label>
+                            <select id="map-asset"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Quantité <span class="text-red-500">*</span></label>
-                            <select id="map-qty" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Quantité <span
+                                    class="text-red-500">*</span></label>
+                            <select id="map-qty"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                     </div>
-                    
+
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Prix (Optionnel)</label>
-                            <select id="map-price" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <select id="map-price"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Frais (Optionnel)</label>
-                            <select id="map-fees" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <select id="map-fees"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Devise Fieduciaire (Optionnel)</label>
-                            <select id="map-currency" class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Devise Fieduciaire
+                                (Optionnel)</label>
+                            <select id="map-currency"
+                                class="custom-map-select w-full p-2 border border-slate-200 rounded-md text-sm bg-slate-50 focus:ring-indigo-500 focus:border-indigo-500 transition-all"></select>
                         </div>
                     </div>
                 </div>
@@ -89,14 +110,17 @@ fuite de données par les logs{% load i18n %}
         </div>
 
         <!-- Footer -->
-        <div class="p-5 md:p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl md:rounded-b-[24px] flex justify-end gap-3">
-            <button type="button" onclick="document.getElementById('customMapperModal').classList.add('hidden')" class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition-all focus:outline-none">
+        <div
+            class="p-5 md:p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl md:rounded-b-[24px] flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('customMapperModal').classList.add('hidden')"
+                class="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition-all focus:outline-none">
                 Annuler
             </button>
-            <button type="button" onclick="applyCustomMapping()" class="px-5 py-2.5 bg-[#7c5cbf] hover:bg-[#6849a3] text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/20 transition-all focus:outline-none">
+            <button type="button" onclick="applyCustomMapping()"
+                class="px-5 py-2.5 bg-[#7c5cbf] hover:bg-[#6849a3] text-white text-sm font-bold rounded-xl shadow-md shadow-purple-500/20 transition-all focus:outline-none">
                 <i class="fas fa-check mr-1"></i> Mémoriser & Lancer la Simulation
             </button>
         </div>
-        
+
     </div>
 </div>

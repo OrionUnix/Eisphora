@@ -76,6 +76,7 @@
         <!-- Tax Estimation Cards -->
         {% include "tax_forms/components/tax_cards.html" %}
 
+        {% if show_results %}
         <!-- Boutons d'export (PDF & CSV) -->
         <div class="flex flex-col md:flex-row gap-4 mt-8 mb-4 items-center justify-end print-hidden print:hidden">
             <button type="button" onclick="toggleForm2086()" id="btn-toggle-2086" class="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-blue-200 shadow-sm mr-auto">
@@ -90,6 +91,7 @@
                 <i class="fas fa-file-pdf"></i> <span id="text-export-pdf">{% trans "Télécharger le PDF" %}</span>
             </button>
         </div>
+        {% endif %}
 
         <!-- Main Form Wrapper -->
         <form method="post" enctype="multipart/form-data" id="main-tx-form" class="animate-fade-in-up" style="animation-delay: 0.2s;">
@@ -153,7 +155,7 @@
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.2.0/dom-to-image-more.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.3/dist/html2canvas-pro.min.js"></script>
 
 <script>
     // Animation de chargement pour la simulation
@@ -256,7 +258,7 @@
         document.body.removeChild(link);
     }
 
-    // Export PDF Client-Side via DOM-to-Image et jsPDF (Compatible modern CSS / oklch)
+    // Export PDF Client-Side via html2canvas-pro et jsPDF
     function exporterPDF() {
         const element = document.getElementById('zone-a-imprimer'); 
         const btnText = document.getElementById('text-export-pdf');
@@ -271,30 +273,46 @@
         const hiddenElements = document.querySelectorAll('.print-hidden, .print\\:hidden');
         hiddenElements.forEach(el => el.style.display = 'none');
 
-        // Capture la div telle qu'elle est à l'écran, en SVG/PNG natif
-        domtoimage.toPng(element, { bgcolor: '#F8FAFC' }) 
-            .then(function (dataUrl) {
+        // Note: html2canvas-pro s'enregistre sous le nom global 'html2canvas'
+        html2canvas(element, { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#f4f7fe',
+            logging: false
+        })
+            .then(function (canvas) {
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
                 const { jsPDF } = window.jspdf;
-                // Landscape (l), millimeters (mm), A4 format
+                
+                // Format Paysage (Landscape)
                 const pdf = new jsPDF('l', 'mm', 'a4');
-                
                 const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
                 
-                const img = new Image();
-                img.src = dataUrl;
-                img.onload = function() {
-                    const imgProps = pdf.getImageProperties(img);
-                    // On calcule la hauteur pour garder les proportions exactes
-                    const pdfImgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    
-                    pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfImgHeight);
-                    pdf.save('Eisphora_Simulation_Fiscale.pdf');
-                    
-                    // Restaurer l'affichage
-                    hiddenElements.forEach(el => el.style.display = '');
-                    btnText.innerText = originalText;
-                    icon.className = "fas fa-file-pdf";
-                };
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+
+                let is2086 = !document.getElementById('view-2086').classList.contains('hidden');
+                let title = is2086 ? 'Eisphora_Assistant_2086.pdf' : 'Eisphora_Simulation_Fiscale.pdf';
+                pdf.save(title);
+                
+                // Restaurer l'affichage
+                hiddenElements.forEach(el => el.style.display = '');
+                btnText.innerText = originalText;
+                icon.className = "fas fa-file-pdf";
             })
             .catch(function (error) {
                 console.error("Erreur d'export PDF :", error);

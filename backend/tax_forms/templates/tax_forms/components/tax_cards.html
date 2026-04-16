@@ -16,18 +16,20 @@
         <div class="relative z-10 flex flex-row justify-between items-start gap-4">
             <div class="flex-1">
 
-                <h3 class="text-base md:text-lg font-bold opacity-90 leading-tight">{% trans "Prélèvement Forfaitaire Unique" %}</h3>
+                <h3 class="text-base md:text-lg font-bold opacity-90 leading-tight">{% trans "Prélèvement Forfaitaire
+                    Unique" %}</h3>
 
                 <div class="flex items-center gap-2 mb-4 md:mb-6 mt-1">
                     <span class="text-xs md:text-sm text-purple-200 font-medium">{% trans "Flat Tax globale de"%}</span>
-                    <input type="number" id="pfu-rate" value="30" step="0.5"
+                    <input type="number" id="pfu-rate" value="31.4" step="0.5"
                         class="w-14 bg-white/20 border border-white/30 text-white text-xs font-bold text-center rounded px-1 py-0.5 focus:outline-none focus:bg-white/30"
                         oninput="updateTaxes()">
                     <span class="text-xs md:text-sm text-purple-200 font-medium">%</span>
                 </div>
 
                 <p id="val-pfu" class="text-4xl lg:text-5xl font-black tracking-tight mb-1 md:mb-2">-- €</p>
-                <p id="pfu-msg" class="text-[10px] md:text-xs text-purple-200">{% trans "L'option la plus avantageuse dans votre cas." %}</p>
+                <p id="pfu-msg" class="text-[10px] md:text-xs text-purple-200">
+                    {% trans "L'option la plus avantageuse dans votre cas." %}</p>
             </div>
             <div
                 class="w-12 h-12 md:w-16 md:h-16 shrink-0 rounded-xl md:rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-xl md:text-2xl">
@@ -43,10 +45,12 @@
             <div class="flex-1 w-full">
                 <h3 class="text-base md:text-lg font-bold text-slate-800 leading-tight">{% trans "Barème Progressif" %}
                 </h3>
-                <p class="text-xs md:text-sm text-slate-500 font-medium mb-4 md:mb-6">{% trans "IR (selon TMI) + Prélèvements Sociaux (17.2%)" %}</p>
+                <p class="text-xs md:text-sm text-slate-500 font-medium mb-4 md:mb-6">{% trans "IR (selon TMI) +
+                    Prélèvements Sociaux (17.2%)" %}</p>
 
                 <p id="val-bareme" class="text-4xl lg:text-5xl font-black text-slate-800 tracking-tight mb-2">-- €</p>
-                <p id="bareme-msg" class="hidden text-[10px] md:text-xs text-emerald-600 font-medium mb-2">{% trans "L'option la plus avantageuse dans votre cas." %}</p>
+                <p id="bareme-msg" class="hidden text-[10px] md:text-xs text-emerald-600 font-medium mb-2">{% trans
+                    "L'option la plus avantageuse dans votre cas." %}</p>
 
                 <div class="mt-3 md:mt-4 space-y-2 w-full">
                     <div

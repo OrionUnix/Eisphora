@@ -174,11 +174,14 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
                 # D. Calcul de la Plus-Value (PV) ou Moins-Value
                 pv = prix_cession_net - prix_acq_fractionne
 
-                # CORRECTION FISCALE : accumulation nette (MV compensent PV)
-                global_plus_value += pv
+                # On garde le PTA AVANT la vente pour le formulaire 2086 (Ligne 216)
+                pta_before = total_acquisition_cost
 
                 # E. Mise à jour du PTA
                 total_acquisition_cost = max(0.0, total_acquisition_cost - prix_acq_fractionne)
+
+                # CORRECTION FISCALE : accumulation nette (MV compensent PV)
+                global_plus_value += pv
 
                 # F. Mise à jour du portefeuille
                 portfolio[crypto] = portfolio.get(crypto, 0.0) - qty
@@ -198,8 +201,9 @@ def calculate_french_taxes(transactions: List[Dict[str, Any]]) -> Dict[str, Any]
                     'prix_cession_brut': round(qty * unit_price, 2),
                     'frais_cession': round(fees, 2),
                     'prix_cession_net': round(prix_cession_net, 2),
-                    'montant_global_acquisition': round(total_acquisition_cost, 2),
+                    'montant_global_acquisition': round(pta_before, 2),
                     'prix_acq_fractionne': round(prix_acq_fractionne, 2),
+                    'unit_acq': round(prix_acq_fractionne / qty, 2) if qty > 0 else 0,
                     'valeur_globale': round(valeur_globale, 2),
                     'plus_value': round(pv, 2)
                 })

@@ -201,7 +201,7 @@ window.initWalletDetection = function() {
 
 // --- LOGIQUE TABLEAU MANUEL & PAGINATION ---
 let currentPage = 1;
-let rowsPerPage = 20;
+let rowsPerPage = 50;
 
 window.updateRowStyle = function(select) {
     const type = select.value;
@@ -244,8 +244,10 @@ window.updateRowTotal = function(input) {
 };
 
 window.updatePagination = function() {
-    const rows = document.querySelectorAll('.transaction-row');
-    const total = rows.length;
+    const allRows = document.querySelectorAll('.transaction-row');
+    const visibleRows = Array.from(allRows).filter(row => !row.classList.contains('hidden-tx-row'));
+    const total = visibleRows.length;
+    
     const emptyState = document.getElementById('tx-empty-state');
     const tableContainer = document.getElementById('tx-table-container');
     const paginationContainer = document.getElementById('pagination-container');
@@ -261,23 +263,25 @@ window.updatePagination = function() {
     tableContainer?.classList.remove('hidden');
     paginationContainer?.classList.remove('hidden');
 
-    const totalPages = Math.ceil(total / rowsPerPage);
-    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+    const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+    if (currentPage > totalPages) currentPage = totalPages;
 
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
 
-    rows.forEach((row, index) => {
+    visibleRows.forEach((row, index) => {
         row.classList.toggle('hidden', index < start || index >= end);
     });
 
     const info = document.getElementById('pagination-info');
     if (info) {
-        info.textContent = `Affichage de ${start + 1} à ${Math.min(end, total)} sur ${total} transactions`;
+        info.textContent = `Affichage de ${total === 0 ? 0 : start + 1} à ${Math.min(end, total)} sur ${total} cessions`;
     }
 
-    document.getElementById('prev-btn').disabled = currentPage === 1;
-    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
+    const prevBtn = document.getElementById('prev-btn');
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages;
 };
 
 window.addTransactionRow = function() {
@@ -342,70 +346,7 @@ window.addTransactionRow = function() {
 
 // --- FILTRAGE SESSIONS IMPOSABLES ---
 window.initFilters = function() {
-    const toggle = document.getElementById('toggle-taxable-only');
-    if (!toggle) return;
-
-    toggle.addEventListener('change', function() {
-        updatePagination(); // Repagine tout en tenant compte du filtre
-    });
-};
-
-// Modification de updatePagination pour prendre en compte le filtre
-const originalUpdatePagination = window.updatePagination;
-window.updatePagination = function() {
-    const toggle = document.getElementById('toggle-taxable-only');
-    const taxableOnly = toggle ? toggle.checked : false;
-    const rows = Array.from(document.querySelectorAll('.transaction-row'));
-    const tableContainer = document.getElementById('tx-table-container');
-    const paginationContainer = document.getElementById('pagination-container');
-    const emptyState = document.getElementById('tx-empty-state');
-
-    // Filtrer les lignes visibles selon le bouton
-    let visibleRows = rows;
-    if (taxableOnly) {
-        visibleRows = rows.filter(row => {
-            const gainCell = row.querySelector('.row-gain');
-            if (!gainCell) return false;
-            const gainText = gainCell.textContent.trim().replace('€', '').replace(',', '.');
-            const gainVal = parseFloat(gainText);
-            return !isNaN(gainVal) && gainVal !== 0;
-        });
-        // Cacher les lignes qui ne correspondent pas au filtre
-        rows.forEach(row => {
-            if (!visibleRows.includes(row)) row.classList.add('hidden');
-        });
-    }
-
-    if (visibleRows.length === 0 && rows.length > 0) {
-        emptyState?.classList.remove('hidden');
-        tableContainer?.classList.add('hidden');
-        paginationContainer?.classList.add('hidden');
-        return;
-    }
-
-    emptyState?.classList.add('hidden');
-    tableContainer?.classList.remove('hidden');
-    paginationContainer?.classList.remove('hidden');
-
-    const total = visibleRows.length;
-    const totalPages = Math.ceil(total / rowsPerPage);
-    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    // Affichage paginé des lignes filtrées ONLY
-    visibleRows.forEach((row, index) => {
-        row.classList.toggle('hidden', index < start || index >= end);
-    });
-
-    const info = document.getElementById('pagination-info');
-    if (info) {
-        info.textContent = `Affichage de ${total === 0 ? 0 : start + 1} à ${Math.min(end, total)} sur ${total} sessions`;
-    }
-
-    document.getElementById('prev-btn').disabled = currentPage === 1;
-    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
+    // Les filtres ne sont plus nécessaires car on n'affiche que les cessions imposables
 };
 
 window.prevPage = function() { if (currentPage > 1) { currentPage--; updatePagination(); } };

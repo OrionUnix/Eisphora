@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n form_tags %}
 
 <div id="form-2086-container" class="mt-8 max-w-4xl mx-auto pb-12 animate-fade-in text-slate-800">
     <div class="mb-8 text-center">
@@ -14,93 +14,132 @@
     {% if taxable_events %}
         <div class="space-y-6">
             {% for event in taxable_events %}
-            <div class="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
+            <div class="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden cession-card"
+                 data-pta="{{ event.montant_global_acquisition }}"
+                 data-qty="{{ event.quantity }}">
                 <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                     <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
-                        <span class="bg-slate-800 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs shadow-sm">{{ event.id }}</span>
-                        {% trans "Cession de" %} {{ event.crypto }}
+                        <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs shadow-sm">{{ forloop.counter }}</span>
+                        {% trans "Cession de" %} <span class="text-indigo-600">{{ event.quantity|stringformat:".6f" }} {{ event.crypto }}</span>
                     </h3>
-                    <span class="text-sm font-semibold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                        <i class="far fa-calendar-alt mr-1"></i> {{ event.date|slice:":10" }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">#{{ event.id }}</span>
+                        <span class="text-sm font-semibold text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+                            <i class="far fa-calendar-alt mr-1"></i> {{ event.date|slice:":10" }}
+                        </span>
+                    </div>
                 </div>
                 
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         
-                        <!-- Lignes 211 à 214 -->
+                        <!-- Lignes 211 à 215 -->
                         <div class="space-y-3">
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div class="bg-slate-50/50 p-3 rounded-xl border border-slate-100 mb-4">
+                                <p class="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-wider">{% trans "Détails de la transaction" %}</p>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-500">{% trans "Quantité" %}</span>
+                                    <span class="font-bold text-slate-700">{{ event.quantity|stringformat:".6f" }} {{ event.crypto }}</span>
+                                </div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-500">{% trans "Prix revente unit." %}</span>
+                                    <span class="font-bold text-slate-700 val-unit-revente">
+                                        {{ event.prix_cession_brut|divide:event.quantity|floatformat:2 }} €
+                                    </span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-500">{% trans "Prix d'acq. unit." %}</span>
+                                    <span class="font-bold text-slate-700 val-unit-acq">
+                                        {{ event.unit_acq|floatformat:2 }} €
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
                                 <span class="text-sm text-slate-600">
                                     <span class="font-bold text-slate-400 w-8 inline-block">211</span> {% trans "Date de la cession" %}
                                 </span>
                                 <span class="font-mono font-bold text-slate-800">{{ event.date|slice:":10" }}</span>
                             </div>
                             
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
                                 <span class="text-sm text-slate-600">
                                     <span class="font-bold text-slate-400 w-8 inline-block">212</span> {% trans "Valeur globale du portefeuille" %}
                                 </span>
-                                <span class="font-mono font-bold text-indigo-600">{{ event.valeur_globale|stringformat:".2f" }} €</span>
+                                <input type="number" step="0.01" value="{{ event.valeur_globale|stringformat:".2f" }}" 
+                                       class="w-32 bg-indigo-50/50 border border-indigo-100 rounded-md px-2 py-1 text-right font-mono font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none input-212" />
                             </div>
 
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
                                 <span class="text-sm text-slate-600">
                                     <span class="font-bold text-slate-400 w-8 inline-block">213</span> {% trans "Prix de cession brut" %}
                                 </span>
-                                <span class="font-mono font-medium text-slate-800">{{ event.prix_cession_brut|default:event.prix_cession_net|stringformat:".2f" }} €</span>
+                                <input type="number" step="0.01" value="{{ event.prix_cession_brut|stringformat:".2f" }}" 
+                                       class="w-32 bg-slate-50 border border-slate-100 rounded-md px-2 py-1 text-right font-mono font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none input-213" />
                             </div>
 
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
                                 <span class="text-sm text-slate-600">
                                     <span class="font-bold text-slate-400 w-8 inline-block">214</span> {% trans "Frais de cession" %}
                                 </span>
-                                <span class="font-mono text-slate-600">{{ event.frais_cession|default:"0.00"|stringformat:".2f" }} €</span>
+                                <input type="number" step="0.01" value="{{ event.frais_cession|default:'0.00'|stringformat:".2f" }}" 
+                                       class="w-28 bg-slate-50 border border-slate-100 rounded-md px-2 py-1 text-right font-mono text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none input-214" />
                             </div>
                             
-                            <div class="flex justify-between items-center p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
-                                <span class="text-sm font-semibold text-indigo-900">
+                            <div class="flex justify-between items-center p-3 bg-indigo-50 border border-indigo-100 rounded-xl shadow-sm">
+                                <span class="text-sm font-bold text-indigo-900">
                                     <span class="font-bold text-indigo-400 w-8 inline-block">215</span> {% trans "Prix de cession net" %}
                                 </span>
-                                <span class="font-mono font-bold text-indigo-700">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
+                                <span class="font-mono font-black text-indigo-700 text-base val-215">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
                             </div>
                         </div>
 
-                        <!-- Lignes 216 à 220 -->
+                        <!-- Lignes 216 à 220 (Version Cerfa 2086 Pro) -->
                         <div class="space-y-3 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-8">
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg opacity-60">
                                 <span class="text-sm text-slate-600">
-                                    <span class="font-bold text-slate-400 w-8 inline-block">216</span> {% trans "Prix total d'acquisition" %}
+                                    <span class="font-bold text-slate-400 w-8 inline-block">216</span> {% trans "Soulte reçue" %}
                                 </span>
-                                <span class="font-mono text-slate-800">{{ event.montant_global_acquisition|default:"0.00"|stringformat:".2f" }} €</span>
+                                <span class="font-mono text-slate-400">0.00 €</span>
                             </div>
 
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors opacity-75">
-                                <span class="text-sm text-slate-500">
-                                    <span class="font-bold text-slate-300 w-8 inline-block">217</span> {% trans "Fraction de capital" %}
-                                </span>
-                                <span class="font-mono text-xs text-slate-400">{% trans "Auto" %}</span>
-                            </div>
-
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors opacity-75">
-                                <span class="text-sm text-slate-500">
-                                    <span class="font-bold text-slate-300 w-8 inline-block">218</span> {% trans "Frais d'acquisition" %}
-                                </span>
-                                <span class="font-mono text-xs text-slate-400">0.00 €</span>
-                            </div>
-
-                            <div class="flex justify-between items-center p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg opacity-60">
                                 <span class="text-sm text-slate-600">
-                                    <span class="font-bold text-slate-400 w-8 inline-block">219</span> {% trans "Prix d'acq. fractionné global" %}
+                                    <span class="font-bold text-slate-400 w-8 inline-block">217</span> {% trans "Soulte versée" %}
                                 </span>
-                                <span class="font-mono font-bold text-slate-800">{{ event.prix_acq_fractionne|stringformat:".2f" }} €</span>
+                                <span class="font-mono text-slate-400">0.00 €</span>
                             </div>
 
-                            <div class="flex justify-between items-center p-3 mt-2 rounded-xl border {% if event.plus_value > 0 %}bg-emerald-50 border-emerald-200{% elif event.plus_value < 0 %}bg-red-50 border-red-200{% else %}bg-slate-50 border-slate-200{% endif %}">
-                                <span class="text-sm font-bold {% if event.plus_value > 0 %}text-emerald-800{% elif event.plus_value < 0 %}text-red-800{% else %}text-slate-600{% endif %}">
-                                    <span class="font-black opacity-50 w-8 inline-block">220</span> {% trans "PV ou MV brute" %}
+                            <div class="flex justify-between items-center px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
+                                <span class="text-sm text-slate-600">
+                                    <span class="font-bold text-slate-400 w-8 inline-block">218</span> {% trans "Prix de cession net frais/soultes" %}
                                 </span>
-                                <span class="font-mono font-black text-lg {% if event.plus_value > 0 %}text-emerald-600{% elif event.plus_value < 0 %}text-red-600{% else %}text-slate-600{% endif %}">
+                                <span class="font-mono font-bold text-slate-800 val-218">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 text-center">
+                                <p class="text-[9px] uppercase font-black text-slate-400 mb-2">{% trans "Calcul du prix d'acquisition" %}</p>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-500">{% trans "Prix total d'acquisition (A)" %}</span>
+                                    <span class="font-bold text-slate-700">{{ event.montant_global_acquisition|stringformat:".2f" }} €</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-500 font-bold text-indigo-600">
+                                        <span class="font-bold text-slate-400 w-8 inline-block text-left">219</span> {% trans "Prix d'acq. fractionné global" %}
+                                    </span>
+                                    <span class="font-bold text-indigo-600 val-219">{{ event.prix_acq_fractionne|stringformat:".2f" }} €</span>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center p-4 mt-4 rounded-xl border shadow-lg result-badge transition-all {% if event.plus_value >= 0 %}bg-emerald-50 border-emerald-200 ring-2 ring-emerald-100{% else %}bg-red-50 border-red-200 ring-2 ring-red-100{% endif %}">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black uppercase tracking-tighter result-type-label {% if event.plus_value >= 0 %}text-emerald-500{% else %}text-red-500{% endif %}">{% if event.plus_value >= 0 %}{% trans "Bénéfice (Plus-value)" %}{% else %}{% trans "Perte (Moins-value)" %}{% endif %}</span>
+                                    <span class="text-sm font-black result-line-label {% if event.plus_value >= 0 %}text-emerald-800{% else %}text-red-800{% endif %}">
+                                        <span class="font-black opacity-30 w-8 inline-block">220</span> {% trans "PV ou MV brute" %}
+                                    </span>
+                                </div>
+                                <span class="font-mono font-black text-2xl val-220 {% if event.plus_value > 0 %}text-emerald-600{% elif event.plus_value < 0 %}text-red-600{% else %}text-slate-600{% endif %}">
                                     {% if event.plus_value > 0 %}+{% endif %}{{ event.plus_value|stringformat:".2f" }} €
                                 </span>
                             </div>
@@ -111,6 +150,87 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- Recalculation Script -->
+        <script>
+        (function() {
+            const cards = document.querySelectorAll('.cession-card');
+            
+            function updateCard(card) {
+                const pta = parseFloat(card.dataset.pta);
+                const qty = parseFloat(card.dataset.qty);
+                const vgp = parseFloat(card.querySelector('.input-212').value) || 1e-6;
+                const brut = parseFloat(card.querySelector('.input-213').value) || 0;
+                const frais = parseFloat(card.querySelector('.input-214').value) || 0;
+                
+                // Formulas
+                const net = brut - frais;
+                const fraction = pta * (net / vgp);
+                const pv = net - fraction;
+                
+                // Update internal values
+                card.querySelector('.val-215').textContent = net.toFixed(2) + ' €';
+                card.querySelector('.val-218').textContent = net.toFixed(2) + ' €';
+                card.querySelector('.val-219').textContent = fraction.toFixed(2) + ' €';
+                
+                const val220 = card.querySelector('.val-220');
+                val220.textContent = (pv >= 0 ? '+ ' : '') + pv.toFixed(2) + ' €';
+                
+                // Update colors and badges
+                const badge = card.querySelector('.result-badge');
+                const typeLabel = card.querySelector('.result-type-label');
+                const lineLabel = card.querySelector('.result-line-label');
+                
+                if (pv >= 0) {
+                    badge.className = 'flex justify-between items-center p-4 mt-4 rounded-xl border shadow-lg result-badge transition-all bg-emerald-50 border-emerald-200 ring-2 ring-emerald-100';
+                    val220.className = 'font-mono font-black text-2xl val-220 text-emerald-600';
+                    typeLabel.className = 'text-[10px] font-black uppercase tracking-tighter result-type-label text-emerald-500';
+                    typeLabel.textContent = "{% trans 'Bénéfice (Plus-value)' %}";
+                    lineLabel.className = 'text-sm font-black result-line-label text-emerald-800';
+                } else {
+                    badge.className = 'flex justify-between items-center p-4 mt-4 rounded-xl border shadow-lg result-badge transition-all bg-red-50 border-red-200 ring-2 ring-red-100';
+                    val220.className = 'font-mono font-black text-2xl val-220 text-red-600';
+                    typeLabel.className = 'text-[10px] font-black uppercase tracking-tighter result-type-label text-red-500';
+                    typeLabel.textContent = "{% trans 'Perte (Moins-value)' %}";
+                    lineLabel.className = 'text-sm font-black result-line-label text-red-800';
+                }
+                
+                // Update Unit Prices
+                if (qty > 0) {
+                    const unitRevente = brut / qty;
+                    card.querySelector('.val-unit-revente').textContent = unitRevente.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+                    
+                    // Unit Acq = Fraction / Quantity
+                    const unitAcq = fraction / qty;
+                    card.querySelector('.val-unit-acq').textContent = unitAcq.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+                }
+                
+                syncGlobalTaxes();
+            }
+            
+            function syncGlobalTaxes() {
+                let totalGains = 0;
+                document.querySelectorAll('.val-220').forEach(el => {
+                    const text = el.textContent.replace('€', '').replace('+', '').replace(/\s/g, '').trim();
+                    totalGains += parseFloat(text) || 0;
+                });
+                
+                const taxData = document.getElementById('tax-data');
+                if (taxData) {
+                    taxData.dataset.gains = totalGains;
+                    if (typeof window.updateTaxes === 'function') {
+                        window.updateTaxes();
+                    }
+                }
+            }
+            
+            cards.forEach(card => {
+                card.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', () => updateCard(card));
+                });
+            });
+        })();
+        </script>
     {% else %}
         <div class="text-center py-16 bg-white border border-slate-200 rounded-[24px]">
             <i class="fas fa-check-circle text-4xl text-emerald-400 mb-3"></i>
