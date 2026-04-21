@@ -8,16 +8,32 @@
 <style>
     /* Ces règles ne s'activent QUE lors de la création du PDF / Impression */
     @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+
         /* On force un fond blanc et texte noir partout */
         body { background: white !important; color: black !important; }
         
-        /* On cache tout ce qui ne sert à rien sur un PDF (Menu, boutons, footer...) */
+        /* On cache tout ce qui ne sert à rien sur un PDF */
         header, nav, footer, .print-hidden, .print\:hidden { display: none !important; }
         
+        /* Ajustement du conteneur pour éviter l'étirement excessif */
+        #zone-a-imprimer {
+            width: 100% !important;
+            max-width: 800px !important;
+            margin: 0 auto !important;
+        }
+
         /* Ajustements pour que le tableau tienne sur la page */
         table { 
             width: 100% !important; 
-            font-size: 10px !important; /* Police plus petite pour tout faire rentrer */
+            font-size: 10px !important; 
             border-collapse: collapse;
         }
         th, td { 
@@ -26,13 +42,19 @@
             word-wrap: break-word;
         }
         
-        /* On évite qu'une ligne du tableau soit coupée en deux entre deux pages */
-        tr { page-break-inside: avoid; }
+        /* On évite qu'un élément soit coupé en deux entre deux pages */
+        tr, .cession-card, .transaction-row, .block { 
+            page-break-inside: avoid !important; 
+            break-inside: avoid !important;
+            margin-bottom: 8px !important;
+        }
         
-        /* On enlève les ombres et les arrondis des cartes pour un style "document" */
-        .shadow-lg, .rounded-xl { box-shadow: none !important; border-radius: 0 !important; }
+        h1, h2, h3 { margin: 4px 0 !important; }
         
-        /* Le bloc d'avertissement qu'on a créé tout à l'heure : on le met bien en évidence */
+        /* On enlève les ombres et les arrondis pour un style "document" */
+        .shadow-lg, .shadow-sm, .rounded-xl, .rounded-\[24px\] { box-shadow: none !important; border-radius: 0 !important; }
+        
+        /* Blocs importants en évidence */
         .bg-amber-50, .bg-red-50 { border: 2px solid black !important; background: white !important; color: black !important; }
     }
 </style>
@@ -158,6 +180,14 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.3/dist/html2canvas-pro.min.js"></script>
 
 <script>
+    // Variables de traduction pour le JS (Sécurisées via escapejs)
+    const TRANS_RETOUR_TABLEAU = "{% trans "Retour au tableau" as t1 %}{{ t1|escapejs }}";
+    const TRANS_OUVRIR_2086 = "{% trans "Ouvrir l'Assistant 2086" as t2 %}{{ t2|escapejs }}";
+    const TRANS_GENERATION_PDF = "{% trans "Génération..." as t3 %}{{ t3|escapejs }}";
+    const TRANS_ERREUR_PDF = "{% trans "Une erreur est survenue lors de la création du PDF. Veuillez utiliser CSV." as t4 %}{{ t4|escapejs }}";
+    const TRANS_AUCUNE_DONNEE = "{% trans "Aucune donnée à exporter." as t5 %}{{ t5|escapejs }}";
+    const TRANS_CONFIRM_DELETE = "{% trans "Êtes-vous sûr de vouloir supprimer définitivement toutes vos données de cette session ?" as t6 %}{{ t6|escapejs }}";
+
     // Animation de chargement pour la simulation
     const form = document.getElementById('main-tx-form');
     const btnSimuler = document.getElementById('btn-simuler');
@@ -176,7 +206,7 @@
 
     // Fonction pour effacer les données
     function effacerDonnees() {
-        if(confirm('{% trans "Êtes-vous sûr de vouloir supprimer définitivement toutes vos données de cette session ?" %}')) {
+        if(confirm(TRANS_CONFIRM_DELETE)) {
             sessionStorage.clear();
             localStorage.clear();
             window.location.href = window.location.pathname;
@@ -187,7 +217,7 @@
     function exporterCSV() {
         const table = document.getElementById('transactions-table'); 
         if (!table) {
-            alert('{% trans "Aucune donnée à exporter." %}');
+            alert(TRANS_AUCUNE_DONNEE);
             return;
         }
 
@@ -266,26 +296,33 @@
         const originalText = btnText.innerText;
         
         // Indicateur de chargement
-        btnText.innerText = "{% trans 'Génération...' %}";
+        btnText.innerText = TRANS_GENERATION_PDF;
         icon.className = "fas fa-spinner fa-spin";
         
         // Cacher temporairement les boutons d'export pendant la capture
         const hiddenElements = document.querySelectorAll('.print-hidden, .print\\:hidden');
         hiddenElements.forEach(el => el.style.display = 'none');
+        
+        // Forcer une largeur maximale pour simuler un format portrait A4
+        const originalMaxWidth = element.style.maxWidth;
+        const originalMargin = element.style.margin;
+        element.style.maxWidth = '800px';
+        element.style.margin = '0 auto';
 
         // Note: html2canvas-pro s'enregistre sous le nom global 'html2canvas'
         html2canvas(element, { 
             scale: 2, 
             useCORS: true, 
             backgroundColor: '#f4f7fe',
+            windowWidth: 800,
             logging: false
         })
             .then(function (canvas) {
                 const imgData = canvas.toDataURL('image/jpeg', 0.95);
                 const { jsPDF } = window.jspdf;
                 
-                // Format Paysage (Landscape)
-                const pdf = new jsPDF('l', 'mm', 'a4');
+                // Format Portrait
+                const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
                 
@@ -309,14 +346,20 @@
                 let title = is2086 ? 'Eisphora_Assistant_2086.pdf' : 'Eisphora_Simulation_Fiscale.pdf';
                 pdf.save(title);
                 
-                // Restaurer l'affichage
+                // Restaurer l'affichage et les styles
+                element.style.maxWidth = originalMaxWidth;
+                element.style.margin = originalMargin;
                 hiddenElements.forEach(el => el.style.display = '');
                 btnText.innerText = originalText;
                 icon.className = "fas fa-file-pdf";
             })
             .catch(function (error) {
                 console.error("Erreur d'export PDF :", error);
-                alert("{% trans 'Une erreur est survenue lors de la création du PDF. Veuillez utiliser CSV.' %}");
+                alert(TRANS_ERREUR_PDF);
+                
+                // Restaurer en cas d'erreur
+                element.style.maxWidth = originalMaxWidth;
+                element.style.margin = originalMargin;
                 hiddenElements.forEach(el => el.style.display = '');
                 btnText.innerText = originalText;
                 icon.className = "fas fa-file-pdf";
@@ -334,7 +377,7 @@
             // Afficher le 2086
             dashboard.classList.add('hidden');
             view2086.classList.remove('hidden');
-            btnText.innerText = "{% trans "Retour au tableau" %}";
+            btnText.innerText = TRANS_RETOUR_TABLEAU;
             btnIcon.className = "fas fa-arrow-left";
             document.getElementById('btn-toggle-2086').classList.replace('bg-blue-50', 'bg-slate-800');
             document.getElementById('btn-toggle-2086').classList.replace('text-blue-700', 'text-white');
@@ -343,7 +386,7 @@
             // Afficher le tableau
             view2086.classList.add('hidden');
             dashboard.classList.remove('hidden');
-            btnText.innerText = "{% trans "Ouvrir l'Assistant 2086" %}";
+            btnText.innerText = TRANS_OUVRIR_2086;
             btnIcon.className = "fas fa-file-invoice";
             document.getElementById('btn-toggle-2086').classList.replace('bg-slate-800', 'bg-blue-50');
             document.getElementById('btn-toggle-2086').classList.replace('text-white', 'text-blue-700');

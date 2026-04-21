@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.views.decorators.debug import sensitive_post_parameters
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
-from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row, get_historical_price, parse_custom_csv
+from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row, parse_custom_csv
 from .services.calculator import calculate_french_taxes, get_pfu_rate
 
 
@@ -118,38 +118,6 @@ def form_2048_view(request):
                 tx['is_taxable_sale'] = (str(tx.get('operation_type')).lower() == 'vente' and 
                                          str(tx.get('currency', '')).upper() in FIAT_CURRENCIES)
 
-            # --- Portfolio Distribution ---
-            remaining_portfolio = calc_results.get('remaining_portfolio', {})
-            portfolio_distribution = []
-            total_portfolio_value = 0
-            from datetime import datetime
-            today_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-            for asset, qty in remaining_portfolio.items():
-                # Get current price for valuation
-                price = get_historical_price(asset, today_str)
-                val = qty * price
-                if val > 0.01:  # Ignore dust
-                    portfolio_distribution.append({
-                        'asset': asset,
-                        'qty': qty,
-                        'price': price,
-                        'value': val
-                    })
-                    total_portfolio_value += val
-
-            # Calculate percentages
-            if total_portfolio_value > 0:
-                for item in portfolio_distribution:
-                    item['percentage'] = round((item['value'] / total_portfolio_value) * 100, 1)
-            
-            # Sort by value
-            portfolio_distribution = sorted(portfolio_distribution, key=lambda x: x['value'], reverse=True)
-
-            # JSON encoding for the template
-            import json
-            portfolio_distribution_json = json.dumps(portfolio_distribution)
-
             # --- Sources Actives (Filtré pour la vue) ---
             sources_map = {}
             for tx in all_transactions:
@@ -180,8 +148,6 @@ def form_2048_view(request):
                 'manual_transactions': all_transactions,
                 'file_count': len(transaction_files),
                 'unique_sources': unique_sources,
-                'portfolio_distribution': portfolio_distribution_json,
-                'total_portfolio_value': total_portfolio_value,
                 'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
             }
             return render(request, 'tax_forms/form_2048.html', context)
