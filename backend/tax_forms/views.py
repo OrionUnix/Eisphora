@@ -110,9 +110,10 @@ def form_2048_view(request):
                     
                     # Update acq_price and price for display if they were missing or 0
                     if not tx.get('acq_price'):
-                        tx['acq_price'] = tx['prix_acquisition']
+                        tx['acq_price'] = event.get('unit_acq', 0)
                     if not tx.get('price'):
-                        tx['price'] = tx['prix_cession']
+                        qty = tx.get('quantity', 0)
+                        tx['price'] = round(event.get('prix_cession_brut', 0) / qty, 6) if qty > 0 else 0
 
                 # Marquer si la transaction doit être affichée dans le tableau des cessions
                 tx['is_taxable_sale'] = (str(tx.get('operation_type')).lower() == 'vente' and 

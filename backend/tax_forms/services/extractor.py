@@ -1049,12 +1049,19 @@ def _parse_coinbase_row(row: dict) -> Optional[dict]:
             row.get('quantity transacted') or row.get('amount')
             or row.get('size') or row.get('quantity')
         )
-        price = (
+        price_raw = (
             row.get('price at transaction')
             or row.get('spot price at transaction')
             or row.get('price') or row.get('unit price')
-            or row.get('subtotal')
         )
+        price = clean_numeric(price_raw)
+        
+        # Fallback : extraire le prix depuis la colonne Notes si toujours absent
+        notes = str(row.get('notes') or row.get('Notes') or '')
+        if price == 0 and notes:
+            m = re.search(r'at\s+([\d.]+)\s+\w+/\w+', notes)
+            if m:
+                price = float(m.group(1))
         # 'fees and/or spread' est le nom exact dans les exports Coinbase récents
         fees = (
             row.get('fees and/or spread') or row.get('fees')
@@ -1179,11 +1186,18 @@ def _parse_generic_row(row: dict) -> Optional[dict]:
             or row.get('executed') or row.get('filled') or row.get('quantité')
             or row.get('montant') or row.get('quantity transacted') or row.get('size')
         )
-        price = (
-            row.get('price') or row.get('value') or row.get('unit_price')
-            or row.get('spot_price') or row.get('price at transaction')
-            or row.get('subtotal') or row.get('prix') or row.get('valeur')
-        )
+        price_candidates = [
+            row.get('price'), row.get('value'), row.get('unit_price'),
+            row.get('spot_price'), row.get('price at transaction'),
+            row.get('prix'), row.get('valeur'),
+        ]
+        price_raw = next((v for v in price_candidates if v and clean_numeric(v) > 0), None)
+        if price_raw is None:
+            # Dernier recours : subtotal reconstitué
+            subtotal_val = clean_numeric(row.get('subtotal') or 0)
+            qty_check = abs(clean_numeric(quantity))
+            if subtotal_val > 0 and qty_check > 0:
+                price_raw = subtotal_val / qty_check
         fees = (
             row.get('fees') or row.get('fee') or row.get('transaction_fee')
             or row.get('fees and/or spread') or row.get('frais')
@@ -1204,7 +1218,7 @@ def _parse_generic_row(row: dict) -> Optional[dict]:
             'operation_type': _normalize_op_type(op_raw),
             'crypto_token': str(asset).strip().upper() if asset else None,
             'quantity': abs(clean_numeric(quantity)),
-            'price': clean_numeric(price),
+            'price': clean_numeric(price_raw) if isinstance(price_raw, str) else (price_raw or 0.0),
             'acq_price': clean_numeric(acq_price),
             'fees': clean_numeric(fees),
             'currency': str(currency).upper().strip(),
