@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.views.decorators.debug import sensitive_post_parameters
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
-from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, parse_generic_row, parse_custom_csv
+from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, _parse_generic_row, parse_custom_csv
 from .services.calculator import calculate_french_taxes, get_pfu_rate
 
 
@@ -36,7 +36,7 @@ def form_2048_view(request):
                     'source': request.POST.get(f'source_{i}', 'Manuel'),
                     'source_type': request.POST.get(f'source_type_{i}', 'Manuel')
                 }
-                tx = parse_generic_row(row)
+                tx = _parse_generic_row(row)
                 if tx:
                     tx['source'] = row['source']
                     tx['source_type'] = row['source_type']

@@ -1,126 +1,292 @@
-import pandas as pd
+"""
+extractor.py – Récupération et parsing des transactions crypto
+==============================================================
+Corrections et améliorations par rapport à la version originale :
+
+1. [🔴 CRITIQUE] PRICE_CACHE global remplacé par Django cache framework
+   → Plus de fuite mémoire / partage de données entre utilisateurs.
+
+2. [🔴 CRITIQUE] Clé 'crypto' → 'crypto_token' dans parse_custom_csv
+   → Les transactions custom étaient toutes ignorées par calculate_french_taxes().
+
+3. [🟡] Toutes les exceptions silencieuses remplacées par logger.error/warning
+   → Le débogage devient possible.
+
+4. [🟡] EVM : ajout des transactions ERC-20 (tokentx) en plus du natif (txlist)
+   → USDC, LINK, UNI, etc. sont maintenant récupérés.
+
+5. [🟡] Binance : extraction du symbole robustifiée avec regex
+   → "ETHBTC", "BTCEUR", "ETHUSDT" sont tous correctement parsés.
+
+6. [🟡] Tron : pagination complète via le curseur 'fingerprint' de TronGrid
+   → L'historique n'est plus tronqué à 200 transactions.
+
+7. [🟡] Retry automatique sur les appels HTTP (urllib3 / requests)
+   → Moins d'échecs sur les API publiques instables.
+
+8. [🔴 FISCAL] Coinbase : 'Retail Staking Transfer' et 'Retail Unstaking Transfer'
+   → Ces mouvements internes Coinbase (paires +qty/-qty) sont désormais ignorés
+     via le type 'transfert_interne'. Aucune réalité fiscale.
+
+9. [🟡] Ordre des règles dans _normalize_op_type() corrigé : les règles
+   spécifiques passent avant les règles génériques pour éviter tout faux positif.
+"""
+
+import csv
 import io
-import re
+import json
+import logging
 import os
+import re
 import time
-import requests
+from typing import Dict, List, Optional
+
+import pandas as pd
 import pdfplumber
+import requests
+from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from typing import Dict
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Address Auto-Detection
+# Session HTTP avec retry automatique
 # ---------------------------------------------------------------------------
 
-EVM_CHAINS = ['ethereum', 'polygon', 'bsc', 'avalanche', 'fantom', 'arbitrum', 'optimism']
+def _build_session(retries: int = 3, backoff: float = 0.5) -> requests.Session:
+    """
+    Crée une session requests avec retry automatique sur les erreurs
+    réseau et les codes HTTP 429, 500, 502, 503, 504.
+    """
+    session = requests.Session()
+    retry = Retry(
+        total=retries,
+        backoff_factor=backoff,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+_SESSION = _build_session()
+
+
+# ---------------------------------------------------------------------------
+# Détection automatique du type d'adresse blockchain
+# ---------------------------------------------------------------------------
+
+EVM_CHAINS = [
+    'ethereum', 'polygon', 'bsc', 'avalanche',
+    'fantom', 'arbitrum', 'optimism',
+]
 
 def detect_address_type(address: str) -> dict:
     """
     Détecte automatiquement le type d'une adresse blockchain.
-    Retourne un dict: {'type': 'evm'|'btc'|'tron'|'unknown', 'chains': [...]}
+
+    Retourne
+    --------
+    dict : {'type': 'evm'|'btc'|'tron'|'unknown', 'chains': [...]}
     """
     address = address.strip()
-    # EVM (Ethereum et compatibles) : commence par 0x, 42 chars hex
+
+    # EVM (Ethereum et compatibles) : 0x + 40 caractères hexadécimaux
     if re.match(r'^0x[0-9a-fA-F]{40}$', address):
         return {'type': 'evm', 'chains': EVM_CHAINS}
-    # Bitcoin (Legacy P2PKH, P2SH, Bech32)
-    if re.match(r'^(1|3)[1-9A-HJ-NP-Za-km-z]{25,34}$', address) or re.match(r'^bc1[a-z0-9]{25,90}$', address):
+
+    # Bitcoin Legacy (P2PKH / P2SH) et SegWit (Bech32)
+    if (
+        re.match(r'^(1|3)[1-9A-HJ-NP-Za-km-z]{25,34}$', address)
+        or re.match(r'^bc1[a-z0-9]{25,90}$', address)
+    ):
         return {'type': 'btc', 'chains': ['bitcoin']}
-    # Tron : T + 33 chars base58
+
+    # Tron : T + 33 caractères base58
     if re.match(r'^T[1-9A-HJ-NP-Za-km-z]{33}$', address):
         return {'type': 'tron', 'chains': ['tron']}
-    
+
     return {'type': 'unknown', 'chains': []}
 
+
 # ---------------------------------------------------------------------------
-# Fetchers API Historique de Prix (Avec Fallback CoinGecko)
+# Récupération des prix historiques (CryptoCompare + fallback CoinGecko)
 # ---------------------------------------------------------------------------
 
-PRICE_CACHE = {}
+# Mapping symbole → id CoinGecko (complété par rapport à la version originale)
+_COINGECKO_IDS: Dict[str, str] = {
+    'BTC':   'bitcoin',
+    'ETH':   'ethereum',
+    'BNB':   'binancecoin',
+    'AVAX':  'avalanche-2',
+    'FTM':   'fantom',
+    'MATIC': 'polygon',
+    'POL':   'polygon-ecosystem-token',
+    'SOL':   'solana',
+    'ADA':   'cardano',
+    'DOT':   'polkadot',
+    'LINK':  'chainlink',
+    'UNI':   'uniswap',
+    'XRP':   'ripple',
+    'LTC':   'litecoin',
+    'TRX':   'tron',
+    'ATOM':  'cosmos',
+    'NEAR':  'near',
+    'OP':    'optimism',
+    'ARB':   'arbitrum',
+}
 
-def get_historical_price(symbol: str, timestamp_str: str, currency: str = 'EUR') -> float:
+_CACHE_TTL = 86_400  # 24 heures (en secondes)
+
+
+def get_historical_price(
+    symbol: str,
+    timestamp_str: str,
+    currency: str = 'EUR',
+) -> float:
     """
-    Récupère le prix historique d'un token via l'API CryptoCompare, avec fallback sur CoinGecko.
-    Utilise un cache local pour éviter les appels redondants.
+    Récupère le prix historique d'un token pour une date donnée.
+
+    Stratégie
+    ---------
+    1. Cache Django (évite les appels réseau redondants).
+    2. API CryptoCompare /histohour.
+    3. Fallback API CoinGecko /history.
+
+    Paramètres
+    ----------
+    symbol        : Symbole du token (ex: 'BTC', 'ETH').
+    timestamp_str : Date/heure ISO 8601 ou 'YYYY-MM-DD'.
+    currency      : Devise de référence (défaut 'EUR').
+
+    Retourne
+    --------
+    float : Prix en `currency`, ou 0.0 si introuvable.
     """
-    if not timestamp_str or not symbol:
+    if not symbol or not timestamp_str:
         return 0.0
 
+    symbol = symbol.upper().strip()
+    currency = currency.upper().strip()
+
     try:
-        # Forcer l'UTC pour éviter les décalages horaires
         date_obj = pd.to_datetime(timestamp_str)
         if date_obj.tzinfo is None:
             date_obj = date_obj.tz_localize('UTC')
-            
         ts = int(date_obj.timestamp())
-        
-        # Arrondir à l'heure pour augmenter le taux de hit du cache
-        ts_key = (symbol.upper(), ts // 3600 * 3600, currency.upper())
-        
-        if ts_key in PRICE_CACHE:
-            return PRICE_CACHE[ts_key]
-            
-        # 1. Tentative CryptoCompare
-        url = "https://min-api.cryptocompare.com/data/v2/histohour"
-        params = {'fsym': symbol.upper(), 'tsym': currency.upper(), 'limit': 1, 'toTs': ts}
-        
-        response = requests.get(url, params=params, timeout=5)
-        data = response.json()
-        
-        if data.get('Response') == 'Success' and data.get('Data', {}).get('Data'):
-            price = data['Data']['Data'][-1].get('close', 0.0)
-            if price > 0:
-                PRICE_CACHE[ts_key] = price
-                return price
+    except Exception:
+        logger.warning("get_historical_price : date invalide '%s'", timestamp_str)
+        return 0.0
 
-        # 2. Fallback CoinGecko (si CryptoCompare échoue)
-        cg_id = {
-            'BTC': 'bitcoin', 'ETH': 'ethereum', 'BNB': 'binancecoin', 'AVAX': 'avalanche-2',
-            'FTM': 'fantom', 'MATIC': 'polygon', 'POL': 'polygon-ecosystem-token'
-        }.get(symbol.upper(), symbol.lower())
-        
-        url_cg = f"https://api.coingecko.com/api/v3/coins/{cg_id}/history"
-        params_cg = {'date': date_obj.strftime('%d-%m-%Y')}
-        
-        time.sleep(0.5) # Pause de sécurité CoinGecko (Rate limit strict)
-        
-        resp_cg = requests.get(url_cg, params=params_cg, timeout=6)
-        if resp_cg.status_code == 200:
-            price = resp_cg.json().get('market_data', {}).get('current_price', {}).get(currency.lower(), 0.0)
-            if price > 0:
-                PRICE_CACHE[ts_key] = price
-                return price
-                
-    except Exception as e:
-        pass
-        
+    # Arrondi à l'heure pour maximiser les hits cache
+    ts_rounded = ts // 3600 * 3600
+    cache_key = f"hprice_{symbol}_{ts_rounded}_{currency}"
+
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    price = _fetch_cryptocompare(symbol, ts_rounded, currency)
+
+    if price <= 0:
+        price = _fetch_coingecko(symbol, date_obj, currency)
+
+    if price > 0:
+        cache.set(cache_key, price, timeout=_CACHE_TTL)
+    else:
+        logger.debug(
+            "Prix introuvable pour %s au %s (%s)",
+            symbol, timestamp_str, currency,
+        )
+
+    return price
+
+
+def _fetch_cryptocompare(symbol: str, ts: int, currency: str) -> float:
+    """Appel à l'API CryptoCompare histohour."""
+    try:
+        url = "https://min-api.cryptocompare.com/data/v2/histohour"
+        params = {
+            'fsym': symbol,
+            'tsym': currency,
+            'limit': 1,
+            'toTs': ts,
+        }
+        resp = _SESSION.get(url, params=params, timeout=6)
+        resp.raise_for_status()
+        data = resp.json()
+
+        if data.get('Response') == 'Success':
+            candles = data.get('Data', {}).get('Data', [])
+            if candles:
+                return float(candles[-1].get('close', 0.0))
+    except Exception as exc:
+        logger.debug("CryptoCompare error [%s] : %s", symbol, exc)
     return 0.0
 
+
+def _fetch_coingecko(symbol: str, date_obj, currency: str) -> float:
+    """Appel à l'API CoinGecko /history (fallback)."""
+    try:
+        cg_id = _COINGECKO_IDS.get(symbol, symbol.lower())
+        url = f"https://api.coingecko.com/api/v3/coins/{cg_id}/history"
+        params = {'date': date_obj.strftime('%d-%m-%Y')}
+
+        time.sleep(0.5)  # Respect du rate-limit CoinGecko (plan gratuit)
+        resp = _SESSION.get(url, params=params, timeout=8)
+        resp.raise_for_status()
+        price = (
+            resp.json()
+            .get('market_data', {})
+            .get('current_price', {})
+            .get(currency.lower(), 0.0)
+        )
+        return float(price) if price else 0.0
+    except Exception as exc:
+        logger.debug("CoinGecko error [%s] : %s", symbol, exc)
+    return 0.0
+
+
 # ---------------------------------------------------------------------------
-# Blockchains Fetchers
+# Configuration des blockchains EVM
 # ---------------------------------------------------------------------------
 
-SCAN_APIS = {
-    "ethereum": "https://api.etherscan.io/v2/api",
-    "polygon": "https://api.etherscan.io/v2/api",
-    "bsc": "https://api.etherscan.io/v2/api",
+SCAN_APIS: Dict[str, str] = {
+    "ethereum":  "https://api.etherscan.io/v2/api",
+    "polygon":   "https://api.etherscan.io/v2/api",
+    "bsc":       "https://api.etherscan.io/v2/api",
     "avalanche": "https://api.snowtrace.io/api",
-    "fantom": "https://api.etherscan.io/v2/api",
-    "arbitrum": "https://api.etherscan.io/v2/api",
-    "optimism": "https://api.etherscan.io/v2/api"
+    "fantom":    "https://api.etherscan.io/v2/api",
+    "arbitrum":  "https://api.etherscan.io/v2/api",
+    "optimism":  "https://api.etherscan.io/v2/api",
 }
 
-CHAIN_METADATA = {
-    "ethereum": {"chainid": 1, "symbol": "ETH", "version": "v2"},
-    "polygon": {"chainid": 137, "symbol": "MATIC", "version": "v2"},
-    "bsc": {"chainid": 56, "symbol": "BNB", "version": "v2"},
-    "avalanche": {"chainid": 43114, "symbol": "AVAX", "version": "v1"},
-    "fantom": {"chainid": 146, "symbol": "FTM", "version": "v2"},
-    "arbitrum": {"chainid": 42161, "symbol": "ETH", "version": "v2"},
-    "optimism": {"chainid": 10, "symbol": "ETH", "version": "v2"}
+CHAIN_METADATA: Dict[str, dict] = {
+    "ethereum":  {"chainid": 1,      "symbol": "ETH",  "version": "v2"},
+    "polygon":   {"chainid": 137,    "symbol": "MATIC", "version": "v2"},
+    "bsc":       {"chainid": 56,     "symbol": "BNB",  "version": "v2"},
+    "avalanche": {"chainid": 43114,  "symbol": "AVAX", "version": "v1"},
+    "fantom":    {"chainid": 146,    "symbol": "FTM",  "version": "v2"},
+    "arbitrum":  {"chainid": 42161,  "symbol": "ETH",  "version": "v2"},
+    "optimism":  {"chainid": 10,     "symbol": "ETH",  "version": "v2"},
 }
 
-def fetch_on_chain_transactions(address: str, blockchains: list = None) -> list:
+
+# ---------------------------------------------------------------------------
+# Fetchers on-chain
+# ---------------------------------------------------------------------------
+
+def fetch_on_chain_transactions(
+    address: str,
+    blockchains: Optional[List[str]] = None,
+) -> List[dict]:
+    """
+    Point d'entrée unique pour récupérer les transactions on-chain.
+    Détecte automatiquement le type d'adresse et dispatch vers le bon fetcher.
+    """
     address = address.strip()
     detected = detect_address_type(address)
     addr_type = detected['type']
@@ -130,224 +296,432 @@ def fetch_on_chain_transactions(address: str, blockchains: list = None) -> list:
     elif addr_type == 'tron':
         return fetch_tron_transactions(address)
     elif addr_type == 'evm':
-        chains_to_scan = blockchains if blockchains else detected['chains']
-        return _fetch_evm_transactions(address, chains_to_scan)
+        chains = blockchains if blockchains else detected['chains']
+        return _fetch_evm_transactions(address, chains)
     else:
+        logger.warning("Adresse non reconnue : '%s'", address)
         return []
 
-def _fetch_evm_transactions(address: str, blockchains: list) -> list:
-    transactions = []
-    
+
+def _fetch_evm_transactions(address: str, blockchains: List[str]) -> List[dict]:
+    """
+    Récupère les transactions EVM (natif + ERC-20) pour chaque chain demandée.
+    Utilise l'API Etherscan v2 (ou Snowtrace pour Avalanche).
+    """
+    transactions: List[dict] = []
+
+    api_key = (
+        os.getenv("ETHERSCAN_API_KEY")
+        or os.getenv("SCAN_API_KEY")
+        or "FREE_KEY"
+    )
+
     for chain in blockchains:
         api_url = SCAN_APIS.get(chain)
         metadata = CHAIN_METADATA.get(chain)
         if not api_url or not metadata:
+            logger.warning("Chain non configurée : '%s'", chain)
             continue
 
-        api_key = os.getenv("ETHERSCAN_API_KEY")
-        if not api_key:
-            api_key = os.getenv(f"{chain.upper()}_SCAN_API_KEY")
+        chain_api_key = os.getenv(f"{chain.upper()}_SCAN_API_KEY", api_key)
 
-        params = {
+        base_params = {
             'module': 'account',
-            'action': 'txlist',
             'address': address,
             'startblock': 0,
-            'endblock': 99999999,
+            'endblock': 99_999_999,
             'sort': 'asc',
-            'apikey': api_key or 'FREE_KEY'
+            'apikey': chain_api_key,
         }
         if metadata.get('version') == 'v2':
-            params['chainid'] = metadata['chainid']
+            base_params['chainid'] = metadata['chainid']
 
-        try:
-            response = requests.get(api_url, params=params, timeout=10)
-            data = response.json()
+        # --- Transactions natives (ETH, BNB, MATIC, AVAX…) ---
+        native_txs = _call_scan_api(
+            api_url, {**base_params, 'action': 'txlist'}
+        )
+        for tx in native_txs:
+            parsed = _parse_evm_native_tx(tx, address, metadata)
+            if parsed:
+                transactions.append(parsed)
 
-            if data.get('status') == '1' and 'result' in data:
-                raw_txs = data['result']
-                for tx in raw_txs:
-                    value_native = float(tx.get('value', 0)) / 10**18
-                    if value_native > 0:
-                        is_outbound = tx.get('from', '').lower() == address.lower()
-                        date_str = pd.to_datetime(int(tx['timeStamp']), unit='s', utc=True).strftime('%Y-%m-%d %H:%M:%S')
-                        price_unit = get_historical_price(metadata['symbol'], date_str)
-                        
-                        # On ne paie le gas que si on est l'expéditeur (outbound)
-                        gas_fee = (float(tx.get('gasUsed', 0)) * float(tx.get('gasPrice', 0))) / 10**18
-                        
-                        transactions.append({
-                            'date': date_str,
-                            'operation_type': 'vente' if is_outbound else 'achat',
-                            'crypto_token': metadata['symbol'],
-                            'tx_hash': tx.get('hash'),
-                            'quantity': value_native,
-                            'price': price_unit,
-                            'fees': gas_fee if is_outbound else 0.0,
-                            'currency': 'EUR',
-                            'source': address
-                        })
-                
-        except Exception as e:
-            pass
-            
-        # Éviter le Rate Limit d'Etherscan (max 5 req/sec sur le plan gratuit)
+        # --- Transactions ERC-20 (USDC, LINK, UNI, PEPE…) ---
+        erc20_txs = _call_scan_api(
+            api_url, {**base_params, 'action': 'tokentx'}
+        )
+        for tx in erc20_txs:
+            parsed = _parse_evm_erc20_tx(tx, address)
+            if parsed:
+                transactions.append(parsed)
+
+        # Respect du rate-limit Etherscan (5 req/s sur plan gratuit)
         time.sleep(0.25)
 
+    # Tri chronologique final
+    transactions.sort(key=lambda x: x.get('date', ''))
     return transactions
 
-def fetch_btc_transactions(address: str) -> list:
-    transactions = []
+
+def _call_scan_api(url: str, params: dict) -> List[dict]:
+    """Appel générique à une API compatible Etherscan. Retourne la liste brute."""
     try:
+        resp = _SESSION.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        if data.get('status') == '1' and isinstance(data.get('result'), list):
+            return data['result']
+        logger.debug("Scan API – réponse vide ou erreur : %s", data.get('message'))
+    except Exception as exc:
+        logger.error("Scan API error (%s) : %s", url, exc)
+    return []
+
+
+def _parse_evm_native_tx(tx: dict, address: str, metadata: dict) -> Optional[dict]:
+    """Parse une transaction native EVM (ETH, BNB, MATIC…)."""
+    try:
+        value_native = float(tx.get('value', 0)) / 10**18
+        if value_native <= 0:
+            return None
+
+        is_outbound = tx.get('from', '').lower() == address.lower()
+        ts = int(tx['timeStamp'])
+        date_str = pd.to_datetime(ts, unit='s', utc=True).strftime('%Y-%m-%dT%H:%M:%SZ')
+        symbol = metadata['symbol']
+        price_unit = get_historical_price(symbol, date_str)
+        gas_fee = (
+            float(tx.get('gasUsed', 0)) * float(tx.get('gasPrice', 0))
+        ) / 10**18
+
+        return {
+            'date': date_str,
+            'operation_type': 'vente' if is_outbound else 'achat',
+            'crypto_token': symbol,
+            'tx_hash': tx.get('hash'),
+            'quantity': value_native,
+            'price': price_unit,
+            'fees': gas_fee if is_outbound else 0.0,
+            'currency': 'EUR',
+            'source': address,
+        }
+    except Exception as exc:
+        logger.debug("Parse EVM native tx error : %s", exc)
+        return None
+
+
+def _parse_evm_erc20_tx(tx: dict, address: str) -> Optional[dict]:
+    """Parse une transaction ERC-20 (token transfer)."""
+    try:
+        decimals = int(tx.get('tokenDecimal', 18) or 18)
+        raw_value = float(tx.get('value', 0) or 0)
+        quantity = raw_value / (10 ** decimals)
+        if quantity <= 0:
+            return None
+
+        symbol = str(tx.get('tokenSymbol', 'UNKNOWN')).upper()
+        is_outbound = tx.get('from', '').lower() == address.lower()
+        ts = int(tx['timeStamp'])
+        date_str = pd.to_datetime(ts, unit='s', utc=True).strftime('%Y-%m-%dT%H:%M:%SZ')
+        price_unit = get_historical_price(symbol, date_str)
+
+        return {
+            'date': date_str,
+            'operation_type': 'vente' if is_outbound else 'achat',
+            'crypto_token': symbol,
+            'tx_hash': tx.get('hash'),
+            'quantity': quantity,
+            'price': price_unit,
+            'fees': 0.0,  # Les frais de gas sont comptés dans la tx native
+            'currency': 'EUR',
+            'source': address,
+        }
+    except Exception as exc:
+        logger.debug("Parse ERC-20 tx error : %s", exc)
+        return None
+
+
+def fetch_btc_transactions(address: str) -> List[dict]:
+    """
+    Récupère les transactions Bitcoin via l'API Blockstream.
+    Gère la pagination (max 25 tx par appel).
+    """
+    transactions: List[dict] = []
+    last_seen_txid: Optional[str] = None
+
+    while True:
         url = f"https://blockstream.info/api/address/{address}/txs"
-        response = requests.get(url, timeout=15)
-        if response.status_code != 200:
-            return []
-            
-        txs = response.json()
+        if last_seen_txid:
+            url += f"/chain/{last_seen_txid}"
+
+        try:
+            resp = _SESSION.get(url, timeout=15)
+            resp.raise_for_status()
+            txs = resp.json()
+        except Exception as exc:
+            logger.error("Blockstream API error [%s] : %s", address, exc)
+            break
+
+        if not txs:
+            break
+
         for tx in txs:
-            status = tx.get('status', {})
-            if not status.get('confirmed'):
-                continue
-                
-            block_time = status.get('block_time', 0)
-            date_str = pd.to_datetime(block_time, unit='s', utc=True).strftime('%Y-%m-%d %H:%M:%S') if block_time else None
-            if not date_str:
-                continue
+            parsed = _parse_btc_tx(tx, address)
+            if parsed:
+                transactions.append(parsed)
 
-            received = sum(vout.get('value', 0) / 1e8 for vout in tx.get('vout', []) if address in [vout.get('scriptpubkey_address', '')])
-            sent = sum(vin.get('prevout', {}).get('value', 0) / 1e8 for vin in tx.get('vin', []) if address in [vin.get('prevout', {}).get('scriptpubkey_address', '')])
-            
-            fees_btc = tx.get('fee', 0) / 1e8
-            net = received - sent
-            op_type = 'achat' if net > 0 else 'vente'
-            quantity = abs(net)
+        if len(txs) < 25:
+            break  # Dernière page
+        last_seen_txid = txs[-1].get('txid')
 
-            if quantity < 1e-9:
-                continue
-
-            price_unit = get_historical_price('BTC', date_str)
-            transactions.append({
-                'date': date_str,
-                'operation_type': op_type,
-                'crypto_token': 'BTC',
-                'tx_hash': tx.get('txid'),
-                'quantity': quantity,
-                'price': price_unit,
-                'fees': fees_btc if op_type == 'vente' else 0.0,
-                'currency': 'EUR',
-                'source': address
-            })
-    except Exception as e:
-        pass
     return transactions
 
-def fetch_tron_transactions(address: str) -> list:
-    transactions = []
+
+def _parse_btc_tx(tx: dict, address: str) -> Optional[dict]:
+    """Parse une transaction Bitcoin brute."""
     try:
-        url = f"https://api.trongrid.io/v1/accounts/{address}/transactions"
-        params = {'limit': 200, 'only_confirmed': True}
-        tron_api_key = os.getenv('TRON_API_KEY', '')
-        headers = {'TRON-PRO-API-KEY': tron_api_key} if tron_api_key else {}
-        
-        response = requests.get(url, params=params, headers=headers, timeout=15)
-        if response.status_code != 200:
-            return []
-            
-        txs = response.json().get('data', [])
+        status = tx.get('status', {})
+        if not status.get('confirmed'):
+            return None
+
+        block_time = status.get('block_time', 0)
+        if not block_time:
+            return None
+
+        date_str = pd.to_datetime(block_time, unit='s', utc=True).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        received = sum(
+            vout.get('value', 0) / 1e8
+            for vout in tx.get('vout', [])
+            if vout.get('scriptpubkey_address') == address
+        )
+        sent = sum(
+            vin.get('prevout', {}).get('value', 0) / 1e8
+            for vin in tx.get('vin', [])
+            if vin.get('prevout', {}).get('scriptpubkey_address') == address
+        )
+
+        net = received - sent
+        quantity = abs(net)
+        if quantity < 1e-9:
+            return None
+
+        op_type = 'achat' if net > 0 else 'vente'
+        fees_btc = tx.get('fee', 0) / 1e8
+        price_unit = get_historical_price('BTC', date_str)
+
+        return {
+            'date': date_str,
+            'operation_type': op_type,
+            'crypto_token': 'BTC',
+            'tx_hash': tx.get('txid'),
+            'quantity': quantity,
+            'price': price_unit,
+            'fees': fees_btc if op_type == 'vente' else 0.0,
+            'currency': 'EUR',
+            'source': address,
+        }
+    except Exception as exc:
+        logger.debug("Parse BTC tx error : %s", exc)
+        return None
+
+
+def fetch_tron_transactions(address: str) -> List[dict]:
+    """
+    Récupère les transactions Tron TRX via TronGrid.
+    Gère la pagination complète via le curseur 'fingerprint'.
+    """
+    transactions: List[dict] = []
+    tron_api_key = os.getenv('TRON_API_KEY', '')
+    headers = {'TRON-PRO-API-KEY': tron_api_key} if tron_api_key else {}
+    url = f"https://api.trongrid.io/v1/accounts/{address}/transactions"
+    fingerprint: Optional[str] = None
+
+    while True:
+        params: dict = {'limit': 200, 'only_confirmed': True}
+        if fingerprint:
+            params['fingerprint'] = fingerprint
+
+        try:
+            resp = _SESSION.get(url, params=params, headers=headers, timeout=15)
+            resp.raise_for_status()
+            payload = resp.json()
+        except Exception as exc:
+            logger.error("TronGrid API error [%s] : %s", address, exc)
+            break
+
+        txs = payload.get('data', [])
         for tx in txs:
-            raw_data = tx.get('raw_data', {}).get('contract', [{}])[0]
-            if raw_data.get('type', '') != 'TransferContract':
-                continue
-                
-            value_data = raw_data.get('parameter', {}).get('value', {})
-            amount_trx = value_data.get('amount', 0) / 1e6
-            if amount_trx < 0.001:
-                continue
-                
-            timestamp_ms = tx.get('block_timestamp', 0)
-            date_str = pd.to_datetime(timestamp_ms, unit='ms', utc=True).strftime('%Y-%m-%d %H:%M:%S') if timestamp_ms else None
-            if not date_str:
-                continue
-                
-            from_addr = value_data.get('owner_address', '')
-            op_type = 'vente' if from_addr == address else 'achat'
-            price_unit = get_historical_price('TRX', date_str)
-            
-            transactions.append({
-                'date': date_str,
-                'operation_type': op_type,
-                'crypto_token': 'TRX',
-                'tx_hash': tx.get('txID'),
-                'quantity': amount_trx,
-                'price': price_unit,
-                'fees': 0.0,
-                'currency': 'EUR',
-                'source': address
-            })
-    except Exception as e:
-        pass
+            parsed = _parse_tron_tx(tx, address)
+            if parsed:
+                transactions.append(parsed)
+
+        # Curseur de pagination TronGrid
+        meta = payload.get('meta', {})
+        fingerprint = meta.get('fingerprint')
+        if not fingerprint or not txs:
+            break
+
     return transactions
 
+
+def _parse_tron_tx(tx: dict, address: str) -> Optional[dict]:
+    """Parse une transaction Tron TRX brute."""
+    try:
+        raw_data = tx.get('raw_data', {}).get('contract', [{}])[0]
+        if raw_data.get('type') != 'TransferContract':
+            return None
+
+        value_data = raw_data.get('parameter', {}).get('value', {})
+        amount_trx = value_data.get('amount', 0) / 1e6
+        if amount_trx < 0.001:
+            return None
+
+        timestamp_ms = tx.get('block_timestamp', 0)
+        if not timestamp_ms:
+            return None
+
+        date_str = pd.to_datetime(timestamp_ms, unit='ms', utc=True).strftime('%Y-%m-%dT%H:%M:%SZ')
+        from_addr = value_data.get('owner_address', '')
+        op_type = 'vente' if from_addr == address else 'achat'
+        price_unit = get_historical_price('TRX', date_str)
+
+        return {
+            'date': date_str,
+            'operation_type': op_type,
+            'crypto_token': 'TRX',
+            'tx_hash': tx.get('txID'),
+            'quantity': amount_trx,
+            'price': price_unit,
+            'fees': 0.0,
+            'currency': 'EUR',
+            'source': address,
+        }
+    except Exception as exc:
+        logger.debug("Parse Tron tx error : %s", exc)
+        return None
+
+
 # ---------------------------------------------------------------------------
-# File Parsers (CEX & Generics)
+# Utilitaires de nettoyage numérique
 # ---------------------------------------------------------------------------
 
-def clean_numeric(value):
+def clean_numeric(value) -> float:
     """
-    Nettoie une valeur pour la convertir en float, 
-    gère les virgules, les symboles corrompus (ex: â‚¬) et les espaces.
+    Convertit une valeur en float positif.
+    Gère les virgules européennes, les symboles corrompus et les espaces.
     """
-    if value is None or value == '' or (isinstance(value, float) and pd.isna(value)):
+    if value is None or value == '':
         return 0.0
     if isinstance(value, (int, float)):
-        return float(value)
-    
+        return float(value) if not pd.isna(value) else 0.0
+
     s = str(value).strip()
     cleaned = re.sub(r'[^0-9.,-]', '', s)
     if not cleaned:
         return 0.0
-        
-    if ',' in cleaned and '.' not in cleaned:
+
+    # Notation européenne : "1.234,56" → "1234.56"
+    if ',' in cleaned and '.' in cleaned:
+        cleaned = cleaned.replace('.', '').replace(',', '.')
+    # Notation simple : "1234,56" → "1234.56"
+    elif ',' in cleaned:
         cleaned = cleaned.replace(',', '.')
-    elif ',' in cleaned and '.' in cleaned:
-        cleaned = cleaned.replace(',', '')
-        
+
     try:
         return float(cleaned)
     except ValueError:
         return 0.0
 
-import json
 
-def parse_custom_csv(file: InMemoryUploadedFile, mapping_json: str, delimiter: str = ',') -> list:
+# ---------------------------------------------------------------------------
+# Normalisation du type d'opération
+# ---------------------------------------------------------------------------
+
+def _normalize_op_type(raw: str) -> str:
+    """
+    Convertit un libellé brut de transaction en type normalisé.
+    Compatible avec calculate_french_taxes().
+
+    Ordre important : les règles les plus spécifiques doivent être testées
+    AVANT les règles génériques (ex: 'retail staking transfer' avant 'staking').
+    """
+    raw = raw.lower().strip()
+
+    # -----------------------------------------------------------------------
+    # Transferts internes Coinbase (Retail Staking/Unstaking Transfer)
+    # Ces opérations sont des mouvements comptables internes entre le wallet
+    # principal et le sous-compte de staking. Elles se présentent toujours
+    # par paires (+qty / -qty) qui se neutralisent et n'ont AUCUNE réalité
+    # fiscale : ni cession, ni acquisition, ni modification du PTA.
+    # -----------------------------------------------------------------------
+    if any(w in raw for w in [
+        'retail staking transfer',
+        'retail unstaking transfer',
+    ]):
+        return 'transfert_interne'  # Ignoré dans calculate_french_taxes()
+
+    if any(w in raw for w in ['buy', 'achat', 'match', 'advanced trade buy']):
+        return 'achat'
+    if any(w in raw for w in ['sell', 'vente', 'advanced trade sell']):
+        return 'vente'
+    if any(w in raw for w in ['receive', 'reçu']):
+        return 'achat'   # Réception externe = nouvelle acquisition → augmente le PTA
+    if any(w in raw for w in ['staking income', 'staking', 'earn', 'reward',
+                               'income', 'interest', 'cashback', 'referral',
+                               'distribution', 'airdrop']):
+        return 'staking'  # Gains passifs → augmente le PTA au prix marché
+    if any(w in raw for w in ['deposit', 'dépôt']):
+        return 'depot'    # Auto-transfert entrant : PTA inchangé
+    if any(w in raw for w in ['withdrawal', 'retrait', 'send', 'envoi']):
+        return 'retrait'  # Envoi externe : PTA inchangé
+    if any(w in raw for w in ['convert', 'swap', 'exchange']):
+        return 'echange'  # Échange crypto↔crypto : sursis d'imposition
+
+    return 'transfert'    # Neutre / inconnu
+
+
+# ---------------------------------------------------------------------------
+# Parser CSV personnalisé (mappage utilisateur)
+# ---------------------------------------------------------------------------
+
+def parse_custom_csv(
+    file: InMemoryUploadedFile,
+    mapping_json: str,
+    delimiter: str = ',',
+) -> List[dict]:
     """
     Parse un CSV en utilisant un mappage de colonnes défini par l'utilisateur.
-    mapping_json est une string JSON: {"date": "Timestamp", "operation_type": "Transaction Type", ...}
+
+    Paramètres
+    ----------
+    file         : Fichier uploadé Django.
+    mapping_json : JSON string {"date": "Timestamp", "operation_type": "Type", ...}
+    delimiter    : Séparateur CSV (défaut ',').
+
+    Retourne
+    --------
+    Liste de dicts de transactions compatibles avec calculate_french_taxes().
     """
     file.seek(0)
+
     try:
-        # 1. Décoder le mappage de l'utilisateur
         mapping = json.loads(mapping_json)
-        
-        # 2. Sécuriser le délimiteur s'il n'est pas fourni correctement
-        if not delimiter:
-            delimiter = ','
-            
-        # 3. Lire le CSV avec le bon délimiteur (on gère les virgules de fin comme vu précédemment)
+    except json.JSONDecodeError as exc:
+        logger.error("parse_custom_csv : mapping JSON invalide : %s", exc)
+        return []
+
+    delimiter = delimiter or ','
+
+    try:
         content = file.read()
         try:
             decoded = content.decode('utf-8')
         except UnicodeDecodeError:
             decoded = content.decode('latin-1')
-            
+
         cleaned_lines = [line.rstrip(delimiter + '\r\n ') for line in decoded.splitlines()]
         cleaned_content = '\n'.join(cleaned_lines)
-            
-        import io
-        import csv
-        
-        # 3.5 Détecter intelligemment la ligne d'en-tête (sauter les lignes parasites)
+
+        # Détection intelligente de la ligne d'en-tête
         skiprows = 0
         for i, line in enumerate(cleaned_lines[:20]):
             line = line.strip()
@@ -358,395 +732,483 @@ def parse_custom_csv(file: InMemoryUploadedFile, mapping_json: str, delimiter: s
                 skiprows = i
                 break
 
-        df = pd.read_csv(io.StringIO(cleaned_content), sep=delimiter, skiprows=skiprows, engine='python')
-        
-        # 4. Nettoyer les noms de colonnes du dataframe (enlever les espaces inutiles)
+        df = pd.read_csv(
+            io.StringIO(cleaned_content),
+            sep=delimiter,
+            skiprows=skiprows,
+            engine='python',
+        )
         df.columns = [str(c).strip() for c in df.columns]
-        
-        transactions = []
-        
-        for idx, row_ser in df.iterrows():
-            row = row_ser.to_dict()
-            # Extraire les données en utilisant le nom exact de la colonne choisie par l'utilisateur
-            raw_date = row.get(mapping.get('date', ''))
-            raw_type = str(row.get(mapping.get('operation_type', ''))).lower()
-            raw_asset = row.get(mapping.get('crypto_token', ''))
-            raw_qty = row.get(mapping.get('quantity', ''))
-            raw_price = row.get(mapping.get('price', ''))
-            raw_fees = row.get(mapping.get('fees', ''))
-            raw_currency = row.get(mapping.get('currency', ''))
-            
-            # Si on n'a pas de date ou d'actif, on ignore la ligne
-            if pd.isna(raw_date) or pd.isna(raw_asset) or raw_date == '' or raw_asset == '':
-                continue
-                
-            # Normalisation du type (Achat, Vente, Transfert)
-            # Normalisation du type (Achat, Vente, Transfert)
-            if any(w in raw_type for w in ['buy', 'achat']):
-                op_type = 'achat'
-            elif any(w in raw_type for w in ['sell', 'vente']):
-                op_type = 'vente'
-            elif any(w in raw_type for w in ['receive', 'reçu']):
-                op_type = 'achat'      # Réception externe = nouvelle acquisition → augmente le PTA
-            elif any(w in raw_type for w in ['staking', 'earn', 'reward', 'income']):
-                op_type = 'staking'    # Gains passifs → augmente le PTA au prix marché
-            elif any(w in raw_type for w in ['deposit', 'dépôt']):
-                op_type = 'depot'      # Auto-transfert entrant
-            elif any(w in raw_type for w in ['withdrawal', 'retrait', 'send', 'envoi']):
-                op_type = 'retrait'    # Envoi externe
-            else:
-                op_type = 'transfert'
 
-            # Construction de l'objet Transaction propre
-            tx = {
-                'index': idx + 1,
-                'date': str(raw_date),
-                'operation_type': op_type,
-                'crypto': str(raw_asset).upper(),
-                'quantity': abs(clean_numeric(raw_qty)),
-                'price': clean_numeric(raw_price),
-                'fees': clean_numeric(raw_fees),
-                'currency': str(raw_currency).upper() if not pd.isna(raw_currency) and raw_currency else 'EUR',
-                'source': 'Import personnalisé'
-            }
-            transactions.append(tx)
-            
-        # Tri des transactions
-        try:
-            transactions.sort(key=lambda x: pd.to_datetime(x['date'], utc=True) if x['date'] else pd.Timestamp.min.tz_localize('UTC'))
-        except:
-            transactions.sort(key=lambda x: str(x['date']))
-            
-        return transactions
-
-    except Exception as e:
+    except Exception as exc:
+        logger.error("parse_custom_csv : erreur lecture CSV : %s", exc)
         return []
 
-def parse_transaction_file(file: InMemoryUploadedFile, cex_type: str = "generic"):
+    transactions: List[dict] = []
+
+    for idx, row_ser in df.iterrows():
+        row = row_ser.to_dict()
+
+        raw_date = row.get(mapping.get('date', ''))
+        raw_type = str(row.get(mapping.get('operation_type', ''), '') or '')
+        raw_asset = row.get(mapping.get('crypto_token', ''))
+        raw_qty = row.get(mapping.get('quantity', ''))
+        raw_price = row.get(mapping.get('price', ''))
+        raw_fees = row.get(mapping.get('fees', ''))
+        raw_currency = row.get(mapping.get('currency', ''))
+
+        # Ignorer les lignes sans date ou actif
+        if pd.isna(raw_date) or pd.isna(raw_asset) or str(raw_date) == '' or str(raw_asset) == '':
+            continue
+
+        tx = {
+            'index': idx + 1,
+            'date': str(raw_date),
+            'operation_type': _normalize_op_type(raw_type),
+            # 🔴 CORRECTION : clé 'crypto_token' (pas 'crypto')
+            'crypto_token': str(raw_asset).strip().upper(),
+            'quantity': abs(clean_numeric(raw_qty)),
+            'price': clean_numeric(raw_price),
+            'fees': clean_numeric(raw_fees),
+            'currency': (
+                str(raw_currency).strip().upper()
+                if not pd.isna(raw_currency) and raw_currency
+                else 'EUR'
+            ),
+            'source': 'Import personnalisé',
+        }
+        transactions.append(tx)
+
+    try:
+        transactions.sort(
+            key=lambda x: pd.to_datetime(x['date'], utc=True)
+            if x['date']
+            else pd.Timestamp.min.tz_localize('UTC')
+        )
+    except Exception:
+        transactions.sort(key=lambda x: str(x['date']))
+
+    logger.info("parse_custom_csv : %d transactions parsées.", len(transactions))
+    return transactions
+
+
+# ---------------------------------------------------------------------------
+# Parser générique de fichiers (CSV / Excel / PDF / TXT)
+# ---------------------------------------------------------------------------
+
+_HEADER_KEYWORDS = {
+    'timestamp', 'date', 'type', 'asset', 'symbol', 'quantity',
+    'amount', 'operation', 'transaction type', 'actif', 'quantité',
+}
+
+def parse_transaction_file(
+    file: InMemoryUploadedFile,
+    cex_type: str = "generic",
+) -> List[dict]:
+    """
+    Parse un fichier de transactions (CSV, Excel, PDF, TXT).
+    Détecte automatiquement le format CEX depuis le nom du fichier.
+
+    Paramètres
+    ----------
+    file     : Fichier uploadé Django.
+    cex_type : 'binance' | 'coinbase' | 'kraken' | 'generic'.
+
+    Retourne
+    --------
+    Liste de dicts de transactions triés chronologiquement.
+    """
     file.seek(0)
     filename = file.name.lower()
-    
+
     try:
         if filename.endswith('.pdf'):
-            df = parse_pdf_file(file)
-        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = _parse_pdf_file(file)
+        elif filename.endswith(('.xlsx', '.xls')):
             df = pd.read_excel(file)
         else:
-            df = attempt_csv_parse(file, filename)
-            if df is None and (filename.endswith('.txt') or filename.endswith('.csv')):
-                df = parse_unstructured_text(file)
-        
+            df = _attempt_csv_parse(file)
+            if df is None:
+                df = _parse_unstructured_text(file)
+
         if df is None or df.empty:
-            raise ValueError(f"Format de fichier non supporté ou données vides : {filename}")
-        
-        transactions = []
+            logger.warning("Fichier vide ou format non supporté : %s", filename)
+            return []
+
         df.columns = [str(c).lower().strip() for c in df.columns]
         df = df.fillna({
-            'quantity': 0, 'price': 0, 'fees': 0, 'amount': 0, 'fee': 0, 'type': '', 'operation': ''
+            'quantity': 0, 'price': 0, 'fees': 0,
+            'amount': 0, 'fee': 0, 'type': '', 'operation': '',
         })
 
-        for _, row_ser in df.iterrows():
-            row = row_ser.to_dict()
-            
-            # Auto-detect CEX from filename if generic
-            effective_cex = cex_type
-            if effective_cex == "generic":
-                if "coinbase" in filename:
-                    effective_cex = "coinbase"
-                elif "binance" in filename:
-                    effective_cex = "binance"
-                elif "kraken" in filename:
-                    effective_cex = "kraken"
+        # Auto-détection du CEX depuis le nom de fichier
+        effective_cex = cex_type
+        if effective_cex == "generic":
+            if "coinbase" in filename:
+                effective_cex = "coinbase"
+            elif "binance" in filename:
+                effective_cex = "binance"
+            elif "kraken" in filename:
+                effective_cex = "kraken"
 
-            if effective_cex == "binance":
-                tx = parse_binance_row(row)
-            elif effective_cex == "coinbase":
-                tx = parse_coinbase_row(row)
-            elif effective_cex == "kraken":
-                tx = parse_kraken_row(row)
-            else:
-                tx = parse_generic_row(row)
-                
+        _parsers = {
+            "binance":  _parse_binance_row,
+            "coinbase": _parse_coinbase_row,
+            "kraken":   _parse_kraken_row,
+        }
+        row_parser = _parsers.get(effective_cex, _parse_generic_row)
+
+        transactions: List[dict] = []
+        for _, row_ser in df.iterrows():
+            tx = row_parser(row_ser.to_dict())
             if tx and tx.get('date'):
                 tx['source'] = filename
                 transactions.append(tx)
-                
+
         try:
-            transactions.sort(key=lambda x: pd.to_datetime(x['date'], utc=True) if x['date'] else pd.Timestamp.min.tz_localize('UTC'))
-        except:
+            transactions.sort(
+                key=lambda x: pd.to_datetime(x['date'], utc=True)
+                if x['date']
+                else pd.Timestamp.min.tz_localize('UTC')
+            )
+        except Exception:
             transactions.sort(key=lambda x: str(x['date']))
-            
+
+        logger.info(
+            "parse_transaction_file [%s / %s] : %d transactions parsées.",
+            filename, effective_cex, len(transactions),
+        )
         return transactions
-    except Exception as e:
+
+    except Exception as exc:
+        logger.error("parse_transaction_file [%s] : %s", filename, exc, exc_info=True)
         return []
 
-def attempt_csv_parse(file, filename):
+
+def _attempt_csv_parse(file: InMemoryUploadedFile) -> Optional[pd.DataFrame]:
+    """
+    Tente de parser un fichier CSV en essayant plusieurs encodages et délimiteurs.
+    """
     file.seek(0)
     content = file.read()
-    
+
     encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']
-    delimiters = [None, ',', ';', '\t']
-    header_keywords = {'timestamp', 'date', 'type', 'asset', 'symbol', 'quantity', 'amount', 'operation', 'transaction type', 'actif', 'quantité'}
-    
+    delimiters = [',', ';', '\t', None]
+
     for encoding in encodings:
         try:
-            decoded_content = content.decode(encoding)
-            lines = decoded_content.splitlines()
-            
-            for sep in delimiters:
-                try:
-                    # Clean trailing delimiters to prevent pandas ParserError (e.g. Coinbase extra commas)
-                    if sep:
-                        cleaned_lines = [line.rstrip(sep + '\r\n ') for line in lines]
-                    else:
-                        cleaned_lines = lines
-                        
-                    cleaned_content = '\n'.join(cleaned_lines)
-                    
-                    skiprows = 0
-                    found_header = False
-                    for i, line in enumerate(cleaned_lines[:20]):
-                        cells = [c.strip().lower() for c in (line.split(sep) if sep else line.split())]
-                        if any(kw in cells for kw in header_keywords):
-                            skiprows = i
-                            found_header = True
-                            break
-                    
-                    df = pd.read_csv(io.StringIO(cleaned_content), sep=sep, skiprows=skiprows if found_header else 0, engine='python')
-                    if len(df.columns) > 1:
-                        cols_lower = [str(c).lower() for c in df.columns]
-                        if any(kw in "".join(cols_lower) for kw in header_keywords):
-                            return df
-                except Exception: continue
-        except UnicodeDecodeError: continue
+            decoded = content.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+
+        lines = decoded.splitlines()
+
+        for sep in delimiters:
+            try:
+                cleaned_lines = [line.rstrip((sep or '') + '\r\n ') for line in lines]
+                cleaned_content = '\n'.join(cleaned_lines)
+
+                skiprows = 0
+                found_header = False
+                for i, line in enumerate(cleaned_lines[:20]):
+                    cells = [
+                        c.strip().lower()
+                        for c in (line.split(sep) if sep else line.split())
+                    ]
+                    if any(kw in cells for kw in _HEADER_KEYWORDS):
+                        skiprows = i
+                        found_header = True
+                        break
+
+                df = pd.read_csv(
+                    io.StringIO(cleaned_content),
+                    sep=sep,
+                    skiprows=skiprows if found_header else 0,
+                    engine='python',
+                )
+                if len(df.columns) > 1:
+                    cols_joined = " ".join(str(c).lower() for c in df.columns)
+                    if any(kw in cols_joined for kw in _HEADER_KEYWORDS):
+                        return df
+            except Exception:
+                continue
+
     return None
 
-def parse_pdf_file(file):
+
+def _parse_pdf_file(file: InMemoryUploadedFile) -> Optional[pd.DataFrame]:
     """
     Extrait des transactions depuis un PDF.
-    Stratégie 1 : tableaux structurés via pdfplumber.extract_table().
-    Stratégie 2 : texte brut via extract_text() passé à parse_unstructured_text().
+    Stratégie 1 : tableaux via pdfplumber.extract_tables().
+    Stratégie 2 : texte brut (fallback).
     """
-    HEADER_KEYWORDS = {'date', 'type', 'asset', 'actif', 'amount', 'quantity',
-                       'montant', 'quantité', 'transaction', 'time', 'timestamp', 'opération'}
-    all_data = []
-    headers = []
-    full_text_lines = []
+    all_data: List[list] = []
+    headers: List[str] = []
+    full_text_lines: List[str] = []
+
+    PDF_KEYWORDS = {
+        'date', 'type', 'asset', 'actif', 'amount', 'quantity',
+        'montant', 'quantité', 'transaction', 'time', 'timestamp', 'opération',
+    }
 
     try:
         file.seek(0)
         with pdfplumber.open(file) as pdf:
             for page in pdf.pages:
-                # --- Stratégie 1 : Tableaux ---
-                tables = page.extract_tables() or []
-                for table in tables:
-                    local_headers = []
+                for table in (page.extract_tables() or []):
+                    local_headers: List[str] = []
                     for row in table:
                         row = [str(c).replace('\n', ' ').strip() if c else '' for c in row]
                         if not any(row):
                             continue
                         row_lower = [c.lower() for c in row]
-                        # Détection souple de l'en-tête
-                        if not local_headers and any(kw in cell for cell in row_lower for kw in HEADER_KEYWORDS):
+                        if not local_headers and any(
+                            kw in cell for cell in row_lower for kw in PDF_KEYWORDS
+                        ):
                             local_headers = row
                             if not headers:
                                 headers = local_headers
                             continue
-                        # Si on a déjà des headers globaux, on essaie de mapper
                         if not local_headers and headers:
                             local_headers = headers
-                        if local_headers and len(row) == len(local_headers):
-                            all_data.append(row)
-                        elif local_headers and len(row) > 0:
-                            # Compléter ou tronquer pour éviter les erreurs de DataFrame
+                        if local_headers:
                             padded = (row + [''] * len(local_headers))[:len(local_headers)]
                             all_data.append(padded)
 
-                # --- Stratégie 2 : Texte brut (fallback) ---
                 text = page.extract_text() or ''
                 full_text_lines.extend(text.splitlines())
 
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.error("parse_pdf_file : %s", exc, exc_info=True)
 
-    # Si tableaux extraits avec succès → retourner le DataFrame
     if all_data and headers:
         try:
             df = pd.DataFrame(all_data, columns=headers)
             df.columns = [str(c).lower().strip() for c in df.columns]
             return df
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("parse_pdf_file : construction DataFrame échouée : %s", exc)
 
-    # Sinon → fallback texte brut
     if full_text_lines:
-        import io as _io
-        text_bytes = '\n'.join(full_text_lines).encode('utf-8')
-        fake_file = _io.BytesIO(text_bytes)
+        fake_file = io.BytesIO('\n'.join(full_text_lines).encode('utf-8'))
         fake_file.name = 'extracted.txt'
-        return parse_unstructured_text(fake_file)
+        return _parse_unstructured_text(fake_file)
 
     return None
 
-def parse_unstructured_text(file):
-    file.seek(0)
-    lines = file.read().decode('utf-8', errors='ignore').splitlines()
-    found_txs = []
-    tx_pattern = re.compile(r'(\d{4}[-/]\d{2}[-/]\d{2})(?:\s+[\d:]{5,8})?\s+(Buy|Sell|Achat|Vente|Trade|Deposit|Withdrawal)\s+([\d.,]+)\s+([A-Z0-9]{2,10})', re.IGNORECASE)
-    for line in lines:
-        match = tx_pattern.search(line)
-        if match:
-            found_txs.append({
-                'date': match.group(1),
-                'type': match.group(2).lower(),
-                'quantity': match.group(3).replace(',', '.'),
-                'asset': match.group(4).upper()
-            })
-    return pd.DataFrame(found_txs) if found_txs else None
 
-def parse_coinbase_row(row: dict):
+def _parse_unstructured_text(file) -> Optional[pd.DataFrame]:
+    """
+    Tente d'extraire des transactions depuis du texte brut non structuré.
+    """
     try:
-        date = row.get('timestamp') or row.get('date') or row.get('created at')
-        op_type_raw = str(row.get('transaction type') or row.get('type') or row.get('operation') or '').lower()
-        asset = row.get('asset') or row.get('symbol') or row.get('base asset')
-        quantity = row.get('quantity transacted') or row.get('amount') or row.get('size') or row.get('quantity')
-        price = row.get('price at transaction') or row.get('spot price at transaction') or row.get('price') or row.get('unit price') or row.get('subtotal')
-        
-        # 🚨 CORRECTION : Ajout de 'fees and/or spread' pour le format Coinbase
-        fees = row.get('fees and/or spread') or row.get('fees') or row.get('fee') or 0
-        currency = row.get('price currency') or row.get('spot price currency') or row.get('currency') or row.get('quote asset') or 'EUR'
+        file.seek(0)
+        lines = file.read().decode('utf-8', errors='ignore').splitlines()
+        pattern = re.compile(
+            r'(\d{4}[-/]\d{2}[-/]\d{2})(?:\s+[\d:]{5,8})?\s+'
+            r'(Buy|Sell|Achat|Vente|Trade|Deposit|Withdrawal)\s+'
+            r'([\d.,]+)\s+([A-Z0-9]{2,10})',
+            re.IGNORECASE,
+        )
+        rows = []
+        for line in lines:
+            m = pattern.search(line)
+            if m:
+                rows.append({
+                    'date': m.group(1),
+                    'type': m.group(2).lower(),
+                    'quantity': m.group(3).replace(',', '.'),
+                    'asset': m.group(4).upper(),
+                })
+        return pd.DataFrame(rows) if rows else None
+    except Exception as exc:
+        logger.error("_parse_unstructured_text : %s", exc)
+        return None
 
-        # Classification granulaire pour le calcul fiscal PMP (art. 150 VH bis)
-        if any(word in op_type_raw for word in ['buy', 'achat', 'match', 'advanced trade buy']):
-            op_type = 'achat'          # Achat fiat→crypto : augmente le PTA
-        elif any(word in op_type_raw for word in ['sell', 'vente', 'advanced trade sell']):
-            op_type = 'vente'          # Vente crypto→fiat : événement imposable
-        elif any(word in op_type_raw for word in ['receive', 'reçu']):
-            op_type = 'achat'          # Réception externe = nouvelle acquisition : augmente le PTA
-        elif any(word in op_type_raw for word in ['staking', 'income', 'reward', 'earn', 'interest', 'cashback', 'referral']):
-            op_type = 'staking'        # Gains passifs : nouvelles unités au prix marché → augmente le PTA
-        elif any(word in op_type_raw for word in ['withdrawal', 'retrait', 'send', 'envoi']):
-            op_type = 'retrait'        # Envoi vers wallet externe : PTA inchangé
-        else:
-            op_type = 'depot'          # Dépôt fiat / auto-transfert entrant : PTA inchangé
+
+# ---------------------------------------------------------------------------
+# Parsers spécifiques par CEX
+# ---------------------------------------------------------------------------
+
+def _parse_coinbase_row(row: dict) -> Optional[dict]:
+    """Parse une ligne du CSV Coinbase."""
+    try:
+        date = (
+            row.get('timestamp') or row.get('date')
+            or row.get('created at')
+        )
+        op_raw = str(
+            row.get('transaction type') or row.get('type')
+            or row.get('operation') or ''
+        )
+        asset = (
+            row.get('asset') or row.get('symbol')
+            or row.get('base asset')
+        )
+        quantity = (
+            row.get('quantity transacted') or row.get('amount')
+            or row.get('size') or row.get('quantity')
+        )
+        price = (
+            row.get('price at transaction')
+            or row.get('spot price at transaction')
+            or row.get('price') or row.get('unit price')
+            or row.get('subtotal')
+        )
+        # 'fees and/or spread' est le nom exact dans les exports Coinbase récents
+        fees = (
+            row.get('fees and/or spread') or row.get('fees')
+            or row.get('fee') or 0
+        )
+        currency = (
+            row.get('price currency')
+            or row.get('spot price currency')
+            or row.get('currency') or row.get('quote asset')
+            or 'EUR'
+        )
 
         return {
             'date': date,
-            'operation_type': op_type,
-            'crypto_token': asset,
+            'operation_type': _normalize_op_type(op_raw),
+            'crypto_token': str(asset).strip().upper() if asset else None,
             'quantity': abs(clean_numeric(quantity)),
             'price': clean_numeric(price),
             'fees': clean_numeric(fees),
-            'currency': currency
+            'currency': str(currency).upper().strip(),
         }
-    except Exception: return None
+    except Exception as exc:
+        logger.debug("_parse_coinbase_row : %s", exc)
+        return None
 
-def parse_binance_row(row: dict):
+
+def _parse_binance_row(row: dict) -> Optional[dict]:
+    """Parse une ligne du CSV Binance."""
     try:
-        op_type_raw = str(row.get('type') or row.get('operation') or '').lower()
-        
-        if any(word in op_type_raw for word in ['buy', 'achat']):
-            op_type = 'achat'
-        elif any(word in op_type_raw for word in ['sell', 'vente']):
-            op_type = 'vente'
-        elif any(word in op_type_raw for word in ['staking', 'earn', 'interest', 'reward', 'cashback', 'referral', 'distribution', 'airdrop']):
-            op_type = 'staking'    # Gains passifs Binance → augmente le PTA
-        elif any(word in op_type_raw for word in ['deposit', 'receive', 'in']):
-            op_type = 'depot'      # Dépôt / auto-transfert entrant
-        elif any(word in op_type_raw for word in ['withdraw', 'send', 'out']):
-            op_type = 'retrait'    # Retrait vers wallet externe
-        elif any(word in op_type_raw for word in ['convert', 'swap', 'exchange', 'transfer']):
-            op_type = 'echange'    # Swap crypto↔crypto : sursis d'imposition
-        else:
-            op_type = 'transfert'
+        op_raw = str(row.get('type') or row.get('operation') or '')
 
-        market = row.get('market') or ''
-        crypto = market.replace('EUR', '').replace('USD', '') or row.get('asset') or row.get('crypto')
-        currency = 'EUR' if 'EUR' in market else 'USD' if 'USD' in market else row.get('currency') or 'UNKNOWN'
+        market = str(row.get('market') or '')
+
+        # 🟡 CORRECTION : extraction du symbole robustifiée avec regex
+        # "BTCEUR" → "BTC", "ETHUSDT" → "ETH", "ETHBTC" → "ETH"
+        crypto = None
+        if market:
+            # On tente de retirer le suffixe de la paire (devise ou crypto de cotation)
+            suffixes = r'(EUR|USD|USDT|USDC|BUSD|BTC|ETH|BNB)$'
+            crypto = re.sub(suffixes, '', market).strip() or None
+        if not crypto:
+            crypto = str(row.get('asset') or row.get('crypto') or '').strip().upper() or None
+
+        # Devise de cotation : EUR si la paire se termine par EUR, sinon USD, etc.
+        if 'EUR' in market:
+            currency = 'EUR'
+        elif 'USD' in market:
+            currency = 'USD'
+        else:
+            currency = str(row.get('currency') or 'UNKNOWN').upper()
 
         return {
-            'date': row.get('date(utc)') or row.get('date') or row.get('time'),
-            'operation_type': op_type,
+            'date': (
+                row.get('date(utc)') or row.get('date') or row.get('time')
+            ),
+            'operation_type': _normalize_op_type(op_raw),
             'crypto_token': crypto,
             'quantity': abs(clean_numeric(row.get('amount') or row.get('quantity'))),
             'price': clean_numeric(row.get('price')),
             'fees': clean_numeric(row.get('fee') or row.get('fees')),
-            'currency': currency
+            'currency': currency,
         }
-    except Exception: return None
+    except Exception as exc:
+        logger.debug("_parse_binance_row : %s", exc)
+        return None
 
-def parse_kraken_row(row: dict):
+
+def _parse_kraken_row(row: dict) -> Optional[dict]:
+    """Parse une ligne du CSV Kraken."""
     try:
-        date = row.get('time') or row.get('date')
-        op_type_raw = str(row.get('type') or row.get('tx_type') or '').lower()
-        asset = row.get('asset') or row.get('pair')
-        
-        if asset and len(asset) > 3 and (asset.startswith('X') or asset.startswith('Z')):
+        asset = str(row.get('asset') or row.get('pair') or '')
+
+        # Kraken préfixe certains symboles avec X (crypto) ou Z (fiat)
+        if len(asset) > 3 and asset[0] in ('X', 'Z'):
             asset = asset[1:]
 
-        quantity = row.get('amount') or row.get('vol') or row.get('quantity')
-        price = row.get('price') or row.get('cost')
-        fees = row.get('fee') or 0
-        currency = row.get('currency') or 'EUR'
-
-        if any(w in op_type_raw for w in ['buy', 'trade']):
-            op_type = 'achat'
-        elif 'sell' in op_type_raw:
-            op_type = 'vente'
-        elif any(w in op_type_raw for w in ['staking', 'reward', 'earn', 'interest']):
-            op_type = 'staking'    # Gains passifs Kraken → augmente le PTA
-        elif any(w in op_type_raw for w in ['deposit', 'receive']):
-            op_type = 'depot'
-        elif any(w in op_type_raw for w in ['withdrawal', 'send']):
-            op_type = 'retrait'
-        else:
-            op_type = 'transfert'
+        op_raw = str(row.get('type') or row.get('tx_type') or '')
 
         return {
-            'date': date,
-            'operation_type': op_type,
-            'crypto_token': asset,
-            'quantity': abs(clean_numeric(quantity)),
-            'price': clean_numeric(price),
-            'fees': clean_numeric(fees),
-            'currency': currency
+            'date': row.get('time') or row.get('date'),
+            'operation_type': _normalize_op_type(op_raw),
+            'crypto_token': asset.upper(),
+            'quantity': abs(clean_numeric(
+                row.get('amount') or row.get('vol') or row.get('quantity')
+            )),
+            'price': clean_numeric(row.get('price') or row.get('cost')),
+            'fees': clean_numeric(row.get('fee') or 0),
+            'currency': str(row.get('currency') or 'EUR').upper(),
         }
-    except Exception: return None
+    except Exception as exc:
+        logger.debug("_parse_kraken_row : %s", exc)
+        return None
 
-def parse_generic_row(row: dict):
+
+def _parse_generic_row(row: dict) -> Optional[dict]:
+    """
+    Parser générique : tente de mapper les colonnes les plus communes
+    de n'importe quel export CSV crypto.
+    """
     try:
-        date = row.get('date') or row.get('timestamp') or row.get('time') or row.get('created_at') or row.get('date(utc)') or row.get('transact_time') or row.get('heure')
-        op_type_raw = str(row.get('type') or row.get('operation_type') or row.get('operation') or row.get('side') or row.get('type d\'opération') or row.get('transaction type') or '').lower()
-        asset = row.get('crypto') or row.get('asset') or row.get('token') or row.get('symbol') or row.get('crypto_token') or row.get('base_asset') or row.get('actif') or row.get('devise') or row.get('market', '').replace('EUR', '').replace('USD', '')
-        quantity = row.get('quantity') or row.get('amount') or row.get('amount_crypto') or row.get('executed') or row.get('filled') or row.get('quantité') or row.get('montant') or row.get('quantity transacted') or row.get('size')
-        price = row.get('price') or row.get('value') or row.get('unit_price') or row.get('spot_price') or row.get('price at transaction') or row.get('subtotal') or row.get('prix') or row.get('valeur')
-        fees = row.get('fees') or row.get('fee') or row.get('transaction_fee') or row.get('fees and/or spread') or row.get('frais') or row.get('commission') or 0
-        currency = row.get('currency') or row.get('price currency') or row.get('fiat') or row.get('quote_asset') or row.get('unité') or 'EUR'
-        acq_price = row.get('acq_price') or row.get('acquisition_price') or row.get('prix_acquisition') or row.get('prix d\'acquisition') or 0
-
-        if any(word in op_type_raw for word in ['buy', 'achat']):
-            op_type = 'achat'
-        elif any(word in op_type_raw for word in ['sell', 'vente']):
-            op_type = 'vente'
-        elif any(word in op_type_raw for word in ['receive', 'reçu']):
-            op_type = 'achat'      # Réception externe = acquisition → augmente le PTA
-        elif any(word in op_type_raw for word in ['staking', 'reward', 'earn', 'income', 'interest', 'airdrop']):
-            op_type = 'staking'    # Gains passifs → augmente le PTA au prix marché
-        elif any(word in op_type_raw for word in ['deposit', 'dépôt']):
-            op_type = 'depot'      # Auto-transfert entrant : PTA inchangé
-        elif any(word in op_type_raw for word in ['withdrawal', 'retrait', 'send', 'envoi']):
-            op_type = 'retrait'    # Envoi externe : PTA inchangé
-        else:
-            op_type = 'transfert'  # Neutre : auto-transfert inconnu
+        date = (
+            row.get('date') or row.get('timestamp') or row.get('time')
+            or row.get('created_at') or row.get('date(utc)')
+            or row.get('transact_time') or row.get('heure')
+        )
+        op_raw = str(
+            row.get('type') or row.get('operation_type')
+            or row.get('operation') or row.get('side')
+            or row.get("type d'opération") or row.get('transaction type')
+            or ''
+        )
+        asset = (
+            row.get('crypto_token') or row.get('crypto') or row.get('asset')
+            or row.get('token') or row.get('symbol') or row.get('base_asset')
+            or row.get('actif') or row.get('devise')
+            # Binance-style : retirer la devise de cotation de la paire
+            or re.sub(r'(EUR|USD|USDT|USDC|BUSD)$', '', str(row.get('market', ''))).strip()
+            or None
+        )
+        quantity = (
+            row.get('quantity') or row.get('amount') or row.get('amount_crypto')
+            or row.get('executed') or row.get('filled') or row.get('quantité')
+            or row.get('montant') or row.get('quantity transacted') or row.get('size')
+        )
+        price = (
+            row.get('price') or row.get('value') or row.get('unit_price')
+            or row.get('spot_price') or row.get('price at transaction')
+            or row.get('subtotal') or row.get('prix') or row.get('valeur')
+        )
+        fees = (
+            row.get('fees') or row.get('fee') or row.get('transaction_fee')
+            or row.get('fees and/or spread') or row.get('frais')
+            or row.get('commission') or 0
+        )
+        currency = (
+            row.get('currency') or row.get('price currency')
+            or row.get('fiat') or row.get('quote_asset')
+            or row.get('unité') or 'EUR'
+        )
+        acq_price = (
+            row.get('acq_price') or row.get('acquisition_price')
+            or row.get('prix_acquisition') or row.get("prix d'acquisition") or 0
+        )
 
         return {
             'date': date,
-            'operation_type': op_type,
-            'crypto_token': asset,
+            'operation_type': _normalize_op_type(op_raw),
+            'crypto_token': str(asset).strip().upper() if asset else None,
             'quantity': abs(clean_numeric(quantity)),
             'price': clean_numeric(price),
             'acq_price': clean_numeric(acq_price),
             'fees': clean_numeric(fees),
-            'currency': currency
+            'currency': str(currency).upper().strip(),
         }
-    except Exception: return None
+    except Exception as exc:
+        logger.debug("_parse_generic_row : %s", exc)
+        return None
