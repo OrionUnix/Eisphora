@@ -70,6 +70,19 @@
     background: white; border-radius: 24px; border: 1px solid #e2e8f0;
     box-shadow: 0 1px 6px rgba(0,0,0,.04); overflow: hidden; margin-bottom: 0;
 }
+
+/* ── Arrondi Badge ── */
+.badge-arrondi {
+    display: inline-block;
+    background: #fffbeb;
+    color: #d97706;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid #fde68a;
+    margin-top: 4px;
+}
 </style>
 
 <div id="form-2086-container" class="mt-6 max-w-3xl mx-auto pb-12 animate-fade-in text-slate-800">
@@ -86,12 +99,24 @@
     </div>
 
     <!-- Banner conseil -->
-    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex gap-3 items-start">
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 flex gap-3 items-start">
         <i class="fas fa-circle-info text-blue-500 mt-0.5 shrink-0"></i>
         <div class="text-sm text-blue-800">
             <strong>Comment utiliser cet assistant ?</strong><br>
             Chaque vente = une fiche. Les champs <span class="bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.5 rounded text-xs">modifiables</span> sont ceux que vous pouvez ajuster.
             Les valeurs <span class="bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded text-xs">calculées</span> sont automatiques. Survolez <i class="fas fa-circle-question text-blue-400"></i> pour des explications.
+        </div>
+    </div>
+
+    <!-- Banner arrondi -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex gap-3 items-start shadow-sm">
+        <i class="fas fa-scale-balanced text-amber-500 mt-0.5 shrink-0"></i>
+        <div class="text-sm text-amber-800">
+            <strong>Règle d'or des arrondis fiscaux</strong><br>
+            L'administration exige des nombres entiers. La règle est la suivante :<br>
+            • De <strong>,01 à ,49</strong> : on arrondit à l'euro inférieur (ex: 12,49 € &rarr; 12 €).<br>
+            • De <strong>,50 à ,99</strong> : on arrondit à l'euro supérieur (ex: 12,50 € &rarr; 13 €).<br>
+            <span class="inline-block mt-2 px-2 py-1 bg-white rounded border border-amber-200 text-xs font-bold text-amber-700">Visualisation Fiscale</span> L'application calcule avec les valeurs exactes mais affiche en évidence la valeur arrondie que vous devez réellement recopier dans les cases.
         </div>
     </div>
 
@@ -105,13 +130,13 @@
             <!-- Card header -->
             <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
                 <div class="flex items-center gap-3">
-                    <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-xs font-black shadow">{{ forloop.counter }}</span>
+                    <span class="bg-indigo-600 text-white px-3 py-1 rounded-full inline-flex items-center justify-center text-xs font-black shadow uppercase tracking-wide whitespace-nowrap">Cession {{ forloop.counter }}</span>
                     <div>
                         <p class="font-extrabold text-slate-900 text-base">
                             Vente de <span class="text-indigo-600">{{ event.quantity|stringformat:".4f" }} {{ event.crypto }}</span>
                         </p>
                         <p class="text-xs text-slate-400 mt-0.5">
-                            <i class="far fa-calendar-alt mr-1"></i>{{ event.date|slice:":10" }}
+                            <i class="far fa-calendar-alt mr-1"></i>{{ event.date|slice:"8:10" }}/{{ event.date|slice:"5:7" }}/{{ event.date|slice:"0:4" }}
                             &nbsp;·&nbsp; Réf. #{{ event.id }}
                         </p>
                     </div>
@@ -139,7 +164,7 @@
                                 <span class="text-[10px] font-black text-slate-300 w-7">211</span>
                                 <span class="text-sm text-slate-700 font-semibold">📅 Quand avez-vous vendu ?</span>
                             </div>
-                            <span class="computed-chip">{{ event.date|slice:":10" }}</span>
+                            <span class="computed-chip">{{ event.date|slice:"8:10" }}/{{ event.date|slice:"5:7" }}/{{ event.date|slice:"0:4" }}</span>
                         </div>
 
                         <!-- 213 : Prix brut -->
@@ -155,10 +180,13 @@
                                     <div class="tip-box">C'est le montant total en euros que vous avez reçu lors de la vente, <strong>avant</strong> déduction des frais de la plateforme.</div>
                                 </div>
                             </div>
-                            <input type="number" step="0.01"
-                                   value="{{ event.prix_cession_brut|stringformat:'.2f' }}"
-                                   class="form-input input-213"
-                                   aria-label="Prix de cession brut">
+                            <div class="flex flex-col items-end">
+                                <input type="number" step="0.01"
+                                       value="{{ event.prix_cession_brut|stringformat:'.2f' }}"
+                                       class="form-input input-213"
+                                       aria-label="Prix de cession brut">
+                                <div class="badge-arrondi rounded-213">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <!-- 214 : Frais -->
@@ -174,10 +202,13 @@
                                     <div class="tip-box">Indiquez les frais <strong>payés lors de cette vente</strong> uniquement (pas les frais d'achat). Si 0, laissez 0.</div>
                                 </div>
                             </div>
-                            <input type="number" step="0.01"
-                                   value="{{ event.frais_cession|default:'0.00'|stringformat:'.2f' }}"
-                                   class="form-input input-214"
-                                   aria-label="Frais de cession">
+                            <div class="flex flex-col items-end">
+                                <input type="number" step="0.01"
+                                       value="{{ event.frais_cession|default:'0.00'|stringformat:'.2f' }}"
+                                       class="form-input input-214"
+                                       aria-label="Frais de cession">
+                                <div class="badge-arrondi rounded-214">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <!-- 215 : Net calculé -->
@@ -189,7 +220,47 @@
                                     <p class="text-[10px] text-indigo-400">Calculé automatiquement : ligne 213 − ligne 214</p>
                                 </div>
                             </div>
-                            <span class="font-mono font-black text-indigo-700 text-base val-215">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-mono font-black text-indigo-700 text-base val-215">{{ event.prix_cession_net|stringformat:".2f" }} €</span>
+                                <div class="badge-arrondi rounded-215">À déclarer : -- €</div>
+                            </div>
+                        </div>
+
+                        <!-- 216 : Soulte -->
+                        <div class="field-row editable-row">
+                            <div class="flex items-center gap-2 flex-1">
+                                <span class="text-[10px] font-black text-indigo-300 w-7">216</span>
+                                <div>
+                                    <p class="text-sm text-slate-800 font-semibold">⚖️ Soulte reçue ou versée lors de la cession</p>
+                                    <p class="text-[10px] text-slate-400">Compensation financière, en € (souvent 0)</p>
+                                </div>
+                                <div class="tip-trigger ml-1 shrink-0">
+                                    <i class="fas fa-circle-question text-indigo-300 text-xs"></i>
+                                    <div class="tip-box">Une soulte est une somme d'argent reçue ou versée pour équilibrer un échange. Dans 99% des ventes crypto contre fiat, cette valeur est de 0.</div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <input type="number" step="0.01"
+                                       value="0.00"
+                                       class="form-input input-216"
+                                       aria-label="Soulte">
+                                <div class="badge-arrondi rounded-216">À déclarer : -- €</div>
+                            </div>
+                        </div>
+
+                        <!-- 218 : Prix de cession net des frais et soultes -->
+                        <div class="field-row" style="background:#eef2ff; border-radius:12px; margin-top:4px;">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black text-indigo-500 w-7">218</span>
+                                <div>
+                                    <p class="text-sm text-indigo-900 font-bold">🏁 Prix net final <em>(frais et soultes déduits)</em></p>
+                                    <p class="text-[10px] text-indigo-500">Calculé automatiquement : ligne 215 − ligne 216</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-mono font-black text-indigo-800 text-base val-218">-- €</span>
+                                <div class="badge-arrondi rounded-218">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <div class="warn-callout">
@@ -223,10 +294,13 @@
                                     <div class="tip-box"><strong>Pourquoi ?</strong> L'administration calcule quelle <em>proportion</em> du portefeuille vous avez vendue. Cette valeur inclut <strong>tout</strong> ce que vous possédiez ce jour-là : BTC, ETH, stables, etc.</div>
                                 </div>
                             </div>
-                            <input type="number" step="0.01"
-                                   value="{{ event.valeur_globale|stringformat:'.2f' }}"
-                                   class="form-input input-212"
-                                   aria-label="Valeur globale du portefeuille">
+                            <div class="flex flex-col items-end">
+                                <input type="number" step="0.01"
+                                       value="{{ event.valeur_globale|stringformat:'.2f' }}"
+                                       class="form-input input-212"
+                                       aria-label="Valeur globale du portefeuille">
+                                <div class="badge-arrondi rounded-212">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <div class="warn-callout">
@@ -276,7 +350,10 @@
                                     <div class="tip-box">C'est la « quote-part » de votre investissement total qui correspond à cette vente. Exemple : si vous vendez 10% de votre portefeuille, 10% de vos coûts d'achat sont attribués.</div>
                                 </div>
                             </div>
-                            <span class="font-mono font-black text-violet-700 text-base val-219">{{ event.prix_acq_fractionne|stringformat:".2f" }} €</span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-mono font-black text-violet-700 text-base val-219">{{ event.prix_acq_fractionne|stringformat:".2f" }} €</span>
+                                <div class="badge-arrondi rounded-219">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <!-- 220 : Résultat -->
@@ -293,9 +370,12 @@
                                     </p>
                                 </div>
                             </div>
-                            <span class="font-mono font-black text-2xl val-220 {% if event.plus_value > 0 %}text-emerald-600{% elif event.plus_value < 0 %}text-red-500{% else %}text-slate-600{% endif %}">
-                                {% if event.plus_value > 0 %}+{% endif %}{{ event.plus_value|stringformat:".2f" }} €
-                            </span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="font-mono font-black text-2xl val-220 {% if event.plus_value > 0 %}text-emerald-600{% elif event.plus_value < 0 %}text-red-500{% else %}text-slate-600{% endif %}">
+                                    {% if event.plus_value > 0 %}+{% endif %}{{ event.plus_value|stringformat:".2f" }} €
+                                </span>
+                                <div class="badge-arrondi rounded-220" style="font-size: 11px;">À déclarer : -- €</div>
+                            </div>
                         </div>
 
                         <!-- Détails unité (mini) -->
@@ -323,16 +403,31 @@
             const vgp  = parseFloat(card.querySelector('.input-212').value) || 1e-6;
             const brut = parseFloat(card.querySelector('.input-213').value) || 0;
             const frais= parseFloat(card.querySelector('.input-214').value) || 0;
+            const soulte= parseFloat(card.querySelector('.input-216').value) || 0;
 
-            const net      = brut - frais;
-            const fraction = pta * (net / vgp);
-            const pv       = net - fraction;
+            const net_frais = brut - frais; // 215
+            const net_soulte = brut - soulte; // 217
+            const net_frais_soulte = net_frais - soulte; // 218
+            const fraction = pta * (net_soulte / vgp); // 219
+            const pv       = net_frais_soulte - fraction; // 220
 
-            card.querySelector('.val-215').textContent = net.toFixed(2) + ' €';
+            // Update DOM exact values
+            card.querySelector('.val-215').textContent = net_frais.toFixed(2) + ' €';
+            card.querySelector('.val-218').textContent = net_frais_soulte.toFixed(2) + ' €';
             card.querySelector('.val-219').textContent = fraction.toFixed(2) + ' €';
 
             const val220 = card.querySelector('.val-220');
             val220.textContent = (pv >= 0 ? '+' : '') + pv.toFixed(2) + ' €';
+
+            // Update Arrondis (Rounded values)
+            card.querySelector('.rounded-212').textContent = `À déclarer : ${Math.round(vgp)} €`;
+            card.querySelector('.rounded-213').textContent = `À déclarer : ${Math.round(brut)} €`;
+            card.querySelector('.rounded-214').textContent = `À déclarer : ${Math.round(frais)} €`;
+            card.querySelector('.rounded-215').textContent = `À déclarer : ${Math.round(net_frais)} €`;
+            card.querySelector('.rounded-216').textContent = `À déclarer : ${Math.round(soulte)} €`;
+            card.querySelector('.rounded-218').textContent = `À déclarer : ${Math.round(net_frais_soulte)} €`;
+            card.querySelector('.rounded-219').textContent = `À déclarer : ${Math.round(fraction)} €`;
+            card.querySelector('.rounded-220').textContent = `À déclarer : ${Math.round(pv)} €`;
 
             // Colors
             const isGain = pv >= 0;
@@ -375,7 +470,11 @@
             }
         }
 
+        // Initialize and bind
         cards.forEach(card => {
+            // First run on load
+            updateCard(card);
+            // Bind inputs
             card.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', () => updateCard(card));
             });
