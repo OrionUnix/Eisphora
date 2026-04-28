@@ -1,0 +1,474 @@
+{% load i18n %}
+
+<!-- ===== MODAL GUIDE 2042-C ===== -->
+<div id="modal-guide-2042c"
+     class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
+     role="dialog" aria-modal="true" aria-labelledby="guide-title">
+
+    <!-- Backdrop -->
+    <div id="guide-backdrop"
+         class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+         onclick="closeGuide2042c()"></div>
+
+    <!-- Panel -->
+    <div class="relative bg-white rounded-[28px] shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-guide-in">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-500 px-6 py-5 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-map-signs text-white text-lg"></i>
+                </div>
+                <div>
+                    <h2 id="guide-title" class="text-white font-extrabold text-lg leading-tight">Guide de report — Formulaire 2042-C</h2>
+                    <p class="text-blue-100 text-xs font-medium mt-0.5">Section « Cession d'actifs numériques »</p>
+                </div>
+            </div>
+            <button onclick="closeGuide2042c()"
+                    class="w-9 h-9 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center text-white transition-colors"
+                    aria-label="Fermer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="h-1 bg-blue-100 shrink-0">
+            <div id="guide-progress" class="h-full bg-gradient-to-r from-indigo-500 to-blue-400 transition-all duration-500" style="width: 33%"></div>
+        </div>
+
+        <!-- Content (scrollable) -->
+        <div class="overflow-y-auto flex-1 px-6 py-6 space-y-0" id="guide-steps-container">
+
+            <!-- ══ ÉTAPE 1 ══ -->
+            <div class="guide-step" data-step="1">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-md">1</span>
+                    <h3 class="text-base font-extrabold text-slate-900">Vérifier l'Annexe 2086 d'abord</h3>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 flex gap-3">
+                    <i class="fas fa-lightbulb text-amber-500 mt-0.5 shrink-0"></i>
+                    <p class="text-sm text-amber-800 leading-relaxed">
+                        Avant de toucher au formulaire 2042-C, vous devez avoir <strong>complété et vérifié l'Annexe&nbsp;2086</strong>.
+                        C'est elle qui détaille chaque vente — Eisphora l'a remplie pour vous via l'<em>Assistant Formulaire 2086</em>.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-start gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                        <span class="text-sm text-slate-700">Téléchargez le PDF généré par Eisphora (bouton <strong>« Télécharger le PDF »</strong>).</span>
+                    </div>
+                    <div class="flex items-start gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                        <span class="text-sm text-slate-700">Saisissez chaque cession dans l'Annexe 2086 sur impots.gouv.fr en recopiant les valeurs ligne par ligne (211 → 220).</span>
+                    </div>
+                    <div class="flex items-start gap-3 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <i class="fas fa-check-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                        <span class="text-sm text-slate-700">Le site calculera automatiquement le total qui sera pré-rempli dans le 2042-C.</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-3">
+                    <i class="fas fa-info-circle text-indigo-500 mt-0.5 shrink-0"></i>
+                    <p class="text-sm text-indigo-800">
+                        <strong>Vous avez déjà fait l'Annexe 2086 ?</strong> Passez directement à l'étape&nbsp;2.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 2 ══ -->
+            <div class="guide-step hidden" data-step="2">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-md">2</span>
+                    <h3 class="text-base font-extrabold text-slate-900">Reporter le bilan sur le formulaire 2042-C</h3>
+                </div>
+
+                <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                    Sur impots.gouv.fr, ouvrez le formulaire <strong>2042-C</strong>, rubrique
+                    <em>« Plus-values et gains divers »</em> → <em>« Cession d'actifs numériques »</em>.
+                </p>
+
+                <!-- Résultat dynamique -->
+                <div id="guide-result-positive" class="hidden mb-4">
+                    <div class="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-arrow-trend-up text-emerald-600 text-lg"></i>
+                            <span class="font-extrabold text-emerald-800 text-base">Votre résultat : GAIN (Plus-value)</span>
+                        </div>
+                        <div class="flex items-center justify-between bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">Case à remplir</p>
+                                <p class="text-2xl font-black text-slate-900">3AN</p>
+                                <p class="text-xs text-slate-600 mt-1">Plus-value globale nette</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-500 font-semibold mb-1">Montant à reporter</p>
+                                <p id="guide-amount-3an" class="text-3xl font-black text-emerald-600">--&nbsp;€</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-emerald-700 mt-3 flex items-start gap-1.5">
+                            <i class="fas fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                            Laissez la case <strong>3BN vide</strong>. N'entrez jamais un montant dans les deux cases simultanément.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="guide-result-negative" class="hidden mb-4">
+                    <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-arrow-trend-down text-red-500 text-lg"></i>
+                            <span class="font-extrabold text-red-800 text-base">Votre résultat : PERTE (Moins-value)</span>
+                        </div>
+                        <div class="flex items-center justify-between bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+                            <div>
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">Case à remplir</p>
+                                <p class="text-2xl font-black text-slate-900">3BN</p>
+                                <p class="text-xs text-slate-600 mt-1">Moins-value globale nette</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-500 font-semibold mb-1">Montant à reporter (en positif)</p>
+                                <p id="guide-amount-3bn" class="text-3xl font-black text-red-500">--&nbsp;€</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-red-700 mt-3 flex items-start gap-1.5">
+                            <i class="fas fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                            Laissez la case <strong>3AN vide</strong>. Entrez le montant <strong>en positif</strong> (sans le signe « - »).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cas sans résultats -->
+                <div id="guide-result-none" class="mb-4">
+                    <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-5 text-center">
+                        <i class="fas fa-calculator text-slate-300 text-3xl mb-2"></i>
+                        <p class="text-sm text-slate-500">Simulez vos transactions dans Eisphora pour voir le montant à reporter ici.</p>
+                    </div>
+                </div>
+
+                <!-- Note importante moins-value -->
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-3">
+                    <i class="fas fa-bookmark text-blue-500 mt-0.5 shrink-0"></i>
+                    <div class="text-sm text-blue-800 leading-relaxed">
+                        <strong>À savoir :</strong> Les moins-values crypto <strong>ne sont pas reportables</strong> sur les années suivantes.
+                        Elles servent uniquement à compenser les plus-values de la <strong>même année fiscale</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ÉTAPE 3 ══ -->
+            <div class="guide-step hidden" data-step="3">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="w-8 h-8 rounded-full bg-indigo-600 text-white text-sm font-black flex items-center justify-center shrink-0 shadow-md">3</span>
+                    <h3 class="text-base font-extrabold text-slate-900">Le choix stratégique — Case 3CN</h3>
+                </div>
+
+                <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                    Cette case vous permet de choisir <strong>comment vos gains crypto sont taxés</strong>.
+                    C'est souvent ici que les utilisateurs hésitent le plus.
+                </p>
+
+                <!-- Comparatif -->
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div class="rounded-2xl border-2 border-slate-200 p-4 bg-white">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 rounded border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                <i class="fas fa-square text-slate-200 text-xs"></i>
+                            </div>
+                            <span class="font-bold text-slate-700 text-sm">Case vide (défaut)</span>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Vous payez le <strong>PFU (Flat Tax)</strong> : taux unique de <strong id="guide-pfu-rate">30</strong>%.</p>
+                        <p class="text-[10px] text-slate-400 mt-2">(12,8% IR + 17,2% prélèvements sociaux)</p>
+                    </div>
+                    <div class="rounded-2xl border-2 border-indigo-200 p-4 bg-indigo-50">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-6 h-6 rounded border-2 border-indigo-500 bg-indigo-500 flex items-center justify-center shrink-0">
+                                <i class="fas fa-check text-white text-xs"></i>
+                            </div>
+                            <span class="font-bold text-indigo-800 text-sm">Case cochée (3CN)</span>
+                        </div>
+                        <p class="text-xs text-indigo-700 leading-relaxed">Vos gains s'ajoutent à vos revenus et sont taxés selon votre <strong>tranche marginale d'imposition (TMI)</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- Recommandation dynamique -->
+                <div id="guide-reco-bareme-avantageux" class="hidden bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fas fa-star text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="font-extrabold text-emerald-800 text-sm mb-1">
+                                ✅ Conseil Eisphora : Cochez la case 3CN
+                            </p>
+                            <p class="text-xs text-emerald-700 leading-relaxed" id="guide-reco-bareme-text">
+                                Avec votre tranche à <strong id="guide-tmi-value-yes">X</strong>%, payer le barème progressif (<strong id="guide-tmi-total-yes">X</strong>% total) est <strong>moins cher</strong> que la Flat Tax de <strong id="guide-pfu-reco-yes">30</strong>%.
+                                <strong>Cochez la case 3CN</strong> pour économiser.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="guide-reco-pfu-avantageux" class="hidden bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="fas fa-shield text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="font-extrabold text-purple-800 text-sm mb-1">
+                                ✅ Conseil Eisphora : Laissez la case 3CN vide
+                            </p>
+                            <p class="text-xs text-purple-700 leading-relaxed">
+                                Avec votre tranche à <strong id="guide-tmi-value-no">X</strong>%, la Flat Tax de <strong id="guide-pfu-reco-no">30</strong>% est <strong>plus avantageuse</strong>.
+                                Laissez la case 3CN décochée.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tableaux tranches -->
+                <div class="bg-slate-50 rounded-2xl border border-slate-100 p-4">
+                    <p class="text-[10px] uppercase font-black text-slate-400 tracking-wider mb-3">Comparatif selon votre TMI</p>
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="text-slate-500 font-bold">
+                                <th class="text-left pb-2">Tranche (TMI)</th>
+                                <th class="text-center pb-2">Total Barème<br><span class="font-normal">(TMI + 17,2%)</span></th>
+                                <th class="text-center pb-2">Flat Tax</th>
+                                <th class="text-center pb-2">Conseil</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="text-slate-700">
+                                <td class="py-1.5 font-medium">0%</td>
+                                <td class="text-center text-emerald-600 font-bold">17,2%</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center"><span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Cocher 3CN</span></td>
+                            </tr>
+                            <tr class="text-slate-700">
+                                <td class="py-1.5 font-medium">11%</td>
+                                <td class="text-center text-emerald-600 font-bold">28,2%</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center"><span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Cocher 3CN</span></td>
+                            </tr>
+                            <tr class="text-slate-700 bg-amber-50/50">
+                                <td class="py-1.5 font-medium">30%</td>
+                                <td class="text-center text-amber-600 font-bold">47,2%</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
+                            </tr>
+                            <tr class="text-slate-700">
+                                <td class="py-1.5 font-medium">41%</td>
+                                <td class="text-center text-red-500 font-bold">58,2%</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
+                            </tr>
+                            <tr class="text-slate-700">
+                                <td class="py-1.5 font-medium">45%</td>
+                                <td class="text-center text-red-500 font-bold">62,2%</td>
+                                <td class="text-center">30%</td>
+                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Avertissement légal -->
+                <div class="mt-4 bg-red-50 border border-red-200 rounded-2xl p-3 flex gap-2.5">
+                    <i class="fas fa-triangle-exclamation text-red-400 mt-0.5 shrink-0 text-sm"></i>
+                    <p class="text-xs text-red-700 leading-relaxed">
+                        Ce guide est <strong>indicatif</strong>. Le choix optimal dépend de l'ensemble de votre situation fiscale.
+                        En cas de doute, consultez un expert-comptable ou un conseiller fiscal.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer navigation -->
+        <div class="border-t border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-white">
+            <button id="guide-btn-prev"
+                    onclick="guideNav(-1)"
+                    class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled>
+                <i class="fas fa-chevron-left text-xs"></i> Précédent
+            </button>
+
+            <div class="flex gap-1.5">
+                <span class="guide-dot w-2 h-2 rounded-full bg-indigo-600 transition-all" data-dot="1"></span>
+                <span class="guide-dot w-2 h-2 rounded-full bg-slate-200 transition-all" data-dot="2"></span>
+                <span class="guide-dot w-2 h-2 rounded-full bg-slate-200 transition-all" data-dot="3"></span>
+            </div>
+
+            <button id="guide-btn-next"
+                    onclick="guideNav(1)"
+                    class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-colors flex items-center gap-2">
+                Suivant <i class="fas fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes guide-slide-in {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-guide-in { animation: guide-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+</style>
+
+<script>
+(function() {
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    window.openGuide2042c = function() {
+        const modal = document.getElementById('modal-guide-2042c');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        populateGuideData();
+        goToStep(1);
+    };
+
+    window.closeGuide2042c = function() {
+        const modal = document.getElementById('modal-guide-2042c');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
+
+    window.guideNav = function(direction) {
+        goToStep(currentStep + direction);
+    };
+
+    function goToStep(step) {
+        currentStep = Math.max(1, Math.min(totalSteps, step));
+
+        // Show/hide steps
+        document.querySelectorAll('.guide-step').forEach(el => {
+            el.classList.add('hidden');
+        });
+        document.querySelector(`.guide-step[data-step="${currentStep}"]`).classList.remove('hidden');
+
+        // Update dots
+        document.querySelectorAll('.guide-dot').forEach(dot => {
+            const n = parseInt(dot.dataset.dot);
+            dot.className = `guide-dot w-2 h-2 rounded-full transition-all ${n === currentStep ? 'bg-indigo-600 w-5' : 'bg-slate-200'}`;
+        });
+
+        // Update progress bar
+        document.getElementById('guide-progress').style.width = `${(currentStep / totalSteps) * 100}%`;
+
+        // Update buttons
+        const btnPrev = document.getElementById('guide-btn-prev');
+        const btnNext = document.getElementById('guide-btn-next');
+        btnPrev.disabled = currentStep === 1;
+
+        if (currentStep === totalSteps) {
+            btnNext.innerHTML = '<i class="fas fa-check mr-2"></i> Terminé';
+            btnNext.onclick = closeGuide2042c;
+            btnNext.className = 'px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors flex items-center gap-2';
+        } else {
+            btnNext.innerHTML = 'Suivant <i class="fas fa-chevron-right text-xs"></i>';
+            btnNext.onclick = function() { guideNav(1); };
+            btnNext.className = 'px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-colors flex items-center gap-2';
+        }
+
+        if (currentStep === 2) populateStep2();
+        if (currentStep === 3) populateStep3();
+    }
+
+    function getGains() {
+        const taxData = document.getElementById('tax-data');
+        if (taxData) return parseFloat(taxData.dataset.gains) || 0;
+        return 0;
+    }
+
+    function getPfuRate() {
+        const pfuInput = document.getElementById('pfu-rate');
+        return pfuInput ? parseFloat(pfuInput.value) || 30 : 30;
+    }
+
+    function getBaremeRate() {
+        const sel = document.getElementById('bareme-rate');
+        return sel ? parseInt(sel.value) || 0 : 0;
+    }
+
+    function populateGuideData() {
+        // PFU rate display
+        const pfu = getPfuRate();
+        document.querySelectorAll('#guide-pfu-rate, #guide-pfu-reco-yes, #guide-pfu-reco-no').forEach(el => {
+            if (el) el.textContent = pfu;
+        });
+    }
+
+    function populateStep2() {
+        const gains = getGains();
+        const noneEl   = document.getElementById('guide-result-none');
+        const posEl    = document.getElementById('guide-result-positive');
+        const negEl    = document.getElementById('guide-result-negative');
+
+        // Determine which to show
+        const hasData = document.getElementById('tax-data') !== null;
+
+        if (!hasData) {
+            noneEl.classList.remove('hidden');
+            posEl.classList.add('hidden');
+            negEl.classList.add('hidden');
+            return;
+        }
+
+        noneEl.classList.add('hidden');
+
+        const fmt = v => Math.abs(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+        if (gains >= 0) {
+            posEl.classList.remove('hidden');
+            negEl.classList.add('hidden');
+            document.getElementById('guide-amount-3an').textContent = fmt(gains);
+        } else {
+            negEl.classList.remove('hidden');
+            posEl.classList.add('hidden');
+            document.getElementById('guide-amount-3bn').textContent = fmt(Math.abs(gains));
+        }
+    }
+
+    function populateStep3() {
+        const tmi = getBaremeRate();
+        const pfu = getPfuRate();
+        const totalBareme = tmi + 17.2;
+
+        // Update TMI displays
+        document.querySelectorAll('#guide-tmi-value-yes, #guide-tmi-value-no').forEach(el => {
+            if (el) el.textContent = tmi;
+        });
+        document.querySelectorAll('#guide-tmi-total-yes').forEach(el => {
+            if (el) el.textContent = totalBareme.toFixed(1);
+        });
+        document.querySelectorAll('#guide-pfu-reco-yes, #guide-pfu-reco-no').forEach(el => {
+            if (el) el.textContent = pfu;
+        });
+
+        const recoBareme = document.getElementById('guide-reco-bareme-avantageux');
+        const recoPfu    = document.getElementById('guide-reco-pfu-avantageux');
+
+        if (totalBareme < pfu) {
+            recoBareme.classList.remove('hidden');
+            recoPfu.classList.add('hidden');
+        } else {
+            recoPfu.classList.remove('hidden');
+            recoBareme.classList.add('hidden');
+        }
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('modal-guide-2042c');
+        if (!modal || modal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeGuide2042c();
+        if (e.key === 'ArrowRight') guideNav(1);
+        if (e.key === 'ArrowLeft')  guideNav(-1);
+    });
+})();
+</script>

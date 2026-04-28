@@ -105,6 +105,12 @@
                 <i class="fas fa-file-invoice"></i> <span id="text-toggle-2086">{% trans "Ouvrir l'Assistant 2086" %}</span>
             </button>
 
+            <!-- Bouton Guide 2042-C -->
+            <button type="button" id="btn-guide-2042c" onclick="openGuide2042c()"
+                    class="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-amber-200 shadow-sm">
+                <i class="fas fa-map-signs text-amber-500"></i> {% trans "Guide déclaration 2042-C" %}
+            </button>
+
             <button type="button" onclick="exporterCSV()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
                 <i class="fas fa-file-csv text-slate-500"></i> {% trans "Exporter le détail (CSV)" %}
             </button>
@@ -135,9 +141,12 @@
         </form>
         </div>
 
-        <!-- Custom CSV Mapper Modal (Placed outside animated containers) -->
+        <!-- Custom CSV Mapper Modal -->
         {% include "tax_forms/components/modal_mapper.html" %}
     </div>
+
+    <!-- Guide pas-à-pas 2042-C -->
+    {% include "tax_forms/components/guide_2042c.html" %}
 </div>
 
 <!-- Loading Overlay (Modal Sablier) -->
