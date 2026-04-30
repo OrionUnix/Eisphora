@@ -50,6 +50,7 @@ window.validateDate = function(input) {
 window.TAX_CONFIG = null;
 window.PS_RATE = 18.6;
 window.PFU_TOTAL_RATE = 31.4;
+window.EXONERATION_THRESHOLD = 305;
 window.TRANCHES = [];
 window.DECOTE_CONFIG = null;
 
@@ -67,6 +68,9 @@ window.loadTaxConfig = function() {
             }
             if (window.TAX_CONFIG.pfu) {
                 window.PFU_TOTAL_RATE = window.TAX_CONFIG.pfu.total_rate || 31.4;
+            }
+            if (window.TAX_CONFIG.exoneration_seuil) {
+                window.EXONERATION_THRESHOLD = parseFloat(window.TAX_CONFIG.exoneration_seuil) || 305;
             }
 
             // Update UI elements if present
@@ -134,7 +138,7 @@ window.updateTaxes = function() {
         elTotalCessions.textContent = Math.round(totalCessions).toLocaleString('fr-FR') + ' €';
     }
     
-    var isExempt = (totalCessions > 0 && totalCessions <= 305);
+    var isExempt = (totalCessions > 0 && totalCessions <= window.EXONERATION_THRESHOLD);
     
     if (elExemptionMsg) {
         if (isExempt) {
@@ -149,11 +153,11 @@ window.updateTaxes = function() {
     var elMoins = document.getElementById('val-minus');
 
     if (taxableAmount >= 0) {
-        if (elPlus) elPlus.textContent = "+ " + taxableAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " €";
+        if (elPlus) elPlus.textContent = "+ " + taxableAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
         if (elMoins) elMoins.textContent = "- 0 €";
     } else {
         if (elPlus) elPlus.textContent = "+ 0 €";
-        if (elMoins) elMoins.textContent = "- " + Math.abs(taxableAmount).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " €";
+        if (elMoins) elMoins.textContent = "- " + Math.abs(taxableAmount).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
     }
 
     if (taxableAmount <= 0) {
@@ -197,19 +201,24 @@ function updateTaxBadges(pfuTotal, baremeTotal) {
     var msgPfu = document.getElementById('pfu-msg');
     var msgBareme = document.getElementById('bareme-msg');
 
+    // Reset all
+    badgePfu?.classList.add('hidden');
+    badgeBareme?.classList.add('hidden');
+    msgPfu?.classList.add('hidden');
+    msgBareme?.classList.add('hidden');
+    cardPfu?.classList.remove('ring-4', 'ring-purple-400');
+    cardBareme?.classList.remove('ring-4', 'ring-emerald-400');
+
+    // If no tax, don't show "advantageous" message
+    if (pfuTotal <= 0 && baremeTotal <= 0) return;
+
     if (pfuTotal <= baremeTotal) {
         badgePfu?.classList.remove('hidden');
-        badgeBareme?.classList.add('hidden');
         msgPfu?.classList.remove('hidden');
-        msgBareme?.classList.add('hidden');
         cardPfu?.classList.add('ring-4', 'ring-purple-400');
-        cardBareme?.classList.remove('ring-4', 'ring-emerald-400');
     } else {
-        badgePfu?.classList.add('hidden');
         badgeBareme?.classList.remove('hidden');
-        msgPfu?.classList.add('hidden');
         msgBareme?.classList.remove('hidden');
-        cardPfu?.classList.remove('ring-4', 'ring-purple-400');
         cardBareme?.classList.add('ring-4', 'ring-emerald-400');
     }
 }
@@ -364,7 +373,7 @@ window.updateRowTotal = function(input) {
     if (type === 'vente') {
         const cost = qty * acqPrice;
         const gain = total - cost;
-        gainEl.textContent = (gain > 0 ? '+ ' : '') + gain.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+        gainEl.textContent = (gain > 0 ? '+ ' : '') + gain.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
         gainEl.classList.toggle('text-emerald-600', gain > 0);
         gainEl.classList.toggle('text-red-500', gain < 0);
         gainEl.classList.toggle('text-slate-400', gain === 0);

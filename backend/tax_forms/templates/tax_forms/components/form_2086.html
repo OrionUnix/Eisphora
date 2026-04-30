@@ -113,7 +113,7 @@
                 <ul class="space-y-1.5 ml-1 mb-4">
                     <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Vérifier chaque valeur avec vos relevés d'exchange</span></li>
                     <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Consulter un expert-comptable ou un conseiller fiscal</span></li>
-                    <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Ou utiliser un logiciel agréé (Waltio, Koinly...)</span></li>
+                    <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Ou utiliser un logiciel fiscal agréé par un professionnel</span></li>
                 </ul>
                 <p class="text-xs italic opacity-80 border-t border-red-200 pt-3">
                     En utilisant cet assistant, vous acceptez d'en être l'unique responsable pour votre déclaration.
@@ -144,13 +144,13 @@
         </div>
     </div>
 
-    <!-- Total des cessions & Exonération 305€ -->
+    <!-- Total des cessions & Exonération {{ exoneration_seuil|floatformat:0 }}€ -->
     <div id="exoneration-banner" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6 flex gap-3 items-start shadow-sm">
         <i class="fas fa-gift text-emerald-500 mt-0.5 shrink-0 text-xl"></i>
         <div class="text-sm text-emerald-800">
-            <strong>Exonération fiscale (Total des ventes &le; 305 €)</strong><br>
+            <strong>Exonération fiscale (Total des ventes &le; {{ exoneration_seuil|floatformat:0 }} €)</strong><br>
             Le montant cumulé de vos ventes s'élève à <strong id="total-cessions-display" class="font-mono text-base bg-emerald-100 px-1 rounded">-- €</strong>.<br>
-            Étant inférieur ou égal à 305 € sur l'année, <strong>vous êtes totalement exonéré d'impôt</strong> sur vos plus-values crypto !<br>
+            Étant inférieur ou égal à {{ exoneration_seuil|floatformat:0 }} € sur l'année, <strong>vous êtes totalement exonéré d'impôt</strong> sur vos plus-values crypto !<br>
             <span class="text-xs text-emerald-600 mt-1 block"><i class="fas fa-info-circle"></i> Il reste obligatoire de déclarer ces opérations sur l'annexe 2086 pour prouver que vous êtes sous le seuil. Les cases de plus-values finales à reporter vaudront 0.</span>
         </div>
     </div>
@@ -160,7 +160,7 @@
         <div class="text-sm text-slate-700">
             <strong>Volume total de vos cessions</strong><br>
             Le montant cumulé de vos ventes (somme des lignes 213) s'élève à <strong id="total-cessions-display-no-exo" class="font-mono text-base bg-white border border-slate-200 px-1 rounded">-- €</strong>.<br>
-            Le seuil d'exonération de 305 € étant dépassé, vos plus-values globales seront bien soumises à l'impôt (PFU ou barème).
+            Le seuil d'exonération de {{ exoneration_seuil|floatformat:0 }} € étant dépassé, vos plus-values globales seront bien soumises à l'impôt (PFU ou barème).
         </div>
     </div>
 
@@ -518,16 +518,17 @@
                 total_brut += brut;
             });
 
-            // Update 305€ Exoneration Banners
+            // Update Exoneration Banners
             const exonerationBanner = document.getElementById('exoneration-banner');
             const noExonerationBanner = document.getElementById('no-exoneration-banner');
+            const seuil = parseFloat("{{ exoneration_seuil|default:305 }}");
             
             if (exonerationBanner && noExonerationBanner) {
-                if (total_brut <= 305 && total_brut > 0) {
+                if (total_brut <= seuil && total_brut > 0) {
                     exonerationBanner.classList.remove('hidden');
                     noExonerationBanner.classList.add('hidden');
                     document.getElementById('total-cessions-display').textContent = total_brut.toFixed(2) + ' €';
-                } else if (total_brut > 305) {
+                } else if (total_brut > seuil) {
                     exonerationBanner.classList.add('hidden');
                     noExonerationBanner.classList.remove('hidden');
                     document.getElementById('total-cessions-display-no-exo').textContent = total_brut.toFixed(2) + ' €';

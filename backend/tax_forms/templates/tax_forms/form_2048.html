@@ -73,7 +73,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-fade-in">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">{% trans "Résumé Fiscal" %}</h1>
-                <p class="text-sm md:text-base text-slate-500 mt-1 font-medium">{% trans "Analyse de vos transactions et estimation de l'impôt." %}</p>
+                <p class="text-sm md:text-base text-slate-500 mt-1 font-medium">{% trans "Analyse de vos transactions et estimation de l'impôt (France uniquement)." %}</p>
             </div>
         </div>
 
@@ -92,46 +92,74 @@
             </div>
         </div>
 
-        <!-- Global Indicators -->
-        {% include "tax_forms/components/indicators.html" %}
-
-        <!-- Tax Estimation Cards -->
-        {% include "tax_forms/components/tax_cards.html" %}
-
-        {% if show_results %}
-        <!-- Boutons d'export (PDF & CSV) -->
-        <div class="flex flex-col md:flex-row gap-4 mt-8 mb-4 items-center justify-end print-hidden print:hidden">
-            <button type="button" onclick="toggleForm2086()" id="btn-toggle-2086" class="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-blue-200 shadow-sm mr-auto">
-                <i class="fas fa-file-invoice"></i> <span id="text-toggle-2086">{% trans "Ouvrir l'Assistant 2086" %}</span>
-            </button>
-
-            <!-- Bouton Guide 2042-C -->
-            <button type="button" id="btn-guide-2042c" onclick="openGuide2042c()"
-                    class="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-amber-200 shadow-sm">
-                <i class="fas fa-map-signs text-amber-500"></i> {% trans "Guide déclaration 2042-C" %}
-            </button>
-
-            <button type="button" onclick="exporterCSV()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
-                <i class="fas fa-file-csv text-slate-500"></i> {% trans "Exporter le détail (CSV)" %}
-            </button>
-
-            <button type="button" id="btn-export-pdf" onclick="exporterPDF()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg">
-                <i class="fas fa-file-pdf"></i> <span id="text-export-pdf">{% trans "Télécharger le PDF" %}</span>
-            </button>
-        </div>
-        {% endif %}
-
         <!-- Main Form Wrapper -->
         <form method="post" enctype="multipart/form-data" id="main-tx-form" class="animate-fade-in-up" style="animation-delay: 0.2s;">
             {% csrf_token %}
             <input type="hidden" name="transaction_count" id="transaction_count" value="{{ manual_transactions|length|default:0 }}">
 
-            <div id="view-dashboard">
-                <!-- User Tax Profile -->
-                {% include "tax_forms/components/tax_profile.html" %}
+            <!-- Global Indicators -->
+            {% include "tax_forms/components/indicators.html" %}
 
-                <!-- Data Sources (Import, Wallet, Chart) -->
+            <!-- User Tax Profile -->
+            {% include "tax_forms/components/tax_profile.html" %}
+
+            <!-- Tax Estimation Cards -->
+            {% include "tax_forms/components/tax_cards.html" %}
+
+            <!-- Hint to scroll (Move here for better visibility) -->
+            <div class="flex flex-col items-center justify-center gap-2 py-8 text-slate-500 animate-fade-in">
+                <div class="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
+                    <i class="fas fa-arrow-down text-indigo-500 animate-bounce"></i>
+                    <span class="text-xs md:text-sm font-bold uppercase tracking-widest">{% trans "Scrollez pour vérifier vos cessions en détail" %}</span>
+                    <i class="fas fa-arrow-down text-indigo-500 animate-bounce"></i>
+                </div>
+            </div>
+
+            {% if show_results %}
+            <!-- Boutons d'export (PDF & CSV) -->
+            <div class="flex flex-col md:flex-row gap-4 mt-2 mb-6 items-center justify-end print-hidden print:hidden">
+                <button type="button" onclick="toggleForm2086()" id="btn-toggle-2086" class="px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-blue-200 shadow-sm mr-auto">
+                    <i class="fas fa-file-invoice"></i> <span id="text-toggle-2086">{% trans "Ouvrir l'Assistant 2086" %}</span>
+                </button>
+
+                <!-- Bouton Guide 2042-C -->
+                <button type="button" id="btn-guide-2042c" onclick="openGuide2042c()"
+                        class="px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-amber-200 shadow-sm">
+                    <i class="fas fa-map-signs text-amber-500"></i> {% trans "Guide déclaration 2042-C" %}
+                </button>
+
+                <button type="button" onclick="exporterCSV()" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
+                    <i class="fas fa-file-csv text-slate-500"></i> {% trans "Exporter le détail (CSV)" %}
+                </button>
+
+                <button type="button" id="btn-export-pdf" onclick="exporterPDF()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg">
+                    <i class="fas fa-file-pdf"></i> <span id="text-export-pdf">{% trans "Télécharger le PDF" %}</span>
+                </button>
+            </div>
+            {% endif %}
+
+            <div id="view-dashboard">
+                {% if show_results %}
+                <!-- Sources de données repliables si résultats affichés -->
+                <details class="group bg-slate-50 rounded-[32px] border border-slate-200 overflow-hidden mb-8">
+                    <summary class="flex items-center justify-between px-8 py-4 cursor-pointer list-none hover:bg-slate-100 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <span class="font-bold text-slate-700">{% trans "Modifier mes sources de données" %}</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="px-6 pb-8 pt-2">
+                        {% include "tax_forms/components/sources.html" %}
+                    </div>
+                </details>
+                {% else %}
+                <!-- Sources de données affichées normalement si pas de résultats -->
+                <h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 md:pt-4 mb-4">{% trans "Sources de Données" %}</h2>
                 {% include "tax_forms/components/sources.html" %}
+                {% endif %}
 
                 <!-- Transaction Table Detail -->
                 {% include "tax_forms/components/table.html" %}
@@ -183,7 +211,22 @@
     </div>
 </div>
 
+<!-- Indicateur de scroll flottant (disparaît au scroll) -->
+<div id="scroll-indicator" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-opacity duration-500 flex flex-col items-center gap-2">
+    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">{% trans "Scrollez pour voir le détail" %}</span>
+    <div class="w-6 h-10 border-2 border-slate-300 rounded-full flex justify-center p-1 bg-white/50 backdrop-blur-sm">
+        <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-scroll-dot"></div>
+    </div>
+</div>
+
 <style>
+    @keyframes scroll-dot {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(15px); opacity: 0; }
+    }
+    .animate-scroll-dot {
+        animation: scroll-dot 1.5s infinite;
+    }
     @keyframes spin-slow {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
@@ -209,6 +252,18 @@
     const form = document.getElementById('main-tx-form');
     const btnSimuler = document.getElementById('btn-simuler');
     const loadingOverlay = document.getElementById('loading-overlay');
+    const scrollIndicator = document.getElementById('scroll-indicator');
+
+    // Gestion de l'indicateur de scroll
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            scrollIndicator.style.opacity = '0';
+            setTimeout(() => scrollIndicator.classList.add('hidden'), 500);
+        } else {
+            scrollIndicator.classList.remove('hidden');
+            scrollIndicator.style.opacity = '1';
+        }
+    });
 
     if (form && btnSimuler && loadingOverlay) {
         form.addEventListener('submit', function() {

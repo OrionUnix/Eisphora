@@ -75,6 +75,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',
                 'config.context_processors.seo',
+                'tax_forms.context_processors.fiscal_config',
               
             ],
         },

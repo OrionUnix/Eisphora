@@ -7,7 +7,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from .forms import Form2048
 from django.utils.translation import gettext_lazy as _
 from .services.extractor import parse_transaction_file, fetch_on_chain_transactions, _parse_generic_row, parse_custom_csv
-from .services.calculator import calculate_french_taxes, get_pfu_rate
+from .services.calculator import calculate_french_taxes, get_pfu_rate, get_exoneration_threshold
 
 
 @sensitive_post_parameters('transaction_files', 'crypto_address', 'custom_mapping_json')
@@ -193,7 +193,9 @@ def form_2048_view(request):
     else:
         form = Form2048()
 
-    context = {'form': form}
+    context = {
+        'form': form,
+    }
     try:
         config_path = os.path.join(os.path.dirname(__file__), 'services', 'tax_config.json')
         with open(config_path, 'r', encoding='utf-8') as f:

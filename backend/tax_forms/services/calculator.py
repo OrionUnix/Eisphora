@@ -76,6 +76,12 @@ def get_ps_rate() -> float:
     return config.get('bareme_progressif', {}).get('ps_rate', 17.2)
 
 
+def get_exoneration_threshold() -> float:
+    """Seuil d'exonération annuelle (ex: 305€)."""
+    config = load_tax_config()
+    return float(config.get('exoneration_seuil', 305.0))
+
+
 def _parse_date(tx: dict) -> datetime:
     """
     Convertit la valeur 'date' d'une transaction en objet datetime.
