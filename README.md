@@ -1,10 +1,9 @@
 # Eisphora
 
-> 🧾 **Eisphora** is an open-source, secure-by-design crypto tax app — built in Django with no exposed REST API.  
-> 🧠 Local key derivation (Argon2/PBKDF2), AES-256 encryption, FIFO-based reporting, Julia-powered calculations.  
-> 🔐 Frontend uses Django Templates + Tailwind + GSAP/Vue.js — minimal JS, no attack surface.  
+> 🧾 **Eisphora** is an open-source, secure-by-design crypto tax app — built in Django.  
+> 🔐 A simple, completely stateless tool that processes CSV files in-memory to calculate your taxes.  
 > 🇫🇷🇺🇸🇱🇺 Focused on privacy, legal clarity, and multilingual support.  
-> ⚠️ Built by one developer, security first. Next.js/React-ready for future versions.
+> ⚠️ Built by one developer, security first.
 
 **Eisphora** is an open-source web application designed to simplify crypto-related tax management. Initially focused on the French tax system, it aims to support the US, Luxembourg, and other jurisdictions. Developed by a solo developer, the project emphasizes **security**, **clarity**, and **long-term maintainability**.
 
@@ -17,149 +16,130 @@
 
 ## 🔒 The "Stateless" Security Model
 
-Most tax applications store your financial history in databases (PostgreSQL, MongoDB), requiring complex encryption mechanisms (AES-256) and creating massive honeypots for hackers. 
+Most tax applications store your financial history in databases, creating massive honeypots for hackers. 
 
 **Eisphora takes a different approach:**
-1. **In-Memory Processing:** Uploaded CSV files (like Coinbase exports) are handled strictly in RAM via Django's `MemoryFileUploadHandler`.
-2. **Zero-Disk Policy:** Once the FIFO calculations are done and the HTML results are rendered to your screen, the memory is wiped. 
+1. **In-Memory Processing:** Uploaded CSV files (like exchange exports) are handled strictly in RAM via Django's file handlers.
+2. **Zero-Disk Policy:** Once the FIFO calculations are done and the HTML results are rendered to your screen, the memory is wiped. No transaction data is stored in the database.
 3. **No User Accounts Needed:** By not forcing users to create accounts, we eliminate the risks of token leakage, password breaches, or identity theft.
 
 ---
 ## 🔒 Why This Architecture?
 
-The project originally used a React/Next.js frontend connected to Django via REST APIs. This introduced:
+Eisphora explicitly moved away from a decoupled **Next.js/React** frontend. A decoupled architecture would have required exposing a **REST API**, which significantly increases the attack surface (CORS, token leakage, endpoint security).
 
-- A broader attack surface (CORS, CSRF, token leakage risks),
-- An overcomplicated setup for a local or low-userbase deployment,
-- An unnecessary architectural split for a secure, single-user tool.
+By using **Django Templates**, we keep the entire logic and rendering server-side, adhering to a "security-by-design" philosophy. This approach eliminates the risks associated with client-side state management and external API communications.
 
-Instead, Eisphora now uses **Django Templates** for rendering, along with modern frontend libraries (Tailwind, GSAP, Vue.js) directly embedded into the server-rendered flow. Data encryption and key management are **performed locally** in the browser using `IndexedDB` and `PBKDF2/Argon2`.
+Because no sensitive user data is persisted on disk in the default configuration, there is no need for complex encryption at rest or user authentication systems for basic usage.
 
-> Nothing prevents future reintegration of a modern frontend stack (like Next.js), but only once the app is secure and stable enough to justify it.
+---
+
+## 🏗️ Usage Modes
+
+### Privacy Mode (Default)
+- **No Account Required**: Immediate use without any registration.
+- **In-Memory Processing**: Data is handled strictly in RAM via Django's `MemoryFileUploadHandler`.
+- **Zero Persistence**: No transaction data is stored on disk or in the database.
+
+### SaaS Mode (For Forkers)
+- **User Accounts**: The architecture allows for enabling accounts and persistent storage.
+- **Advanced Persistence**: Support for **PostgreSQL** and **AES-256 encryption** via `django-cryptography`.
+- **Commercial Foundation**: Provides a robust base to build paid services or commercial tax platforms (similar to Waltio).
+- ⚠️ **Note**: `django-cryptography` is available in the stack but is intentionally disabled in development mode to simplify the setup.
+
+---
 
 ---
 
 ## ✨ Features
 
-- Tax reporting based on FIFO method and income brackets
-- Advanced transaction management
+- Tax reporting based on FIFO method
+- Advanced transaction analysis
 - Multilingual UI (English, French, Spanish)
-- AES-256 secure data encryption (local + server)
-- Heavy computation offloading using Julia
-- Transformer-based LLM for tax interpretation
-- Declarative BPMN workflows with Camunda
-- Document and reporting generation
-- GDPR-friendly by design
+- Stateless in-memory calculation (no data stored)
+- PDF generation for tax forms
 
 ---
 
 ## 🧠 Architecture Overview
 
-Here is the updated architecture diagram reflecting the current stack:
+Here is the architecture diagram reflecting the current stack:
 
 ```mermaid
 graph TD
-    A[User] -->|HTTPS| B[Frontend: Django Templates]
-    subgraph Frontend
-        B -->|Tailwind CSS| C[Responsive UI]
-        B -->|GSAP| D[Parallax Animations]
-        B -->|Vue.js| E[Lightweight Interactions]
-        B -->|IndexedDB| F[Local Key Storage]
-        F -->|PBKDF2/Argon2| G[Key Derivation]
-    end
+    A[User] -->|HTTPS| B[Frontend: Django Templates + Tailwind]
     B --> H[Django Server]
     subgraph Backend_Django
         H --> I[Apps]
-        I --> J[core: Global Models, Utils]
-        I --> K[users: Signup & Login]
-        I --> L[calculator_FIFO: FIFO Engine]
-        I --> M[taxes: Country-specific Logic]
-        I --> N[documents: Reports & Exports]
-        I --> O[analytics: Dashboards & Metrics]
-        H --> P[Celery Tasks]
-        H -->|AES-256| Q[django-cryptography]
-        H --> R[django-otp]
-        H --> S[django-gdpr-assistant]
-        H --> T[Julia via pyjulia]
-        H --> U[LLM Transformers]
-        H --> V[Camunda BPMN Engine]
+        I --> J[core: Global Utilities]
+        I --> K[tax_forms: FIFO Engine & Specific Forms]
+        I --> L[theme: Tailwind UI]
     end
-    H --> W[Webhooks]
-    H --> X[PostgreSQL]
-    X --> Y[pg_cron]
-    X --> Z[pgjwt]
-    X --> AA[TOAST Compression]
-    X --> AB[Readonly Role]
-    H --> AC[Redis]
-    H --> AD[MinIO]
-    H --> AE[Azure Key Vault]
+    H --> M[db.sqlite3: Application Configuration]
 ```
 
-##  🚀 Installation Guide
+## 🚀 Installation Guide
 
 ### 1. Clone the Repository
 
-```git clone https://github.com/OrionUnix/Eisphora.git
+```bash
+git clone https://github.com/OrionUnix/Eisphora.git
 cd Eisphora
 ```
 
-#### 2. Configure Environment Variables
+### 2. Configure Environment Variables
 
-**Backend**
-Copy or create a .env file at the project root:
+Copy or create a `.env` file at the project root:
 
 ```bash
-cp .env.example .env
-# Edit it with your DB credentials, secret keys, etc.
+cp .envExample .env
+# Edit it with your Django secret key, etc.
 ```
 
-**_Frontend (Optional)  _**
-Only if you reintroduce the frontend build process (Vue/Next.js/etc.):
+### 3. Install Backend Dependencies
 
-```touch frontend/.env.local
-# Example:
-NEXT_PUBLIC_BASE_URL=http://localhost:8000
-
-```
-
-### Install Backend Dependencies
-
-```cd backend
+```bash
 python -m venv venv
+# On Linux/macOS:
 source venv/bin/activate
+# On Windows:
+# venv\Scripts\activate
+
+cd backend
 pip install -r requirements.txt
-
 ```
 
-### 4. (Optional) Install Frontend Dependencies
+### 4. Apply Database Migrations
 
-Only if you re-enable JS assets:
-
-```cd ../frontend
-npm install```
-
-### 5. Apply Database Migrations
-
-```cd ../backend
+```bash
 python manage.py migrate
-
 ```
 
-### 6. Build Frontend Assets (Optional)
+### 5. Run the Server
 
-```./build_frontend.sh
-# or manually: cd frontend && npm run build
+**On Linux / macOS:**
+You can run the server using the provided script from the root folder:
+```bash
+./runserver.sh
+```
+Or manually:
+```bash
+python manage.py runserver
 ```
 
-### 7. Run the Server
-
-``` cd backend
+**On Windows:**
+You can use the provided batch script from the root folder:
+```cmd
+runserver.bat
+```
+Or manually:
+```cmd
 python manage.py runserver
 ```
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the project.
+Contributions are welcome. Please ensure that all code comments, variable names, and application structures remain in **English** to maintain consistency, even though the end-user UI is multilingual (FR/EN/ES).
 
 ## 📄 License
 
@@ -167,7 +147,6 @@ This project is licensed under the [BSD-3-Clause License](LICENSE) - see the [LI
 
 ## 🧭 Roadmap
 
- * Expand tax logic to US, Luxembourg, Germany
- * Improve local encryption UX (password entropy hints, key backup)
- * Add PDF export of tax reports
- * Consider reintroducing REST API + external frontend (as an opt-in)
+ * Expand tax logic to US, Luxembourg, Germany (currently focused on **France**)
+ * Enhance the PDF export of tax reports
+ * Support for automated exchange API imports in SaaS mode

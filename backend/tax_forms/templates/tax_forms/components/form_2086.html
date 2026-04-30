@@ -120,6 +120,26 @@
         </div>
     </div>
 
+    <!-- Total des cessions & Exonération 305€ -->
+    <div id="exoneration-banner" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6 flex gap-3 items-start shadow-sm">
+        <i class="fas fa-gift text-emerald-500 mt-0.5 shrink-0 text-xl"></i>
+        <div class="text-sm text-emerald-800">
+            <strong>Exonération fiscale (Total des ventes &le; 305 €)</strong><br>
+            Le montant cumulé de vos ventes s'élève à <strong id="total-cessions-display" class="font-mono text-base bg-emerald-100 px-1 rounded">-- €</strong>.<br>
+            Étant inférieur ou égal à 305 € sur l'année, <strong>vous êtes totalement exonéré d'impôt</strong> sur vos plus-values crypto !<br>
+            <span class="text-xs text-emerald-600 mt-1 block"><i class="fas fa-info-circle"></i> Il reste obligatoire de déclarer ces opérations sur l'annexe 2086 pour prouver que vous êtes sous le seuil. Les cases de plus-values finales à reporter vaudront 0.</span>
+        </div>
+    </div>
+
+    <div id="no-exoneration-banner" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 flex gap-3 items-start shadow-sm">
+        <i class="fas fa-chart-line text-slate-400 mt-0.5 shrink-0"></i>
+        <div class="text-sm text-slate-700">
+            <strong>Volume total de vos cessions</strong><br>
+            Le montant cumulé de vos ventes (somme des lignes 213) s'élève à <strong id="total-cessions-display-no-exo" class="font-mono text-base bg-white border border-slate-200 px-1 rounded">-- €</strong>.<br>
+            Le seuil d'exonération de 305 € étant dépassé, vos plus-values globales seront bien soumises à l'impôt (PFU ou barème).
+        </div>
+    </div>
+
     {% if taxable_events %}
     <div class="space-y-6">
         {% for event in taxable_events %}
@@ -459,10 +479,36 @@
 
         function syncGlobalTaxes() {
             let total = 0;
+            let total_brut = 0;
+
             document.querySelectorAll('.cession-card').forEach(c => {
                 const t = c.querySelector('.val-220');
                 if (t) total += parseFloat(t.textContent.replace('€','').replace('+','').replace(/\s/g,'')) || 0;
+                
+                const brut = parseFloat(c.querySelector('.input-213').value) || 0;
+                total_brut += brut;
             });
+
+            // Update 305€ Exoneration Banners
+            const exonerationBanner = document.getElementById('exoneration-banner');
+            const noExonerationBanner = document.getElementById('no-exoneration-banner');
+            
+            if (exonerationBanner && noExonerationBanner) {
+                if (total_brut <= 305 && total_brut > 0) {
+                    exonerationBanner.classList.remove('hidden');
+                    noExonerationBanner.classList.add('hidden');
+                    document.getElementById('total-cessions-display').textContent = total_brut.toFixed(2) + ' €';
+                } else if (total_brut > 305) {
+                    exonerationBanner.classList.add('hidden');
+                    noExonerationBanner.classList.remove('hidden');
+                    document.getElementById('total-cessions-display-no-exo').textContent = total_brut.toFixed(2) + ' €';
+                } else {
+                    // Si total brut == 0 (cas vide)
+                    exonerationBanner.classList.add('hidden');
+                    noExonerationBanner.classList.add('hidden');
+                }
+            }
+
             const taxData = document.getElementById('tax-data');
             if (taxData) {
                 taxData.dataset.gains = total;
