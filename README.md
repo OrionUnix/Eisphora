@@ -45,6 +45,7 @@ Because no sensitive user data is persisted on disk in the default configuration
 - **User Accounts**: The architecture allows for enabling accounts and persistent storage.
 - **Advanced Persistence**: Support for **PostgreSQL** and **AES-256 encryption** via `django-cryptography`.
 - **Commercial Foundation**: Provides a robust base to build paid services or commercial tax platforms (similar to Waltio).
+- **Business-Friendly License**: Licensed under **BSD-3-Clause**, allowing companies to integrate and extend the codebase into proprietary products with minimal restrictions (unlike GPL).
 - ⚠️ **Note**: `django-cryptography` is available in the stack but is intentionally disabled in development mode to simplify the setup.
 
 ---
@@ -147,6 +148,24 @@ This project is licensed under the [BSD-3-Clause License](LICENSE) - see the [LI
 
 ## 🧭 Roadmap
 
- * Expand tax logic to US, Luxembourg, Germany (currently focused on **France**)
- * Enhance the PDF export of tax reports
- * Support for automated exchange API imports in SaaS mode
+### ✅ Done
+- FIFO calculation engine (validated)
+- French tax form 2086 helper
+- Portfolio visualization
+- CSV & PDF export
+- Multilingual UI (FR/EN/ES)
+- Legal disclaimer system
+
+### 🚧 In Progress
+- SaaS mode (user accounts + PostgreSQL)
+- AES-256 encryption activation (django-cryptography)
+
+### 🔜 Next
+- Multi-exchange CSV support (Binance, Kraken, Ledger)
+- US & Luxembourg tax logic
+- Stripe integration scaffold (for forkers)
+
+### 💡 Considered
+- Staking / DeFi / NFT fiscal edge cases
+- Automated exchange API imports
+- REST API opt-in for decoupled frontends
