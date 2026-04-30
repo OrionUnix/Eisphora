@@ -127,6 +127,9 @@
             <input type="hidden" name="transaction_count" id="transaction_count" value="{{ manual_transactions|length|default:0 }}">
 
             <div id="view-dashboard">
+                <!-- User Tax Profile -->
+                {% include "tax_forms/components/tax_profile.html" %}
+
                 <!-- Data Sources (Import, Wallet, Chart) -->
                 {% include "tax_forms/components/sources.html" %}
 
@@ -144,6 +147,11 @@
         <!-- Custom CSV Mapper Modal -->
         {% include "tax_forms/components/modal_mapper.html" %}
     </div>
+
+    <!-- Configuration fiscale dynamique -->
+    <script id="tax-config-data" type="application/json">
+        {{ tax_config_json|safe }}
+    </script>
 
     <!-- Guide pas-à-pas 2042-C -->
     {% include "tax_forms/components/guide_2042c.html" %}

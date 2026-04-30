@@ -1,4 +1,6 @@
 import os
+import json
+import hashlib
 from django.shortcuts import render
 from django.contrib import messages
 from django.views.decorators.debug import sensitive_post_parameters
@@ -44,18 +46,37 @@ def form_2048_view(request):
 
             # --- 2. Adresses crypto (BTC, Tron, EVM — auto-détectées) ---
             if crypto_addresses_raw:
+                from django.core.cache import cache
                 addresses = [a.strip() for a in crypto_addresses_raw.splitlines() if a.strip()]
                 for addr in addresses:
-                    messages.info(request, _(f"Récupération des transactions pour {addr[:12]}..."))
-                    chain_txs = fetch_on_chain_transactions(addr)
+                    cache_key = f"wallet_txs_{addr}"
+                    chain_txs = cache.get(cache_key)
+                    if chain_txs is None:
+                        messages.info(request, _(f"Récupération des transactions pour {addr[:12]}..."))
+                        chain_txs = fetch_on_chain_transactions(addr)
+                        cache.set(cache_key, chain_txs, timeout=3600)
+                    else:
+                        messages.info(request, _(f"Transactions chargées depuis le cache pour {addr[:12]}."))
                     all_transactions.extend(chain_txs)
 
             # --- 3. Fichiers importés (CSV, XLS, XLSX, PDF — multi-fichiers) ---
             if transaction_files:
                 mapping_json = request.POST.get('custom_mapping_json')
                 custom_delimiter = request.POST.get('custom_mapping_delimiter', ',')
+                seen_file_hashes = set()
 
                 for uploaded_file in transaction_files:
+                    # Vérification des doublons par hash du contenu
+                    uploaded_file.seek(0)
+                    file_hash = hashlib.md5(uploaded_file.read()).hexdigest()
+                    uploaded_file.seek(0)
+                    
+                    if file_hash in seen_file_hashes:
+                        messages.warning(request, _(f"⚠️ Le fichier '{uploaded_file.name}' a été ignoré car un fichier identique a déjà été fourni."))
+                        continue
+                        
+                    seen_file_hashes.add(file_hash)
+
                     messages.info(request, _(f"Analyse du fichier : {uploaded_file.name}"))
                     
                     if mapping_json and uploaded_file.name.endswith('.csv'):
@@ -76,9 +97,10 @@ def form_2048_view(request):
             # --- Calcul fiscal ---
             calc_results = calculate_french_taxes(all_transactions)
             taxable_profits = calc_results.get('total_plus_value_imposable', 0)
+            total_cessions = 0
 
             # PFU depuis tax_config.json
-            pfu_rate = get_pfu_rate("2025")
+            pfu_rate = get_pfu_rate()
             estimated_tax = max(0, taxable_profits * pfu_rate / 100)
 
             # Le barème progressif a été retiré pour simplification
@@ -118,6 +140,8 @@ def form_2048_view(request):
                 # Marquer si la transaction doit être affichée dans le tableau des cessions
                 tx['is_taxable_sale'] = (str(tx.get('operation_type')).lower() == 'vente' and 
                                          str(tx.get('currency', '')).upper() in FIAT_CURRENCIES)
+                if tx['is_taxable_sale']:
+                    total_cessions += tx.get('price', 0) * tx.get('quantity', 0)
 
             # --- Sources Actives (Filtré pour la vue) ---
             sources_map = {}
@@ -150,11 +174,31 @@ def form_2048_view(request):
                 'file_count': len(transaction_files),
                 'unique_sources': unique_sources,
                 'GEMINI_API_KEY': os.getenv('GEMINI_API_KEY', ''),
+                'revenu_net': request.POST.get('revenu_net', 0),
+                'nb_parts': request.POST.get('nb_parts', 1),
+                'total_cessions': total_cessions,
             }
+            
+            # Load tax config
+            try:
+                config_path = os.path.join(os.path.dirname(__file__), 'services', 'tax_config.json')
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    context['tax_config_json'] = f.read()
+            except Exception as e:
+                context['tax_config_json'] = '{}'
+
             return render(request, 'tax_forms/form_2048.html', context)
         else:
             messages.error(request, _("Veuillez corriger les erreurs dans le formulaire."))
     else:
         form = Form2048()
 
-    return render(request, 'tax_forms/form_2048.html', {'form': form})
+    context = {'form': form}
+    try:
+        config_path = os.path.join(os.path.dirname(__file__), 'services', 'tax_config.json')
+        with open(config_path, 'r', encoding='utf-8') as f:
+            context['tax_config_json'] = f.read()
+    except Exception as e:
+        context['tax_config_json'] = '{}'
+
+    return render(request, 'tax_forms/form_2048.html', context)

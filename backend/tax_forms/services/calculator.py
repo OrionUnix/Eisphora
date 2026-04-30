@@ -54,7 +54,7 @@ _DUST_THRESHOLD = 1e-8
 # Helpers
 # ---------------------------------------------------------------------------
 
-def load_tax_config(year: str = "2026") -> dict:
+def load_tax_config() -> dict:
     """Charge la configuration des taux fiscaux depuis tax_config.json."""
     try:
         with open(_TAX_CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -64,16 +64,16 @@ def load_tax_config(year: str = "2026") -> dict:
         return {}
 
 
-def get_pfu_rate(year: str = "2026") -> float:
-    """Taux PFU (Prélèvement Forfaitaire Unique) pour l'année donnée."""
-    config = load_tax_config(year)
-    return config.get('pfu', {}).get(year, {}).get('total_rate', 30.0)
+def get_pfu_rate() -> float:
+    """Taux PFU (Prélèvement Forfaitaire Unique)."""
+    config = load_tax_config()
+    return config.get('pfu', {}).get('total_rate', 30.0)
 
 
-def get_ps_rate(year: str = "2026") -> float:
-    """Taux des prélèvements sociaux pour l'année donnée."""
-    config = load_tax_config(year)
-    return config.get('bareme_progressif', {}).get(year, {}).get('ps_rate', 17.2)
+def get_ps_rate() -> float:
+    """Taux des prélèvements sociaux."""
+    config = load_tax_config()
+    return config.get('bareme_progressif', {}).get('ps_rate', 17.2)
 
 
 def _parse_date(tx: dict) -> datetime:

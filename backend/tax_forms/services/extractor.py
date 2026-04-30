@@ -1,37 +1,3 @@
-"""
-extractor.py – Récupération et parsing des transactions crypto
-==============================================================
-Corrections et améliorations par rapport à la version originale :
-
-1. [🔴 CRITIQUE] PRICE_CACHE global remplacé par Django cache framework
-   → Plus de fuite mémoire / partage de données entre utilisateurs.
-
-2. [🔴 CRITIQUE] Clé 'crypto' → 'crypto_token' dans parse_custom_csv
-   → Les transactions custom étaient toutes ignorées par calculate_french_taxes().
-
-3. [🟡] Toutes les exceptions silencieuses remplacées par logger.error/warning
-   → Le débogage devient possible.
-
-4. [🟡] EVM : ajout des transactions ERC-20 (tokentx) en plus du natif (txlist)
-   → USDC, LINK, UNI, etc. sont maintenant récupérés.
-
-5. [🟡] Binance : extraction du symbole robustifiée avec regex
-   → "ETHBTC", "BTCEUR", "ETHUSDT" sont tous correctement parsés.
-
-6. [🟡] Tron : pagination complète via le curseur 'fingerprint' de TronGrid
-   → L'historique n'est plus tronqué à 200 transactions.
-
-7. [🟡] Retry automatique sur les appels HTTP (urllib3 / requests)
-   → Moins d'échecs sur les API publiques instables.
-
-8. [🔴 FISCAL] Coinbase : 'Retail Staking Transfer' et 'Retail Unstaking Transfer'
-   → Ces mouvements internes Coinbase (paires +qty/-qty) sont désormais ignorés
-     via le type 'transfert_interne'. Aucune réalité fiscale.
-
-9. [🟡] Ordre des règles dans _normalize_op_type() corrigé : les règles
-   spécifiques passent avant les règles génériques pour éviter tout faux positif.
-"""
-
 import csv
 import io
 import json
@@ -40,9 +6,7 @@ import os
 import re
 import time
 from typing import Dict, List, Optional
-
 import pandas as pd
-import pdfplumber
 import requests
 from django.core.cache import cache
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -56,10 +20,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def _build_session(retries: int = 3, backoff: float = 0.5) -> requests.Session:
-    """
-    Crée une session requests avec retry automatique sur les erreurs
-    réseau et les codes HTTP 429, 500, 502, 503, 504.
-    """
     session = requests.Session()
     retry = Retry(
         total=retries,
@@ -197,8 +157,10 @@ def get_historical_price(
     if price > 0:
         cache.set(cache_key, price, timeout=_CACHE_TTL)
     else:
+        # Cache aggressively even if price is 0.0 to prevent spamming the APIs for unknown shitcoins
+        cache.set(cache_key, 0.0, timeout=_CACHE_TTL)
         logger.debug(
-            "Prix introuvable pour %s au %s (%s)",
+            "Prix introuvable pour %s au %s (%s). Mis en cache à 0.0.",
             symbol, timestamp_str, currency,
         )
 
@@ -637,13 +599,7 @@ def clean_numeric(value) -> float:
 # ---------------------------------------------------------------------------
 
 def _normalize_op_type(raw: str) -> str:
-    """
-    Convertit un libellé brut de transaction en type normalisé.
-    Compatible avec calculate_french_taxes().
 
-    Ordre important : les règles les plus spécifiques doivent être testées
-    AVANT les règles génériques (ex: 'retail staking transfer' avant 'staking').
-    """
     raw = raw.lower().strip()
 
     # -----------------------------------------------------------------------
@@ -688,19 +644,6 @@ def parse_custom_csv(
     mapping_json: str,
     delimiter: str = ',',
 ) -> List[dict]:
-    """
-    Parse un CSV en utilisant un mappage de colonnes défini par l'utilisateur.
-
-    Paramètres
-    ----------
-    file         : Fichier uploadé Django.
-    mapping_json : JSON string {"date": "Timestamp", "operation_type": "Type", ...}
-    delimiter    : Séparateur CSV (défaut ',').
-
-    Retourne
-    --------
-    Liste de dicts de transactions compatibles avec calculate_french_taxes().
-    """
     file.seek(0)
 
     try:
@@ -805,31 +748,17 @@ def parse_transaction_file(
     file: InMemoryUploadedFile,
     cex_type: str = "generic",
 ) -> List[dict]:
-    """
-    Parse un fichier de transactions (CSV, Excel, PDF, TXT).
-    Détecte automatiquement le format CEX depuis le nom du fichier.
-
-    Paramètres
-    ----------
-    file     : Fichier uploadé Django.
-    cex_type : 'binance' | 'coinbase' | 'kraken' | 'generic'.
-
-    Retourne
-    --------
-    Liste de dicts de transactions triés chronologiquement.
-    """
     file.seek(0)
     filename = file.name.lower()
 
     try:
-        if filename.endswith('.pdf'):
-            df = _parse_pdf_file(file)
-        elif filename.endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(file)
-        else:
-            df = _attempt_csv_parse(file)
-            if df is None:
-                df = _parse_unstructured_text(file)
+        if filename.endswith(('.pdf', '.xlsx', '.xls')):
+            logger.warning("Format PDF/XLSX non supporté : %s", filename)
+            return []
+
+        df = _attempt_csv_parse(file)
+        if df is None:
+            df = _parse_unstructured_text(file)
 
         if df is None or df.empty:
             logger.warning("Fichier vide ou format non supporté : %s", filename)
@@ -892,12 +821,13 @@ def _attempt_csv_parse(file: InMemoryUploadedFile) -> Optional[pd.DataFrame]:
     file.seek(0)
     content = file.read()
 
-    encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']
+    encodings = ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']
     delimiters = [',', ';', '\t', None]
 
     for encoding in encodings:
         try:
             decoded = content.decode(encoding)
+            decoded = decoded.replace('â‚¬', '').replace('Â', '')
         except UnicodeDecodeError:
             continue
 
@@ -936,65 +866,7 @@ def _attempt_csv_parse(file: InMemoryUploadedFile) -> Optional[pd.DataFrame]:
     return None
 
 
-def _parse_pdf_file(file: InMemoryUploadedFile) -> Optional[pd.DataFrame]:
-    """
-    Extrait des transactions depuis un PDF.
-    Stratégie 1 : tableaux via pdfplumber.extract_tables().
-    Stratégie 2 : texte brut (fallback).
-    """
-    all_data: List[list] = []
-    headers: List[str] = []
-    full_text_lines: List[str] = []
 
-    PDF_KEYWORDS = {
-        'date', 'type', 'asset', 'actif', 'amount', 'quantity',
-        'montant', 'quantité', 'transaction', 'time', 'timestamp', 'opération',
-    }
-
-    try:
-        file.seek(0)
-        with pdfplumber.open(file) as pdf:
-            for page in pdf.pages:
-                for table in (page.extract_tables() or []):
-                    local_headers: List[str] = []
-                    for row in table:
-                        row = [str(c).replace('\n', ' ').strip() if c else '' for c in row]
-                        if not any(row):
-                            continue
-                        row_lower = [c.lower() for c in row]
-                        if not local_headers and any(
-                            kw in cell for cell in row_lower for kw in PDF_KEYWORDS
-                        ):
-                            local_headers = row
-                            if not headers:
-                                headers = local_headers
-                            continue
-                        if not local_headers and headers:
-                            local_headers = headers
-                        if local_headers:
-                            padded = (row + [''] * len(local_headers))[:len(local_headers)]
-                            all_data.append(padded)
-
-                text = page.extract_text() or ''
-                full_text_lines.extend(text.splitlines())
-
-    except Exception as exc:
-        logger.error("parse_pdf_file : %s", exc, exc_info=True)
-
-    if all_data and headers:
-        try:
-            df = pd.DataFrame(all_data, columns=headers)
-            df.columns = [str(c).lower().strip() for c in df.columns]
-            return df
-        except Exception as exc:
-            logger.warning("parse_pdf_file : construction DataFrame échouée : %s", exc)
-
-    if full_text_lines:
-        fake_file = io.BytesIO('\n'.join(full_text_lines).encode('utf-8'))
-        fake_file.name = 'extracted.txt'
-        return _parse_unstructured_text(fake_file)
-
-    return None
 
 
 def _parse_unstructured_text(file) -> Optional[pd.DataFrame]:
@@ -1033,53 +905,58 @@ def _parse_unstructured_text(file) -> Optional[pd.DataFrame]:
 def _parse_coinbase_row(row: dict) -> Optional[dict]:
     """Parse une ligne du CSV Coinbase."""
     try:
-        date = (
-            row.get('timestamp') or row.get('date')
-            or row.get('created at')
-        )
-        op_raw = str(
-            row.get('transaction type') or row.get('type')
-            or row.get('operation') or ''
-        )
-        asset = (
-            row.get('asset') or row.get('symbol')
-            or row.get('base asset')
-        )
-        quantity = (
-            row.get('quantity transacted') or row.get('amount')
-            or row.get('size') or row.get('quantity')
-        )
+        date = row.get('timestamp') or row.get('date')
+        op_raw = str(row.get('transaction type') or row.get('type') or '')
+        asset = row.get('asset')
+        quantity = row.get('quantity transacted') or row.get('amount')
+        
+        # Prix unitaire — nom exact Coinbase
         price_raw = (
-            row.get('price at transaction')
+            row.get('price at transaction')      # ← nom réel
             or row.get('spot price at transaction')
-            or row.get('price') or row.get('unit price')
+            or row.get('price')
         )
         price = clean_numeric(price_raw)
         
-        # Fallback : extraire le prix depuis la colonne Notes si toujours absent
-        notes = str(row.get('notes') or row.get('Notes') or '')
+        # Fallback robuste depuis Notes
+        # "Sold 2.741 AVAX for 71.21984156 EUR on AVAX-EUR at 26.14 EUR/AVAX"
+        notes = str(row.get('notes') or '')
         if price == 0 and notes:
             m = re.search(r'at\s+([\d.]+)\s+\w+/\w+', notes)
             if m:
                 price = float(m.group(1))
-        # 'fees and/or spread' est le nom exact dans les exports Coinbase récents
+        
+        # Frais — nom exact Coinbase récent
         fees = (
-            row.get('fees and/or spread') or row.get('fees')
-            or row.get('fee') or 0
+            row.get('fees and/or spread')
+            or row.get('fees') or row.get('fee') or 0
         )
+        
+        # Subtotal = montant sans frais (utile pour FIFO)
+        subtotal = clean_numeric(row.get('subtotal') or 0)
+        total = clean_numeric(row.get('total') or 0)
+        
         currency = (
             row.get('price currency')
-            or row.get('spot price currency')
-            or row.get('currency') or row.get('quote asset')
-            or 'EUR'
+            or row.get('currency') or 'EUR'
         )
+
+        op_type = _normalize_op_type(op_raw)
+        
+        # Staking Income — quantité peut être très petite (0.0003489...)
+        # → ne pas filtrer les très petites valeurs pour le staking
+        qty = abs(clean_numeric(quantity))
+        if qty == 0 and op_type != 'staking':
+            return None
 
         return {
             'date': date,
-            'operation_type': _normalize_op_type(op_raw),
+            'operation_type': op_type,
             'crypto_token': str(asset).strip().upper() if asset else None,
-            'quantity': abs(clean_numeric(quantity)),
-            'price': clean_numeric(price),
+            'quantity': qty,
+            'price': price,
+            'subtotal': subtotal,  # utile pour recalcul FIFO si prix = 0
+            'total': total,
             'fees': clean_numeric(fees),
             'currency': str(currency).upper().strip(),
         }
@@ -1101,7 +978,9 @@ def _parse_binance_row(row: dict) -> Optional[dict]:
         if market:
             # On tente de retirer le suffixe de la paire (devise ou crypto de cotation)
             suffixes = r'(EUR|USD|USDT|USDC|BUSD|BTC|ETH|BNB)$'
-            crypto = re.sub(suffixes, '', market).strip() or None
+            stripped = re.sub(suffixes, '', market).strip()
+            if stripped:
+                crypto = stripped
         if not crypto:
             crypto = str(row.get('asset') or row.get('crypto') or '').strip().upper() or None
 
@@ -1135,8 +1014,7 @@ def _parse_kraken_row(row: dict) -> Optional[dict]:
         asset = str(row.get('asset') or row.get('pair') or '')
 
         # Kraken préfixe certains symboles avec X (crypto) ou Z (fiat)
-        if len(asset) > 3 and asset[0] in ('X', 'Z'):
-            asset = asset[1:]
+        asset = re.sub(r'^X{1,2}|^Z', '', asset)
 
         op_raw = str(row.get('type') or row.get('tx_type') or '')
 
@@ -1218,7 +1096,7 @@ def _parse_generic_row(row: dict) -> Optional[dict]:
             'operation_type': _normalize_op_type(op_raw),
             'crypto_token': str(asset).strip().upper() if asset else None,
             'quantity': abs(clean_numeric(quantity)),
-            'price': clean_numeric(price_raw) if isinstance(price_raw, str) else (price_raw or 0.0),
+            'price': clean_numeric(price_raw) if price_raw else 0.0,
             'acq_price': clean_numeric(acq_price),
             'fees': clean_numeric(fees),
             'currency': str(currency).upper().strip(),

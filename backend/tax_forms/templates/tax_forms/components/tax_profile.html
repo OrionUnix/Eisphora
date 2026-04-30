@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col mb-6 mt-4">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fas fa-user-tie"></i>
+        </div>
+        <h3 class="text-base md:text-lg font-bold text-slate-800">{% trans "Mon Profil Fiscal" %}</h3>
+    </div>
+
+    <p class="text-xs md:text-sm text-slate-500 mb-4 font-medium">
+        {% trans "Définissez votre situation fiscale française afin d'obtenir un conseil d'optimisation exact." %}
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Revenus Nets -->
+        <div>
+            <label for="revenu_net" class="block text-xs font-bold text-slate-600 mb-1.5">
+                {% trans "Revenus nets imposables (Case 1AJ)" %}
+            </label>
+            <div class="relative">
+                <input type="number" id="revenu-net" name="revenu_net" value="{{ revenu_net|default:0 }}" step="100" min="0"
+                    class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#7c5cbf] focus:border-[#7c5cbf] outline-none transition-all"
+                    oninput="updateTaxes()">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">€</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1 pl-1">{% trans "Salaires nets imposables de 2024" %}</p>
+        </div>
+
+        <!-- Nombre de parts -->
+        <div>
+            <label for="nb_parts" class="block text-xs font-bold text-slate-600 mb-1.5">
+                {% trans "Nombre de parts fiscales" %}
+            </label>
+            <div class="relative">
+                <input type="number" id="nb-parts" name="nb_parts" value="{{ nb_parts|default:1 }}" step="0.5" min="1"
+                    class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#7c5cbf] focus:border-[#7c5cbf] outline-none transition-all"
+                    oninput="updateTaxes()">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"><i class="fas fa-users"></i></span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1 pl-1">{% trans "Célibataire = 1, Couple = 2" %}</p>
+        </div>
+    </div>
+
+    <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100/50 flex items-start gap-2">
+        <i class="fas fa-lock text-amber-500 mt-0.5"></i>
+        <p class="text-[10px] text-amber-700 leading-tight">
+            {% trans "Vos données fiscales ne sont jamais enregistrées sur nos serveurs. L'application Eisphora est conçue 'zéro-disque' : toutes les informations sont traitées à la volée dans votre navigateur." %}
+        </p>
+    </div>
+</div>

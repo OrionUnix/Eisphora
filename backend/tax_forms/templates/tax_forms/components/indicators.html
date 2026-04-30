@@ -1,7 +1,7 @@
 {% load i18n %}
 
 {% if show_results %}
-<span id="tax-data" data-gains="{{ taxable_profits|default:0 }}" style="display:none"></span>
+<span id="tax-data" data-gains="{{ taxable_profits|default:0 }}" data-total-cessions="{{ total_cessions|default:0 }}" style="display:none"></span>
 
 <h2 class="text-lg md:text-xl font-bold text-slate-800 pt-2 animate-fade-in-up">{% trans "Indicateurs Globaux" %}</h2>
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 animate-fade-in-up">

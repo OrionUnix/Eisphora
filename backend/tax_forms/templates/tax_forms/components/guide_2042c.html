@@ -233,42 +233,13 @@
                         <thead>
                             <tr class="text-slate-500 font-bold">
                                 <th class="text-left pb-2">Tranche (TMI)</th>
-                                <th class="text-center pb-2">Total Barème<br><span class="font-normal">(TMI + 17,2%)</span></th>
+                                <th class="text-center pb-2">Total Barème<br><span class="font-normal">(TMI + <span id="guide-ps-rate">17,2</span>%)</span></th>
                                 <th class="text-center pb-2">Flat Tax</th>
                                 <th class="text-center pb-2">Conseil</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr class="text-slate-700">
-                                <td class="py-1.5 font-medium">0%</td>
-                                <td class="text-center text-emerald-600 font-bold">17,2%</td>
-                                <td class="text-center">30%</td>
-                                <td class="text-center"><span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Cocher 3CN</span></td>
-                            </tr>
-                            <tr class="text-slate-700">
-                                <td class="py-1.5 font-medium">11%</td>
-                                <td class="text-center text-emerald-600 font-bold">28,2%</td>
-                                <td class="text-center">30%</td>
-                                <td class="text-center"><span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Cocher 3CN</span></td>
-                            </tr>
-                            <tr class="text-slate-700 bg-amber-50/50">
-                                <td class="py-1.5 font-medium">30%</td>
-                                <td class="text-center text-amber-600 font-bold">47,2%</td>
-                                <td class="text-center">30%</td>
-                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
-                            </tr>
-                            <tr class="text-slate-700">
-                                <td class="py-1.5 font-medium">41%</td>
-                                <td class="text-center text-red-500 font-bold">58,2%</td>
-                                <td class="text-center">30%</td>
-                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
-                            </tr>
-                            <tr class="text-slate-700">
-                                <td class="py-1.5 font-medium">45%</td>
-                                <td class="text-center text-red-500 font-bold">62,2%</td>
-                                <td class="text-center">30%</td>
-                                <td class="text-center"><span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span></td>
-                            </tr>
+                        <tbody id="guide-tmi-table-body" class="divide-y divide-slate-100">
+                            <!-- Rempli dynamiquement par JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -437,14 +408,18 @@
     function populateStep3() {
         const tmi = getBaremeRate();
         const pfu = getPfuRate();
-        const totalBareme = tmi + 17.2;
+        const totalBareme = tmi + (window.PS_RATE || 17.2);
+
+        // Update PS rate display in table header
+        const psRateEl = document.getElementById('guide-ps-rate');
+        if (psRateEl) psRateEl.textContent = (window.PS_RATE || 17.2).toString().replace('.', ',');
 
         // Update TMI displays
         document.querySelectorAll('#guide-tmi-value-yes, #guide-tmi-value-no').forEach(el => {
             if (el) el.textContent = tmi;
         });
         document.querySelectorAll('#guide-tmi-total-yes').forEach(el => {
-            if (el) el.textContent = totalBareme.toFixed(1);
+            if (el) el.textContent = totalBareme.toFixed(1).replace('.', ',');
         });
         document.querySelectorAll('#guide-pfu-reco-yes, #guide-pfu-reco-no').forEach(el => {
             if (el) el.textContent = pfu;
@@ -459,6 +434,43 @@
         } else {
             recoPfu.classList.remove('hidden');
             recoBareme.classList.add('hidden');
+        }
+
+        // Generate dynamic table
+        const tbody = document.getElementById('guide-tmi-table-body');
+        if (tbody && window.TRANCHES) {
+            tbody.innerHTML = '';
+            window.TRANCHES.forEach(tranche => {
+                const tr = document.createElement('tr');
+                tr.className = 'text-slate-700';
+                
+                const totalTranche = tranche.rate + (window.PS_RATE || 17.2);
+                const isPfuBetter = totalTranche > pfu;
+                
+                if (tranche.rate === tmi) {
+                    tr.classList.add('bg-indigo-50/50');
+                }
+
+                let conseilHtml = '';
+                if (isPfuBetter) {
+                    conseilHtml = '<span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Flat Tax</span>';
+                    tr.innerHTML = `
+                        <td class="py-1.5 font-medium">${tranche.rate}%</td>
+                        <td class="text-center text-red-500 font-bold">${totalTranche.toFixed(1).replace('.', ',')}%</td>
+                        <td class="text-center">${pfu}%</td>
+                        <td class="text-center">${conseilHtml}</td>
+                    `;
+                } else {
+                    conseilHtml = '<span class="bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Cocher 3CN</span>';
+                    tr.innerHTML = `
+                        <td class="py-1.5 font-medium">${tranche.rate}%</td>
+                        <td class="text-center text-emerald-600 font-bold">${totalTranche.toFixed(1).replace('.', ',')}%</td>
+                        <td class="text-center">${pfu}%</td>
+                        <td class="text-center">${conseilHtml}</td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            });
         }
     }
 

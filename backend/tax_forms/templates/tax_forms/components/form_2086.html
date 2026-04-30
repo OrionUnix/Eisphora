@@ -98,6 +98,30 @@
         </p>
     </div>
 
+    <!-- Disclaimer Warning -->
+    <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-5 mb-6 shadow-sm">
+        <div class="flex gap-4 items-start">
+            <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <i class="fas fa-triangle-exclamation text-xl"></i>
+            </div>
+            <div class="text-sm text-red-900">
+                <p class="font-black text-base mb-2">⚠️ Disclaimer & Responsabilité</p>
+                <p class="mb-3 leading-relaxed">
+                    Eisphora est un outil <strong>open source</strong> développé sur le temps libre d'un passionné. Les calculs sont fournis à titre indicatif uniquement.
+                </p>
+                <p class="font-bold mb-2 underline">Avant de soumettre votre déclaration, nous vous recommandons fortement de :</p>
+                <ul class="space-y-1.5 ml-1 mb-4">
+                    <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Vérifier chaque valeur avec vos relevés d'exchange</span></li>
+                    <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Consulter un expert-comptable ou un conseiller fiscal</span></li>
+                    <li class="flex items-center gap-2"><i class="fas fa-arrow-right text-red-400 text-[10px]"></i> <span>Ou utiliser un logiciel agréé (Waltio, Koinly...)</span></li>
+                </ul>
+                <p class="text-xs italic opacity-80 border-t border-red-200 pt-3">
+                    En utilisant cet assistant, vous acceptez d'en être l'unique responsable pour votre déclaration.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Banner conseil -->
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 flex gap-3 items-start">
         <i class="fas fa-circle-info text-blue-500 mt-0.5 shrink-0"></i>
@@ -307,7 +331,12 @@
                                 <span class="text-[10px] font-black text-indigo-300 w-7">212</span>
                                 <div>
                                     <p class="text-sm text-slate-800 font-semibold">🌍 Valeur de <u>TOUTES</u> vos cryptos à ce moment</p>
-                                    <p class="text-[10px] text-slate-400">Toutes plateformes confondues, en €, au jour de la vente</p>
+                                    <p class="text-[10px] text-slate-400 flex items-center gap-1">
+                                        Toutes plateformes confondues, en €, au jour de la vente
+                                        <a href="https://www.impots.gouv.fr/particulier/questions/jai-vendu-des-actifs-numeriques-cryptomonnaies-comment-dois-je-declarer" target="_blank" class="text-indigo-500 hover:underline inline-flex items-center gap-0.5">
+                                            <i class="fas fa-external-link-alt text-[9px]"></i> Doc officielle
+                                        </a>
+                                    </p>
                                 </div>
                                 <div class="tip-trigger ml-1 shrink-0">
                                     <i class="fas fa-circle-question text-indigo-300 text-xs"></i>

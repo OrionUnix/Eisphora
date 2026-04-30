@@ -46,14 +46,105 @@ window.validateDate = function(input) {
     }
 };
 
-// --- CALCUL DES IMPOTS ET MISES À JOUR DES CARTES ---
-var PS_RATE = 17.2;
+// --- CONFIGURATION FISCALE DYNAMIQUE ---
+window.TAX_CONFIG = null;
+window.PS_RATE = 18.6;
+window.PFU_TOTAL_RATE = 31.4;
+window.TRANCHES = [];
+window.DECOTE_CONFIG = null;
+
+window.loadTaxConfig = function() {
+    try {
+        const scriptEl = document.getElementById('tax-config-data');
+        if (scriptEl && scriptEl.textContent.trim()) {
+            window.TAX_CONFIG = JSON.parse(scriptEl.textContent);
+            
+            if (window.TAX_CONFIG.bareme_progressif) {
+                const bConfig = window.TAX_CONFIG.bareme_progressif;
+                window.PS_RATE = bConfig.ps_rate || 18.6;
+                window.TRANCHES = bConfig.tranches || [];
+                window.DECOTE_CONFIG = bConfig.decote || null;
+            }
+            if (window.TAX_CONFIG.pfu) {
+                window.PFU_TOTAL_RATE = window.TAX_CONFIG.pfu.total_rate || 31.4;
+            }
+
+            // Update UI elements if present
+            const pfuInput = document.getElementById('pfu-rate');
+            if (pfuInput) pfuInput.value = window.PFU_TOTAL_RATE;
+
+            const psRateEl = document.getElementById('card-ps-rate');
+            if (psRateEl) psRateEl.textContent = window.PS_RATE;
+
+        }
+    } catch (e) {
+        console.error("Erreur chargement tax_config:", e);
+    }
+};
+
+function calculIR(revenuNet, parts = 1.0) {
+    if (!window.TRANCHES || window.TRANCHES.length === 0) return { impot: 0, tmi: 0 };
+
+    const quotient = revenuNet / parts;
+    let irPart = 0.0;
+    let tmi = 0;
+    
+    for (const tranche of window.TRANCHES) {
+        if (quotient <= tranche.min) break;
+        const max = tranche.max !== null ? tranche.max : Infinity;
+        const base = Math.min(quotient, max) - tranche.min;
+        irPart += base * (tranche.rate / 100);
+        if (base > 0) tmi = tranche.rate;
+    }
+    
+    let impotBrut = irPart * parts;
+    
+    // Décote
+    let decote = 0;
+    if (window.DECOTE_CONFIG) {
+        if (parts < 2) { // Célibataire
+            if (impotBrut < window.DECOTE_CONFIG.seuil_celibataire) {
+                decote = Math.max(0, 873 - (impotBrut * window.DECOTE_CONFIG.taux)); // On garde le 873 statique ou on peut l'améliorer
+            }
+        } else { // Couple
+            if (impotBrut < window.DECOTE_CONFIG.seuil_couple) {
+                decote = Math.max(0, 1444 - (impotBrut * window.DECOTE_CONFIG.taux));
+            }
+        }
+    }
+    
+    return { 
+        impot: Math.max(0, impotBrut - decote),
+        tmi: tmi
+    };
+}
 
 window.updateTaxes = function() {
     const taxDataEl = document.getElementById('tax-data');
     if (!taxDataEl) return;
     
     var taxableAmount = parseFloat(taxDataEl.dataset.gains) || 0;
+    var totalCessions = parseFloat(taxDataEl.dataset.totalCessions) || 0;
+    
+    // Update Total Cessions Card
+    var elTotalCessions = document.getElementById('val-total-cessions');
+    var elExemptionMsg = document.getElementById('exemption-msg');
+    
+    if (elTotalCessions) {
+        elTotalCessions.textContent = Math.round(totalCessions).toLocaleString('fr-FR') + ' €';
+    }
+    
+    var isExempt = (totalCessions > 0 && totalCessions <= 305);
+    
+    if (elExemptionMsg) {
+        if (isExempt) {
+            elExemptionMsg.classList.remove('hidden');
+            taxableAmount = 0; // Exonéré
+        } else {
+            elExemptionMsg.classList.add('hidden');
+        }
+    }
+
     var elPlus = document.getElementById('val-plus');
     var elMoins = document.getElementById('val-minus');
 
@@ -73,15 +164,26 @@ window.updateTaxes = function() {
         return;
     }
 
-    var pfuRate = parseFloat(document.getElementById('pfu-rate')?.value) || 0;
-    var pfuTotal = taxableAmount * (pfuRate / 100);
+    var pfuTotal = taxableAmount * (window.PFU_TOTAL_RATE / 100);
     var elPfuResult = document.getElementById('val-pfu');
     if (elPfuResult) elPfuResult.textContent = Math.round(pfuTotal).toLocaleString('fr-FR') + ' €';
 
-    var baremeRate = parseFloat(document.getElementById('bareme-rate')?.value) || 0;
-    var baremeTotal = taxableAmount * ((baremeRate + PS_RATE) / 100);
+    // --- Calcul Barème Progressif Exact ---
+    var revenuNet = parseFloat(document.getElementById('revenu-net')?.value) || 0;
+    var nbParts = parseFloat(document.getElementById('nb-parts')?.value) || 1;
+
+    var irSans = calculIR(revenuNet, nbParts);
+    var irAvec = calculIR(revenuNet + taxableAmount, nbParts);
+
+    // Delta IR + Prélèvements Sociaux
+    var baremeTotal = (irAvec.impot - irSans.impot) + (taxableAmount * (window.PS_RATE / 100));
+    
     var elBaremeResult = document.getElementById('val-bareme');
     if (elBaremeResult) elBaremeResult.textContent = Math.round(baremeTotal).toLocaleString('fr-FR') + ' €';
+
+    // Mise à jour de la TMI affichée (visuel uniquement)
+    var elTmiSelect = document.getElementById('bareme-rate');
+    if (elTmiSelect) elTmiSelect.value = irAvec.tmi;
 
     // Badge styling
     updateTaxBadges(pfuTotal, baremeTotal);
@@ -214,6 +316,36 @@ window.updateRowStyle = function(select) {
     if (typeof updateTaxableCount === 'function') updateTaxableCount();
 };
 
+window.recalculateGlobalGains = function() {
+    let totalGain = 0;
+    let totalSalePrice = 0;
+    const rows = document.querySelectorAll('.transaction-row');
+    
+    rows.forEach(row => {
+        const typeElement = row.querySelector('[name^="operation_type_"]');
+        const type = typeElement ? typeElement.value : 'transfert';
+        
+        if (type === 'vente') {
+            const qty = parseFloat(row.querySelector('input[name^="quantity_"]').value) || 0;
+            const price = parseFloat(row.querySelector('input[name^="price_"]').value) || 0;
+            const acqPrice = parseFloat(row.querySelector('input[name^="acq_price_"]').value) || 0;
+            
+            const salePrice = qty * price;
+            const gain = salePrice - (qty * acqPrice);
+            
+            totalGain += gain;
+            totalSalePrice += salePrice;
+        }
+    });
+
+    const taxDataEl = document.getElementById('tax-data');
+    if (taxDataEl) {
+        taxDataEl.dataset.gains = totalGain;
+        taxDataEl.dataset.totalCessions = totalSalePrice;
+    }
+    updateTaxes();
+};
+
 window.updateRowTotal = function(input) {
     const row = input.closest('tr');
     if (!row) return;
@@ -241,6 +373,8 @@ window.updateRowTotal = function(input) {
         gainEl.classList.remove('text-emerald-600', 'text-red-500');
         gainEl.classList.add('text-slate-400');
     }
+
+    recalculateGlobalGains();
 };
 
 window.updatePagination = function() {
@@ -381,7 +515,7 @@ window.removeSource = function(sourceName, tagId) {
         }
         
         updatePagination();
-        updateTaxes();
+        recalculateGlobalGains();
         updateTaxableCount();
     }
 };
@@ -501,6 +635,7 @@ window.applyCustomMapping = function() {
 
 // --- DOM READY ---
 document.addEventListener('DOMContentLoaded', function () {
+    window.loadTaxConfig();
     updateTaxes();
     initFileUpload();
     initWalletDetection();
@@ -514,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
             row.remove();
             updatePagination();
             updateTaxableCount();
+            recalculateGlobalGains();
         }
     });
 
