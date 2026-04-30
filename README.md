@@ -14,6 +14,17 @@
  link : https://orionj.pythonanywhere.com/fr-fr/
 ![alt text](image.png)
 
+## 💡 Eisphora Lite: Immediate Web Demo
+For users who need a functional, ready-to-use version without any technical installation, we recommend **Eisphora Lite**.
+
+*   **Project Link**: [GitHub - Eisphora Lite](https://github.com/OrionUnix/Eisphora-Lite)
+*   **Ready-to-Use**: Designed for non-developers to estimate their taxes immediately via a web browser.
+*   **Streamlit Powered**: Built on Streamlit to provide a smooth, fast, and modern user experience.
+*   **Maximum Privacy**: Just like the main version, the Lite app is entirely **stateless**. It uses no database; all data is processed strictly in memory and deleted the moment you close your session. No private logs, no data retention.
+*   **Developer Boilerplate**: This version serves as a lightweight codebase foundation (boilerplate). We invite developers to fork it and build their own open-source or commercial alternatives to tools like Waltio, Koinly, or ZenLedger.
+
+---
+
 ## 🔒 The "Stateless" Security Model
 
 Most tax applications store your financial history in databases, creating massive honeypots for hackers. 
@@ -50,17 +61,17 @@ Because no sensitive user data is persisted on disk in the default configuration
 
 ---
 
----
-
 ## ✨ Features
 
-- Tax reporting based on FIFO method
-- Advanced transaction analysis
-- Multilingual UI (English, French, Spanish)
-- Stateless in-memory calculation (no data stored)
-- PDF generation for tax forms
-
----
+- **FIFO Tax Calculation Engine**: Highly accurate engine compliant with Art. 150 VH bis of the French Tax Code (CGI).
+- **French Tax Form 2086 Assistant**: Line-by-line helper to simplify your official reporting.
+- **Strategic Optimization**: Real-time comparison between PFU (Flat Tax) and the Progressive Income Tax Scale with personalized advice.
+- **Portfolio Visualization**: Clear overview of your remaining holdings and acquisition costs.
+- **Export Capabilities**: Generate professional PDF reports and CSV data exports for your records.
+- **Multilingual Support**: Fully translated UI available in English, French, and Spanish.
+- **Stateless Privacy**: Zero-data retention policy — everything is processed in RAM and wiped after use.
+- **Legally Resilient**: Dynamic tax rates and thresholds updated annually via a centralized `tax_config.json`.
+- **Disclaimer System**: Built-in legal protections and educational context for end-users.
 
 ## 🧠 Architecture Overview
 

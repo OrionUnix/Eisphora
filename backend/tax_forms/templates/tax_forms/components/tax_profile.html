@@ -18,12 +18,18 @@
             {% trans "Revenus nets imposables (Case 1AJ)" %}
         </label>
         <div class="relative">
-            <input type="number" id="revenu-net" name="revenu_net" value="{{ revenu_net|default:0 }}" step="100" min="0"
+            <input type="number" id="revenu-net" name="revenu_net" value="{{ revenu_net|default:'' }}" step="1" min="0" max="9999999"
+                placeholder="Ex: 32 450"
                 class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#7c5cbf] focus:border-[#7c5cbf] outline-none transition-all"
                 oninput="updateTaxes()">
             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">€</span>
         </div>
-        <p class="text-[10px] text-slate-400 mt-1 pl-1">{% trans "Salaires nets imposables de 2024" %}</p>
+        <div class="mt-1.5 flex items-start gap-1.5 px-1">
+            <i class="fas fa-lightbulb text-amber-500 text-[10px] mt-0.5"></i>
+            <p class="text-[10px] text-slate-400 leading-tight">
+                {% trans "À trouver sur votre avis d'imposition (Case 1AJ) ou déclaration (Traitements et salaires nets)." %}
+            </p>
+        </div>
     </div>
 
     <!-- Nombre de parts -->

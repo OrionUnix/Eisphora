@@ -408,3 +408,6 @@ msgstr "Global Flat Tax of"
 
 msgid "IR (selon TMI) + Prélèvements Sociaux"
 msgstr "Income Tax (TMI) + Social Contributions"
+
+msgid "À trouver sur votre avis d'imposition (Case 1AJ) ou déclaration (Traitements et salaires nets)."
+msgstr "Can be found on your tax notice (Box 1AJ) or tax return (Net wages and salaries)."
