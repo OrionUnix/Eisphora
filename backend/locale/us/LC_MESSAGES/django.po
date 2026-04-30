@@ -372,3 +372,39 @@ msgstr ""
 #: .\theme\templates\pages\security.html:19
 msgid "Automatic deletion after 30 days of inactivity"
 msgstr ""
+
+msgid "Zero-Knowledge architecture"
+msgstr "Zero-Knowledge architecture"
+
+msgid "100% Local processing"
+msgstr "100% Local processing"
+
+msgid "No server database"
+msgstr "No server database"
+
+msgid "Résumé Fiscal"
+msgstr "Tax Summary"
+
+msgid "Analyse de vos transactions et estimation de l'impôt (France uniquement)."
+msgstr "Transaction analysis and tax estimation (France only)."
+
+msgid "Affinez votre estimation en renseignant votre situation fiscale."
+msgstr "Refine your estimation by providing your tax situation."
+
+msgid "Scrollez pour voir le détail"
+msgstr "Scroll to see details"
+
+msgid "Modifier mes sources de données"
+msgstr "Modify my data sources"
+
+msgid "Modifier mon profil fiscal"
+msgstr "Modify my tax profile"
+
+msgid "Scrollez pour vérifier vos cessions en détail"
+msgstr "Scroll to verify your disposals in detail"
+
+msgid "Flat Tax globale de"
+msgstr "Global Flat Tax of"
+
+msgid "IR (selon TMI) + Prélèvements Sociaux"
+msgstr "Income Tax (TMI) + Social Contributions"

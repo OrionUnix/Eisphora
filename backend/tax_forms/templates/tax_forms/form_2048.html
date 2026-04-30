@@ -101,7 +101,26 @@
             {% include "tax_forms/components/indicators.html" %}
 
             <!-- User Tax Profile -->
-            {% include "tax_forms/components/tax_profile.html" %}
+            {% if show_results %}
+            <details class="group bg-white rounded-[24px] border border-slate-100 overflow-hidden mb-6 mt-4 shadow-sm">
+                <summary class="flex items-center justify-between px-6 py-4 cursor-pointer list-none hover:bg-slate-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <span class="font-bold text-slate-700">{% trans "Modifier mon profil fiscal" %}</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 pt-2">
+                    {% include "tax_forms/components/tax_profile.html" %}
+                </div>
+            </details>
+            {% else %}
+            <div class="bg-white rounded-[24px] p-5 md:p-6 shadow-sm border border-slate-100 flex flex-col mb-6 mt-4">
+                {% include "tax_forms/components/tax_profile.html" %}
+            </div>
+            {% endif %}
 
             <!-- Tax Estimation Cards -->
             {% include "tax_forms/components/tax_cards.html" %}
